@@ -1,14 +1,29 @@
 NAME
-    Capture::Tiny - Add abstract here
+    Capture::Tiny - Capture STDOUT and STDERR from perl, XS or system
+    commands
 
 VERSION
     This documentation describes version 0.01.
 
 SYNOPSIS
          use Capture::Tiny;
+     
+     ($stdout, $stderr) = capture {
+           # your code here
+         };
+     
+     ($stdout, $stderr) = tee {
+           # your code here 
+         };
 
 DESCRIPTION
 USAGE
+  capture
+       ($stdout, $stderr) = capture \&code_ref;
+
+  tee
+       ($stdout, $stderr) = capture \&code_ref;
+
 BUGS
     Please report any bugs or feature using the CPAN Request Tracker. Bugs
     can be submitted through the web interface at

@@ -3,7 +3,7 @@ name: Capture-Tiny
 version: 0.01
 author:
   - 'David Golden <dagolden@cpan.org>'
-abstract: Add abstract here
+abstract: 'Capture STDOUT and STDERR from perl, XS or system commands'
 license: apache
 resources:
   license: http://www.apache.org/licenses/LICENSE-2.0.txt

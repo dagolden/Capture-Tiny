@@ -4,7 +4,7 @@
 
 =head1 NAME
 
-Capture::Tiny - Add abstract here
+Capture::Tiny - Capture STDOUT and STDERR from perl, XS or system commands
 
 =head1 VERSION
 
@@ -13,10 +13,26 @@ This documentation describes version 0.01.
 =head1 SYNOPSIS
 
      use Capture::Tiny;
+ 
+     ($stdout, $stderr) = capture {
+       # your code here
+     };
+ 
+     ($stdout, $stderr) = tee {
+       # your code here 
+     };
 
 =head1 DESCRIPTION
 
 =head1 USAGE
+
+=head2 capture
+
+   ($stdout, $stderr) = capture \&code_ref;
+
+=head2 tee
+
+   ($stdout, $stderr) = capture \&code_ref;
 
 =head1 BUGS
 

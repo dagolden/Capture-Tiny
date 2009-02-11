@@ -35,86 +35,79 @@ my @outputs = qw/STDOUT STDERR/;
 sub _capture_tee {
   my ($code, $tee) = @_;
 
-
-  my ( %saved_fh_for, %capturing_fh_for, %kid_input_for, %kid_pid_for );
+  my ( %saved_fh, %capturing_fh, %kid_input, %kid_pid, %output );
 
   # copy STDOUT and STDERR and open files for replacement in binary mode
   for my $handle ( @outputs ) {
-    open $saved_fh_for{$handle}, ">&" . fileno(qualify_to_ref($handle)) 
+    open $saved_fh{$handle}, ">&" . fileno(qualify_to_ref($handle)) 
       or die "Couldn't save a copy for $handle";
     my $temp_fh = File::Temp::tempfile()
       or die "Couldn't get temporary file for capturing $handle\n";
     binmode( $temp_fh );
-    $capturing_fh_for{$handle} = $temp_fh; 
+    $capturing_fh{$handle} = $temp_fh; 
   }
 
   # if teeing, direct output to teeing subprocesses
   if ($tee) {
     # create filehandles for kids to listen on
-    %kid_input_for = (
-        stdout => IO::Handle->new,
-        stderr => IO::Handle->new,
-    );
+    %kid_input = ( stdout => IO::Handle->new, stderr => IO::Handle->new );
 
     # open listeners for each of STDOUT and STDERR;
     for my $handle ( @outputs ) {
         # autoflush everything -- XXX needed?
-#        $kid_input_for{$handle}->autoflush(1);
-#        $capturing_fh_for{$handle}->autoflush(1);
-#        $saved_fh_for{$handle}->autoflush(1);
+#        $kid_input{$handle}->autoflush(1);
+#        $capturing_fh{$handle}->autoflush(1);
+#        $saved_fh{$handle}->autoflush(1);
 
         # XXX this is a hack -- using STDERR temporarily to manage fds 
-        open STDERR, ">&".$capturing_fh_for{$handle}->fileno;
+        open STDERR, ">&".$capturing_fh{$handle}->fileno;
 
-        $kid_pid_for{$handle} = open3( 
-            $kid_input_for{$handle}, 
-            ">&".$saved_fh_for{$handle}->fileno,
+        $kid_pid{$handle} = open3( 
+            $kid_input{$handle}, 
+            ">&".$saved_fh{$handle}->fileno,
             ">&STDERR",
             @cmd
         ) or do {
-            open STDERR, ">&".$saved_fh_for{STDERR}->fileno;
+            open STDERR, ">&".$saved_fh{STDERR}->fileno;
             die "Couldn't open3 for $handle\n";
         };
     }
-    # redirect output to kid
-    open STDOUT, ">&".$kid_input_for{STDOUT}->fileno or die "Couldn't redirect STDOUT";
-    open STDERR, ">&".$kid_input_for{STDERR}->fileno or die "Couldn't redirect STDERR";
+    # now that kids are running, redirect output to kids
+    open STDOUT, ">&".$kid_input{STDOUT}->fileno or die "Couldn't redirect STDOUT";
+    open STDERR, ">&".$kid_input{STDERR}->fileno or die "Couldn't redirect STDERR";
   }
   else {
     # redirect output to capture file
-    open STDOUT, ">&".$capturing_fh_for{STDOUT}->fileno or die "Couldn't redirect STDOUT";
-    open STDERR, ">&".$capturing_fh_for{STDERR}->fileno or die "Couldn't redirect STDERR";
+    open STDOUT, ">&".$capturing_fh{STDOUT}->fileno or die "Couldn't redirect STDOUT";
+    open STDERR, ">&".$capturing_fh{STDERR}->fileno or die "Couldn't redirect STDERR";
   }
 
   # run code block
   $code->();
 
-  # close inputs to kids -- kids should exit -- and reopen from saved
+  # shut down kids -- or signal them to stop
   if ( $tee ) {
     for my $handle ( @outputs ) {
       close qualify_to_ref($handle);
-      close $kid_input_for{$handle};
+      close $kid_input{$handle};
       if ( $^O eq 'MSWin32' ) {
-        kill 1, $kid_pid_for{$handle};
+        kill 1, $kid_pid{$handle};
       }
       else {
-        waitpid $kid_pid_for{$handle}, 0;
+        waitpid $kid_pid{$handle}, 0;
       }
     }
   }
 
-  # restore STDOUT and STDERR
-  open STDERR, ">&".$saved_fh_for{STDERR}->fileno or die "Couldn't restore STDERR";
-  open STDOUT, ">&".$saved_fh_for{STDOUT}->fileno or die "eouldn't restore STDOUT";
-
-  # read back output
-  my %output_for;
-  for my $handle ( @outputs ) {
-    seek $capturing_fh_for{$handle}, 0, 0;
-    $output_for{$handle} = do { local $/; readline $capturing_fh_for{$handle} };
+  # restore and read back output (STDERR first)
+  for my $handle ( reverse @outputs ) {
+    open qualify_to_ref($handle), ">&".$saved_fh{$handle}->fileno 
+      or die "Couldn't restore $handle";
+    seek $capturing_fh{$handle}, 0, 0;
+    $output{$handle} = do { local $/; readline $capturing_fh{$handle} };
   }
 
-  return wantarray ? ($output_for{STDOUT}, $output_for{STDERR}) : $output_for{STDOUT};
+  return wantarray ? ($output{STDOUT}, $output{STDERR}) : $output{STDOUT};
 }
 
 #--------------------------------------------------------------------------#
@@ -143,7 +136,7 @@ __END__
 
 = NAME
 
-Capture::Tiny - Add abstract here
+Capture::Tiny - Capture STDOUT and STDERR from perl, XS or system commands
 
 = VERSION
 
@@ -152,12 +145,27 @@ This documentation describes version %%VERSION%%.
 = SYNOPSIS
 
     use Capture::Tiny;
+    
+    ($stdout, $stderr) = capture {
+      # your code here
+    };
+
+    ($stdout, $stderr) = tee {
+      # your code here 
+    };
 
 = DESCRIPTION
 
 
 = USAGE
 
+== capture
+
+  ($stdout, $stderr) = capture \&code_ref;
+
+== tee
+
+  ($stdout, $stderr) = capture \&code_ref;
 
 = BUGS
 
