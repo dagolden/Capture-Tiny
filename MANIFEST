@@ -19,3 +19,4 @@ xt/stopwords.txt
 lib/Capture/Tiny.pod
 t/02-capture.t
 META.yml
+t/03-tee.t
