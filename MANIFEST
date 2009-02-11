@@ -16,3 +16,6 @@ xt/critic.t
 xt/perlcriticrc
 xt/spelling.t
 xt/stopwords.txt
+lib/Capture/Tiny.pod
+t/02-capture.t
+META.yml
