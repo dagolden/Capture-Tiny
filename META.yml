@@ -1,0 +1,26 @@
+---
+name: Capture-Tiny
+version: 0.01
+author:
+  - 'David Golden <dagolden@cpan.org>'
+abstract: Add abstract here
+license: apache
+resources:
+  license: http://www.apache.org/licenses/LICENSE-2.0.txt
+requires:
+  perl: 5.004
+build_requires:
+  Test::More: 0.47
+provides:
+  Capture::Tiny:
+    file: lib/Capture/Tiny.pm
+    version: 0.01
+generated_by: Module::Build version 0.31012
+meta-spec:
+  url: http://module-build.sourceforge.net/META-spec-v1.2.html
+  version: 1.2
+no_index:
+  directory:
+    - examples
+    - inc
+    - t
