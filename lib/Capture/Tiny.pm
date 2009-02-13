@@ -10,15 +10,40 @@ use strict;
 use warnings;
 use Exporter ();
 use File::Temp ();
+use IO::File;
 use IO::Handle;
 use IPC::Open3;
 use Symbol qw/qualify_to_ref/;
+use Fatal qw/pipe open close/;
 
 our $VERSION = '0.01';
 $VERSION = eval $VERSION; ## no critic
 our @ISA = qw/Exporter/;
 our @EXPORT = qw/capture tee/;
 
+my $use_system = $^O eq 'MSWin32';
+
+#--------------------------------------------------------------------------#
+# bulk filehandle manipulation
+#--------------------------------------------------------------------------#
+
+sub _copy_std {
+  return (
+    IO::Handle->new_from_fd( fileno(STDIN ), "r" ),
+    IO::Handle->new_from_fd( fileno(STDOUT), "w" ),
+    IO::Handle->new_from_fd( fileno(STDERR), "w" ),
+  )
+}
+
+sub _open_std {
+  STDIN ->fdopen( fileno( $_[0] ), 'r' );
+  STDOUT->fdopen( fileno( $_[1] ), 'w' );
+  STDOUT->fdopen( fileno( $_[2] ), 'w' );
+}
+
+sub _autoflush {
+  select((select($_), $|=1)[0]) for @_;
+}
 
 #--------------------------------------------------------------------------#
 # _capture()
@@ -30,84 +55,66 @@ my @cmd = ($^X, '-e',
   'while (<>) { print STDOUT $_; print STDERR $_}' 
 );
 
-my @outputs = qw/STDOUT STDERR/;
-
 sub _capture_tee {
   my ($code, $tee) = @_;
-
-  my ( %saved_fh, %capturing_fh, %kid_input, %kid_pid, %output );
-
-  # copy STDOUT and STDERR and open files for replacement in binary mode
-  for my $handle ( @outputs ) {
-    open $saved_fh{$handle}, ">&" . fileno(qualify_to_ref($handle)) 
-      or die "Couldn't save a copy for $handle";
-    my $temp_fh = File::Temp::tempfile()
-      or die "Couldn't get temporary file for capturing $handle\n";
-    binmode( $temp_fh );
-    $capturing_fh{$handle} = $temp_fh; 
-  }
+  my (@pids, @tees);
+  my @copy_of_std = _copy_std();
+  
+#  my $stdout_capture = File::Temp::tempfile();
+#  my $stderr_capture = File::Temp::tempfile();
+  my $stdout_capture = IO::File->new( 'stdout.txt', '+>' );
+  my $stderr_capture = IO::File->new( 'stderr.txt', '+>' );
 
   # if teeing, direct output to teeing subprocesses
   if ($tee) {
-    # create filehandles for kids to listen on
-    %kid_input = ( stdout => IO::Handle->new, stderr => IO::Handle->new );
-
-    # open listeners for each of STDOUT and STDERR;
-    for my $handle ( @outputs ) {
-        # autoflush everything -- XXX needed?
-#        $kid_input{$handle}->autoflush(1);
-#        $capturing_fh{$handle}->autoflush(1);
-#        $saved_fh{$handle}->autoflush(1);
-
-        # XXX this is a hack -- using STDERR temporarily to manage fds 
-        open STDERR, ">&".$capturing_fh{$handle}->fileno;
-
-        $kid_pid{$handle} = open3( 
-            $kid_input{$handle}, 
-            ">&".$saved_fh{$handle}->fileno,
-            ">&STDERR",
-            @cmd
-        ) or do {
-            open STDERR, ">&".$saved_fh{STDERR}->fileno;
-            die "Couldn't open3 for $handle\n";
-        };
+    my ($stdout_tee, $stdout_reader, $stderr_tee, $stderr_reader) =
+      map { IO::Handle->new } 1 .. 4;
+    pipe $stdout_reader, $stdout_tee;
+    pipe $stderr_reader, $stderr_tee;
+    if ( $use_system ) {
+      # start STDOUT listener
+      _open_std( $stdout_reader, $copy_of_std[1], $stdout_capture );
+      push @pids, system(1, @cmd);
+      push @tees, $stdout_tee;
+      $stdout_reader->close;
+      # start STDERR listener
+      _open_std( $stderr_reader, $stderr_capture, $copy_of_std[2] );
+      push @pids, system(1, @cmd);
+      push @tees, $stderr_tee;
+      $stderr_reader->close;
     }
-    # now that kids are running, redirect output to kids
-    open STDOUT, ">&".$kid_input{STDOUT}->fileno or die "Couldn't redirect STDOUT";
-    open STDERR, ">&".$kid_input{STDERR}->fileno or die "Couldn't redirect STDERR";
+    else {
+      die "fork not implemented yet";
+    }
+    # redirect output to kids
+    _open_std( $copy_of_std[0], $stdout_tee, $stderr_tee );
+    _autoflush( $stdout_tee, $stderr_tee );
   }
+  # otherwise redirect output to capture file
   else {
-    # redirect output to capture file
-    open STDOUT, ">&".$capturing_fh{STDOUT}->fileno or die "Couldn't redirect STDOUT";
-    open STDERR, ">&".$capturing_fh{STDERR}->fileno or die "Couldn't redirect STDERR";
+    _open_std( $copy_of_std[0], $stdout_capture, $stderr_capture );
   }
 
   # run code block
   $code->();
 
-  # shut down kids -- or signal them to stop
+  # restore original handles
+  _open_std( @copy_of_std );
+
+  # shut down kids
   if ( $tee ) {
-    for my $handle ( @outputs ) {
-      close qualify_to_ref($handle);
-      close $kid_input{$handle};
-      if ( $^O eq 'MSWin32' ) {
-        kill 1, $kid_pid{$handle};
-      }
-      else {
-        waitpid $kid_pid{$handle}, 0;
-      }
+    close $_ for @tees;   # they should stop when input closes
+    kill 1, $_ for @pids; # tell them to hang up if they haven't stopped
+    if ( $^O ne 'MSWin32' ) {
+      waitpid $_, 0 for @pids;
     }
   }
 
-  # restore and read back output (STDERR first)
-  for my $handle ( reverse @outputs ) {
-    open qualify_to_ref($handle), ">&".$saved_fh{$handle}->fileno 
-      or die "Couldn't restore $handle";
-    seek $capturing_fh{$handle}, 0, 0;
-    $output{$handle} = do { local $/; readline $capturing_fh{$handle} };
-  }
+  # read back capture output
+  my ($got_out, $got_err) = map { seek $_, 0, 0; do {local $/; <$_>} } 
+                            $stdout_capture, $stderr_capture;
 
-  return wantarray ? ($output{STDOUT}, $output{STDERR}) : $output{STDOUT};
+  return wantarray ? ($got_out, $got_err) : $got_out;
 }
 
 #--------------------------------------------------------------------------#
