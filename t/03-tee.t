@@ -10,23 +10,23 @@ use Test::More;
 
 use Capture::Tiny qw/capture tee/;
 
-plan tests => 2; 
+plan tests => 4; 
 
 my ($out, $err, $out2, $err2, $label);
 sub _reset { $_ = '' for ($out, $err, $out2, $err2 ); 1};
 
 # Basic test
 _reset;
-#($out2, $err2) = capture {
+($out2, $err2) = capture {
   ($out, $err) = tee {
-    print __PACKAGE__; print STDERR __FILE__;
+    print __PACKAGE__ ; print STDERR __FILE__;
   };
-#};
+};
 
 $label = "tee: ";
 is($out, __PACKAGE__, "$label captured stdout during tee");
-is($err, __FILE__, "$label captured stderr during teed");
-#is($out2, __PACKAGE__, "$label captured stdout passed-through from tee");
-#is($err2, __FILE__, "$label captured stderr passed-through from tee");
+is($err, __FILE__, "$label captured stderr during tee");
+is($out2, __PACKAGE__, "$label captured stdout passed-through from tee");
+is($err2, __FILE__, "$label captured stderr passed-through from tee");
 
 

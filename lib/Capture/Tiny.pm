@@ -28,17 +28,25 @@ my $use_system = $^O eq 'MSWin32';
 #--------------------------------------------------------------------------#
 
 sub _copy_std {
-  return (
-    IO::Handle->new_from_fd( fileno(STDIN ), "r" ),
-    IO::Handle->new_from_fd( fileno(STDOUT), "w" ),
-    IO::Handle->new_from_fd( fileno(STDERR), "w" ),
-  )
+  my @std = map { IO::Handle->new } 0 .. 2;
+  open $std[0], "<&STDIN";
+  open $std[1], ">&STDOUT";
+  open $std[2], ">&STDERR";
+  return @std;
+#  return (
+#    IO::Handle->new_from_fd( fileno(STDIN ), "r" ),
+#    IO::Handle->new_from_fd( fileno(STDOUT), "w" ),
+#    IO::Handle->new_from_fd( fileno(STDERR), "w" ),
+#  )
 }
 
 sub _open_std {
-  STDIN ->fdopen( fileno( $_[0] ), 'r' );
-  STDOUT->fdopen( fileno( $_[1] ), 'w' );
-  STDOUT->fdopen( fileno( $_[2] ), 'w' );
+#  STDIN ->fdopen( fileno( $_[0] ), 'r' );
+#  STDOUT->fdopen( fileno( $_[1] ), 'w' );
+#  STDOUT->fdopen( fileno( $_[2] ), 'w' );
+  open STDIN , "<&" . fileno( $_[0] );
+  open STDOUT, ">&" . fileno( $_[1] );
+  open STDERR, ">&" . fileno( $_[2] );
 }
 
 sub _autoflush {
@@ -46,13 +54,21 @@ sub _autoflush {
 }
 
 #--------------------------------------------------------------------------#
+# _check_and_clear
+#
+# Win32 can take a while to setup the subprocesses.  We want to keep trying
+#--------------------------------------------------------------------------#
+
+sub _check_and_clear {}
+
+#--------------------------------------------------------------------------#
 # _capture()
 #--------------------------------------------------------------------------#
 
 # command to tee output
 my @cmd = ($^X, '-e', 
-  'select STDERR;$|++;select STDOUT;$|++; $SIG{HUP}=sub{exit};' .
-  'while (<>) { print STDOUT $_; print STDERR $_}' 
+  '$SIG{HUP}=sub{exit}; my $buf; while (sysread(STDIN, $buf, 2048)) { ' .
+  'syswrite(STDOUT, $buf); syswrite(STDERR, $buf) }' 
 );
 
 sub _capture_tee {
@@ -64,31 +80,35 @@ sub _capture_tee {
 #  my $stderr_capture = File::Temp::tempfile();
   my $stdout_capture = IO::File->new( 'stdout.txt', '+>' );
   my $stderr_capture = IO::File->new( 'stderr.txt', '+>' );
+  my ($stdout_tee, $stdout_reader, $stderr_tee, $stderr_reader) =
+    map { IO::Handle->new } 1 .. 4;
 
   # if teeing, direct output to teeing subprocesses
   if ($tee) {
-    my ($stdout_tee, $stdout_reader, $stderr_tee, $stderr_reader) =
-      map { IO::Handle->new } 1 .. 4;
     pipe $stdout_reader, $stdout_tee;
     pipe $stderr_reader, $stderr_tee;
+    _autoflush( $stdout_tee, $stderr_tee );
     if ( $use_system ) {
       # start STDOUT listener
       _open_std( $stdout_reader, $copy_of_std[1], $stdout_capture );
-      push @pids, system(1, @cmd);
+      my $out_kid = system(1, @cmd);
       push @tees, $stdout_tee;
-      $stdout_reader->close;
       # start STDERR listener
       _open_std( $stderr_reader, $stderr_capture, $copy_of_std[2] );
-      push @pids, system(1, @cmd);
+      my $err_kid = system(1, @cmd);
+      push @pids, $out_kid, $err_kid;
       push @tees, $stderr_tee;
-      $stderr_reader->close;
+      sleep 2; # let the OS get the processes set up
     }
     else {
       die "fork not implemented yet";
     }
+    $stdout_reader->close;
+    $stderr_reader->close;
+#    print {$stdout_tee} "testing out tee\n"; 
+#    print {$stderr_tee} "testing err tee\n"; 
     # redirect output to kids
     _open_std( $copy_of_std[0], $stdout_tee, $stderr_tee );
-    _autoflush( $stdout_tee, $stderr_tee );
   }
   # otherwise redirect output to capture file
   else {
