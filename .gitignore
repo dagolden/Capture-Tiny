@@ -2,3 +2,4 @@ Build.bat
 Build
 _build/
 blib/
+*.tmp
