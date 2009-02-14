@@ -9,8 +9,8 @@ use 5.006;
 use strict;
 use warnings;
 use Exporter ();
-use File::Temp ();
 use IO::Handle ();
+use File::Temp qw/tempfile tmpnam/;
 use Fatal qw/pipe open close/;
 
 our $VERSION = '0.01';
@@ -43,10 +43,10 @@ sub _autoflush {
 }
 
 #--------------------------------------------------------------------------#
-# _fork3
+# _fork_exec
 #--------------------------------------------------------------------------#
 
-sub _fork3 {
+sub _fork_exec {
   my ($tee, $in, $out, $err, @cmd) = @_;
   my $pid = fork; # XXX needs error handling
   if ($pid == 0) { # child
@@ -61,63 +61,56 @@ sub _fork3 {
 }
 
 #--------------------------------------------------------------------------#
+# command to tee output -- on Win32 the argument is a filename that must
+# be opened to signal that the process is ready to receive input.
+# This is annoying, but seems to be the best that can be done on Win32
+#--------------------------------------------------------------------------#
+my @cmd = ($^X, '-e', '$SIG{HUP}=sub{exit}; ' 
+  . 'if( my $fn=shift ){ open my $fh, qq{>$fn}; print {$fh} $$; close $fh;} '
+  . 'my $buf; while (sysread(STDIN, $buf, 2048)) { '
+  . 'syswrite(STDOUT, $buf); syswrite(STDERR, $buf)}' 
+);
+
+#--------------------------------------------------------------------------#
 # _capture_tee()
 #--------------------------------------------------------------------------#
 
-# command to tee output on Win32 -- the argument is a filename that must
-# be opened to signal that the process is ready to receive input.
-# This is annoying, but seems to be the best that can be done on Win32
-my @cmd = ($^X, '-e', 
-  '$SIG{HUP}=sub{exit}; my $f=shift; open my $flag, qq{>$f}; ' .
-  'print {$flag} $$; close $flag; ' .
-  'my $buf; while (sysread(STDIN, $buf, 2048)) { ' .
-  'syswrite(STDOUT, $buf); syswrite(STDERR, $buf)}' 
-);
-
 sub _capture_tee {
   my ($code, $tee) = @_;
-  my (@pids, @tees);
-  my @copy_of_std = _copy_std();
   
-  my $stdout_capture = File::Temp::tempfile();
-  my $stderr_capture = File::Temp::tempfile();
-  my ($stdout_tee, $stdout_reader, $stderr_tee, $stderr_reader) =
-    map { IO::Handle->new } 1 .. 4;
+  my @copy_of_std = _copy_std();
+  my @captures    = ( undef, scalar tempfile(), scalar tempfile() );
+  my @readers     = ( undef, IO::Handle->new, IO::Handle->new );
+  my @tees        = ( undef, IO::Handle->new, IO::Handle->new );
+  my @pids;
 
-  # if teeing, direct output to teeing subprocesses
+  # if teeing, redirect output to teeing subprocesses
   if ($tee) {
-    pipe $stdout_reader, $stdout_tee;
-    pipe $stderr_reader, $stderr_tee;
-    _autoflush( $stdout_tee, $stderr_tee );
-    my @out_handles = ($stdout_reader, $copy_of_std[1], $stdout_capture);
-    my @err_handles = ($stderr_reader, $stderr_capture, $copy_of_std[2]);
-    my @flag_files = map { scalar File::Temp::tmpnam() } 0 .. 1;
+    pipe $readers[1], $tees[1];
+    pipe $readers[2], $tees[2];
+    _autoflush( @tees[1,2] );
+    my @out_handles = ($readers[1], $copy_of_std[1], $captures[1]);
+    my @err_handles = ($readers[2], $copy_of_std[2], $captures[2]);
+    my @flag_files = ( scalar tmpnam(), scalar tmpnam() );
     if ( $use_system ) {
-      # start STDOUT listener
       _open_std( @out_handles );
       push @pids, system(1, @cmd, $flag_files[0]);
-      push @tees, $stdout_tee;
-      # start STDERR listener
-      _open_std( @out_handles );
+      _open_std( @err_handles );
       push @pids, system(1, @cmd, $flag_files[1]);
-      push @tees, $stderr_tee;
     }
     else { # use fork
-      push @pids, _fork3($stdout_tee => @out_handles, @cmd, $flag_files[0] );
-      push @pids, _fork3($stderr_tee => @err_handles, @cmd, $flag_files[1] );
-      push @tees, $stdout_tee, $stderr_tee;
+      push @pids, _fork_exec($tees[1] => @out_handles, @cmd, $flag_files[0] );
+      push @pids, _fork_exec($tees[2] => @err_handles, @cmd, $flag_files[1] );
     }
-    # redirect our output to the subprocesses
-    _open_std( $copy_of_std[0], $stdout_tee, $stderr_tee );
+    _open_std( $copy_of_std[0], @tees[1,2] );
     # wait for the OS get the processes set up
     1 until -f $flag_files[0] && -f $flag_files[1];
     unlink $_ for @flag_files;
-    $stdout_reader->close;
-    $stderr_reader->close;
+    close $_ for @readers[1,2];
   }
   # if not teeing, redirect output to capture file
   else {
-    _open_std( $copy_of_std[0], $stdout_capture, $stderr_capture );
+    _open_std( $copy_of_std[0], @captures[1,2] );
   }
 
   # run code block
@@ -128,16 +121,18 @@ sub _capture_tee {
   
   # shut down kids
   if ( $tee ) {
-    close $_ for @tees;   # they should stop when input closes
-    kill 1, $_ for @pids; # tell them to hang up if they haven't stopped
-    if ( $^O ne 'MSWin32' ) {
+    close $_ for @tees[1,2];   # kids should stop when input closes
+    if ( $use_system ) {
+      kill 1, $_ for @pids; # tell them to hang up if they haven't stopped
+    }
+    else {
       waitpid $_, 0 for @pids;
     }
   }
 
   # read back capture output
   my ($got_out, $got_err) = 
-    map { seek $_,0,0; do {local $/; <$_>} } $stdout_capture, $stderr_capture;
+    map { seek $_,0,0; do {local $/; <$_>} } @captures[1,2];
 
   return wantarray ? ($got_out, $got_err) : $got_out;
 }
