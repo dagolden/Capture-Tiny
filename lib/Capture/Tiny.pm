@@ -61,9 +61,10 @@ sub _fork_exec {
 }
 
 #--------------------------------------------------------------------------#
-# command to tee output -- on Win32 the argument is a filename that must
+# command to tee output -- the argument is a filename that must
 # be opened to signal that the process is ready to receive input.
 # This is annoying, but seems to be the best that can be done on Win32
+# so I use it as a simple, portable IPC technique
 #--------------------------------------------------------------------------#
 my @cmd = ($^X, '-e', '$SIG{HUP}=sub{exit}; ' 
   . 'if( my $fn=shift ){ open my $fh, qq{>$fn}; print {$fh} $$; close $fh;} '
@@ -244,8 +245,8 @@ existing test-file that illustrates the bug or desired feature.
 
 This is a selection of CPAN modules that provide some sort of output capture,
 albeit with various limitations that make them appropriate only in particular
-circumstances.  I'm probably missing some.  The long list is provided show why
-I felt Capture::Tiny was necessary. 
+circumstances.  I'm probably missing some.  The long list is provided to show
+why I felt Capture::Tiny was necessary. 
 
 * [IO::Capture]
 * [IO::Capture::Extended]
