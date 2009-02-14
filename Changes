@@ -7,5 +7,6 @@
 
 Revision history for Capture-Tiny
 
-0.01 Wed Feb 11 15:50:11 2009
-    - original skeleton created with Module::Boilerplate
+0.01 Fri Feb 13 23:15:19 EST 2009
+
+    - Added: 'capture' and 'tee' functions
