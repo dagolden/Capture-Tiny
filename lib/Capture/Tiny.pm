@@ -43,6 +43,24 @@ sub _autoflush {
 }
 
 #--------------------------------------------------------------------------#
+# _fork3
+#--------------------------------------------------------------------------#
+
+sub _fork3 {
+  my ($tee, $in, $out, $err, @cmd) = @_;
+  my $pid = fork; # XXX needs error handling
+  if ($pid == 0) { # child
+    untie *STDIN;
+    untie *STDOUT;
+    untie *STDOUT;
+    close $tee;
+    _open_std( $in, $out, $err );
+    exec @cmd;
+  }
+  return $pid
+}
+
+#--------------------------------------------------------------------------#
 # _capture_tee()
 #--------------------------------------------------------------------------#
 
@@ -87,8 +105,9 @@ sub _capture_tee {
       1 until -f $flag_files[0] && -f $flag_files[1];
       unlink $_ for @flag_files;
     }
-    else {
-      die "fork not implemented yet";
+    else { # use fork
+      push @pids, _fork3($stdout_tee => $stdout_reader, $copy_of_std[1], $stdout_capture, @cmd);
+      push @pids, _fork3($stderr_tee => $stderr_reader, $stderr_capture, $copy_of_std[2], @cmd);
       _open_std( $copy_of_std[0], $stdout_tee, $stderr_tee );
     }
     $stdout_reader->close;
