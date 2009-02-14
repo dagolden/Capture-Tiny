@@ -7,27 +7,29 @@ VERSION
 
 SYNOPSIS
          use Capture::Tiny;
-     
-     ($stdout, $stderr) = capture {
+ 
+         ($stdout, $stderr) = capture {
            # your code here
          };
-     
-     ($stdout, $stderr) = tee {
+ 
+         ($stdout, $stderr) = tee {
            # your code here 
          };
 
 DESCRIPTION
 USAGE
   capture
+
        ($stdout, $stderr) = capture \&code_ref;
 
   tee
+
        ($stdout, $stderr) = capture \&code_ref;
 
 BUGS
     Please report any bugs or feature using the CPAN Request Tracker. Bugs
     can be submitted through the web interface at
-    <http://rt.cpan.org/Dist/Display.html?Queue=Capture-Tiny>
+    http://rt.cpan.org/Dist/Display.html?Queue=Capture-Tiny
 
     When submitting a bug or request, please include a test-file or a patch
     to an existing test-file that illustrates the bug or desired feature.
@@ -42,7 +44,8 @@ COPYRIGHT AND LICENSE
     Licensed under Apache License, Version 2.0 (the "License"). You may not
     use this file except in compliance with the License. A copy of the
     License was distributed with this file or you may obtain a copy of the
-    License from http://www.apache.org/licenses/LICENSE-2.0
+    License from
+    http:E<sol>E<sol>www.apache.orgE<sol>licensesE<sol>LICENSE-2.0
 
     Files produced as output though the use of this software, shall not be
     considered Derivative Works, but shall be considered the original work

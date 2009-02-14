@@ -10,10 +10,7 @@ use strict;
 use warnings;
 use Exporter ();
 use File::Temp ();
-use IO::File;
-use IO::Handle;
-use IPC::Open3;
-use Symbol qw/qualify_to_ref/;
+use IO::Handle ();
 use Fatal qw/pipe open close/;
 
 our $VERSION = '0.01';
@@ -46,38 +43,15 @@ sub _autoflush {
 }
 
 #--------------------------------------------------------------------------#
-# _win32_wait_for_start
-#--------------------------------------------------------------------------#
-
-sub _win32_wait_for_start {
-}
-#  my @ ) = @_;
-##  while (time - $now < 10) {
-##    my ($out, $err) = _capture_tee( 
-##      sub { print STDOUT "test STDOUT\n"; print STDERR "test STDERR\n" } 
-##    );
-##    $out ||= 'undef';
-##    $err ||= 'undef';
-###    print { $stderr } "Got '$out' and '$err'\n";
-##    Win32::Sleep( 50 );
-##    last if ($out eq "test STDOUT\n") && ($err eq "test STDERR\n");
-##  }
-#  # signal kid process ready to write to STDERR (the capture file) 
-#  kill 1, $_ for ($out_kid, $err_kid);
-#  return;
-#}
-
-#--------------------------------------------------------------------------#
 # _capture_tee()
-#
-# kids for tee must always have cloned STD handle on STDOUT and capture 
-# file on STDERR -- on Windows, need to ensure readiness before enabling
-# tee to capture_file on STDERR.  See _win32_wait_for_start
 #--------------------------------------------------------------------------#
 
-# command to tee output
+# command to tee output on Win32 -- the argument is a filename that must
+# be opened to signal that the process is ready to receive input.
+# This is annoying, but seems to be the best that can be done on Win32
 my @cmd = ($^X, '-e', 
-  '$SIG{HUP}=sub{exit}; my $f=shift; open my $flag, qq{>$f}; print {$flag} $$; close $flag; ' .
+  '$SIG{HUP}=sub{exit}; my $f=shift; open my $flag, qq{>$f}; ' .
+  'print {$flag} $$; close $flag; ' .
   'my $buf; while (sysread(STDIN, $buf, 2048)) { ' .
   'syswrite(STDOUT, $buf); syswrite(STDERR, $buf)}' 
 );
@@ -89,8 +63,6 @@ sub _capture_tee {
   
   my $stdout_capture = File::Temp::tempfile();
   my $stderr_capture = File::Temp::tempfile();
-#  my $stdout_capture = IO::File->new( 'stdout.txt', '+>' );
-#  my $stderr_capture = IO::File->new( 'stderr.txt', '+>' );
   my ($stdout_tee, $stdout_reader, $stderr_tee, $stderr_reader) =
     map { IO::Handle->new } 1 .. 4;
 
@@ -103,15 +75,15 @@ sub _capture_tee {
       my @flag_files = map { scalar File::Temp::tmpnam() } 0 .. 1;
       # start STDOUT listener
       _open_std( $stdout_reader, $copy_of_std[1], $stdout_capture );
-      my $out_kid = system(1, @cmd, $flag_files[0]);
+      push @pids, system(1, @cmd, $flag_files[0]);
       push @tees, $stdout_tee;
       # start STDERR listener
       _open_std( $stderr_reader, $stderr_capture, $copy_of_std[2] );
-      my $err_kid = system(1, @cmd, $flag_files[1]);
-      push @pids, $out_kid, $err_kid;
+      push @pids, system(1, @cmd, $flag_files[1]);
       push @tees, $stderr_tee;
-      # wait for the OS get the processes set up
+      # redirect our output to the subprocesses
       _open_std( $copy_of_std[0], $stdout_tee, $stderr_tee );
+      # wait for the OS get the processes set up
       1 until -f $flag_files[0] && -f $flag_files[1];
       unlink $_ for @flag_files;
     }
@@ -122,17 +94,17 @@ sub _capture_tee {
     $stdout_reader->close;
     $stderr_reader->close;
   }
-  # otherwise redirect output to capture file
+  # if not teeing, redirect output to capture file
   else {
     _open_std( $copy_of_std[0], $stdout_capture, $stderr_capture );
   }
 
   # run code block
   $code->();
-
+  
   # restore original handles
   _open_std( @copy_of_std );
-
+  
   # shut down kids
   if ( $tee ) {
     close $_ for @tees;   # they should stop when input closes
@@ -143,8 +115,8 @@ sub _capture_tee {
   }
 
   # read back capture output
-  my ($got_out, $got_err) = map { seek $_, 0, 0; do {local $/; <$_>} } 
-                            $stdout_capture, $stderr_capture;
+  my ($got_out, $got_err) = 
+    map { seek $_,0,0; do {local $/; <$_>} } $stdout_capture, $stderr_capture;
 
   return wantarray ? ($got_out, $got_err) : $got_out;
 }
@@ -175,7 +147,7 @@ __END__
 
 = NAME
 
-Capture::Tiny - Capture STDOUT and STDERR from perl, XS or system commands
+Capture::Tiny - Capture STDOUT and STDERR from perl, XS or external programs
 
 = VERSION
 
@@ -195,6 +167,10 @@ This documentation describes version %%VERSION%%.
 
 = DESCRIPTION
 
+Capture::Tiny provides a simple, portable way to capture anything sent to 
+STDOUT or STDERR, regardless of whether it comes from Perl, from XS code or
+from an external program.  Optionally, output can be teed so that it is 
+captured while being passed through to the original handlers.
 
 = USAGE
 
@@ -204,7 +180,7 @@ This documentation describes version %%VERSION%%.
 
 == tee
 
-  ($stdout, $stderr) = capture \&code_ref;
+  ($stdout, $stderr) = tee \&code_ref;
 
 = BUGS
 
@@ -217,6 +193,12 @@ existing test-file that illustrates the bug or desired feature.
 
 = SEE ALSO
 
+* [IO::CaptureOutput]
+* [IPC::Cmd]
+* [IPC::Open2]
+* [IPC::Open3]
+* [IPC::Run]
+* [IPC::Run3]
 
 = AUTHOR
 
