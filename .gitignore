@@ -3,3 +3,4 @@ Build
 _build/
 blib/
 *.tmp
+*.bak

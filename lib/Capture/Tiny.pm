@@ -16,7 +16,7 @@ use Fatal qw/pipe open close/;
 our $VERSION = '0.01';
 $VERSION = eval $VERSION; ## no critic
 our @ISA = qw/Exporter/;
-our @EXPORT = qw/capture tee/;
+our @EXPORT_OK = qw/capture tee/;
 
 my $use_system = $^O eq 'MSWin32';
 
@@ -141,7 +141,7 @@ sub _capture_tee {
 # capture()
 #--------------------------------------------------------------------------#
 
-sub capture(&) {
+sub capture(&) { ## no critic
   $_[1] = 0; # no tee
   goto \&_capture_tee;
 }
@@ -150,7 +150,7 @@ sub capture(&) {
 # tee()
 #--------------------------------------------------------------------------#
 
-sub tee(&) {
+sub tee(&) { ## no critic
   $_[1] = 1; # tee
   goto \&_capture_tee;
 }
@@ -163,7 +163,7 @@ __END__
 
 = NAME
 
-Capture::Tiny - Capture STDOUT and STDERR from perl, XS or external programs
+Capture::Tiny - Capture STDOUT and STDERR from Perl, XS or external programs
 
 = VERSION
 
@@ -171,7 +171,7 @@ This documentation describes version %%VERSION%%.
 
 = SYNOPSIS
 
-    use Capture::Tiny;
+    use Capture::Tiny qw/capture tee/;
     
     ($stdout, $stderr) = capture {
       # your code here
@@ -183,20 +183,53 @@ This documentation describes version %%VERSION%%.
 
 = DESCRIPTION
 
-Capture::Tiny provides a simple, portable way to capture anything sent to 
+Capture::Tiny provides a simple, portable way to capture anything sent to
 STDOUT or STDERR, regardless of whether it comes from Perl, from XS code or
-from an external program.  Optionally, output can be teed so that it is 
-captured while being passed through to the original handlers.
+from an external program.  Optionally, output can be teed so that it is
+captured while being passed through to the original handles.  Yes, it even
+works on Windows.  Stop guessing which of a dozen capturing modules to use in
+any particular situation and just use this one.
+
+This module was heavily inspired by [IO::CaptureOutput], which provides 
+similar functionality without the ability to tee output and with more
+complicated code and API.
 
 = USAGE
 
+The following functions are available.  None are exported by default.
+
 == capture
 
-  ($stdout, $stderr) = capture \&code_ref;
+  ($stdout, $stderr) = capture \&code;
+  $stdout = capture \&code;
+
+The {capture} function takes a code reference and returns what is sent to
+STDOUT and STDERR.  In scalar context, it returns only STDOUT.  Regardless of
+context, all output is captured -- nothing is passed to the existing handles.
+
+It is prototyped to take a subroutine reference as an argument. Thus, it
+can be called in block form:
+
+  ($stdout, $stderr) = capture {
+    # your code here ...
+  };
 
 == tee
 
-  ($stdout, $stderr) = tee \&code_ref;
+  ($stdout, $stderr) = tee \&code;
+  $stdout = tee \&code;
+
+The {tee} function works just like {capture}, except that output is captured
+as well as passed on to the original STDOUT and STDERR.  As with {capture} it
+may be called in block form.
+
+= LIMITATIONS
+
+Portability is a goal, not a guarantee.  {tee} requires fork, except on 
+Windows where {system(1, @cmd)} is used instead.  Not tested on any
+esoteric platforms yet.  Minimal test suite so far.
+
+No support for merging STDERR with STDOUT.  This may be added in the future.
 
 = BUGS
 
@@ -209,12 +242,32 @@ existing test-file that illustrates the bug or desired feature.
 
 = SEE ALSO
 
+This is a selection of CPAN modules that provide some sort of output capture,
+albeit with various limitations that make them appropriate only in particular
+circumstances.  I'm probably missing some.  The long list is provided show why
+I felt Capture::Tiny was necessary. 
+
+* [IO::Capture]
+* [IO::Capture::Extended]
 * [IO::CaptureOutput]
+* [IPC::Capture]
 * [IPC::Cmd]
 * [IPC::Open2]
 * [IPC::Open3]
+* [IPC::Open3::Simple]
+* [IPC::Open3::Utils]
 * [IPC::Run]
+* [IPC::Run::SafeHandles]
+* [IPC::Run::Simple]
 * [IPC::Run3]
+* [IPC::System::Simple]
+* [Tee]
+* [IO::Tee]
+* [File::Tee]
+* [Filter::Handle]
+* [Tie::STDERR]
+* [Tie::STDOUT]
+* [Test::Output]
 
 = AUTHOR
 
