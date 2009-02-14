@@ -4,6 +4,6 @@
 # A copy of the License was distributed with this file or you may obtain a 
 # copy of the License from http://www.apache.org/licenses/LICENSE-2.0
 
-- Write some code
-- Write some tests
-- Replace boilerplate docs with real documentation
+- Add capture_merged and tee_merged functions
+- Add tee_stdout and tee_stderr functions (?)
+- More tests (tied handles, actual interactivity, etc.)
