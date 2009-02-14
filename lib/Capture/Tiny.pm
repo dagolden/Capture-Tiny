@@ -89,27 +89,29 @@ sub _capture_tee {
     pipe $stdout_reader, $stdout_tee;
     pipe $stderr_reader, $stderr_tee;
     _autoflush( $stdout_tee, $stderr_tee );
+    my @out_handles = ($stdout_reader, $copy_of_std[1], $stdout_capture);
+    my @err_handles = ($stderr_reader, $stderr_capture, $copy_of_std[2]);
+    my @flag_files = map { scalar File::Temp::tmpnam() } 0 .. 1;
     if ( $use_system ) {
-      my @flag_files = map { scalar File::Temp::tmpnam() } 0 .. 1;
       # start STDOUT listener
-      _open_std( $stdout_reader, $copy_of_std[1], $stdout_capture );
+      _open_std( @out_handles );
       push @pids, system(1, @cmd, $flag_files[0]);
       push @tees, $stdout_tee;
       # start STDERR listener
-      _open_std( $stderr_reader, $stderr_capture, $copy_of_std[2] );
+      _open_std( @out_handles );
       push @pids, system(1, @cmd, $flag_files[1]);
       push @tees, $stderr_tee;
-      # redirect our output to the subprocesses
-      _open_std( $copy_of_std[0], $stdout_tee, $stderr_tee );
-      # wait for the OS get the processes set up
-      1 until -f $flag_files[0] && -f $flag_files[1];
-      unlink $_ for @flag_files;
     }
     else { # use fork
-      push @pids, _fork3($stdout_tee => $stdout_reader, $copy_of_std[1], $stdout_capture, @cmd);
-      push @pids, _fork3($stderr_tee => $stderr_reader, $stderr_capture, $copy_of_std[2], @cmd);
-      _open_std( $copy_of_std[0], $stdout_tee, $stderr_tee );
+      push @pids, _fork3($stdout_tee => @out_handles, @cmd, $flag_files[0] );
+      push @pids, _fork3($stderr_tee => @err_handles, @cmd, $flag_files[1] );
+      push @tees, $stdout_tee, $stderr_tee;
     }
+    # redirect our output to the subprocesses
+    _open_std( $copy_of_std[0], $stdout_tee, $stderr_tee );
+    # wait for the OS get the processes set up
+    1 until -f $flag_files[0] && -f $flag_files[1];
+    unlink $_ for @flag_files;
     $stdout_reader->close;
     $stderr_reader->close;
   }
