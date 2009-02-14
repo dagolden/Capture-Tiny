@@ -3,12 +3,16 @@ use warnings;
 
 use Capture::Tiny qw/capture tee/;
 
+print "Type some text.  Type 'exit' to quit\n";
 my ($out, $err) = tee {
-    print "On STDOUT: " . __PACKAGE__ . "\n"; 
-    print STDERR "On STDERR: " . __FILE__ . "\n";
-  };
+  while (<>) {
+    last if /^exit$/;
+    print "Echoing to STDOUT: $_";
+    print STDERR "Echoing to STDERR: $_";
+  }
+};
 
-print "Captured STDOUT was '" . ( defined $out ? $out : 'undef' ) . "'\n"; 
-print "Captured STDERR was '" . ( defined $err ? $err : 'undef' ) . "'\n"; 
+print "\nCaptured STDOUT was:\n" . ( defined $out ? $out : 'undef' ); 
+print "\nCaptured STDERR was:\n" . ( defined $err ? $err : 'undef' ); 
 
 
