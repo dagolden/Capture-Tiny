@@ -13,7 +13,7 @@ use IO::Handle ();
 use File::Temp qw/tempfile tmpnam/;
 use Fatal qw/pipe open close/;
 
-our $VERSION = '0.01';
+our $VERSION = '0.02';
 $VERSION = eval $VERSION; ## no critic
 our @ISA = qw/Exporter/;
 our @EXPORT_OK = qw/capture tee/;
