@@ -7,12 +7,11 @@
 
 Revision history for Capture-Tiny
 
-0.02
+0.02 Tue Feb 17 17:24:35 EST 2009
 
   Fixed: 
 
-    - Bug in recovering output when STDOUT is empty 
-      (reported by Vincent Pit)
+    - Bug recovering output when STDOUT is empty (reported by Vincent Pit)
 
     - Removed Fatal.pm to avoid global action-at-a-distance
 
