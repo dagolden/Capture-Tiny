@@ -60,7 +60,7 @@ is($err, "Bar", "$label captured stderr");
 
 _reset;
 ($out, $err) = capture {
-  system ($^X, '-e', 'print "Foo"');
+  system ($^X, '-e', 'print q{Foo}');
 };
 
 $label = "system STDOUT: ";
@@ -73,7 +73,7 @@ is($err, '', "$label captured stderr");
 
 _reset;
 ($out, $err) = capture {
-  system ($^X, '-e', 'print STDERR "Bar"');
+  system ($^X, '-e', 'print STDERR q{Bar}');
 };
 
 $label = "system STDERR: ";
@@ -86,7 +86,7 @@ is($err, "Bar", "$label captured stderr");
 
 _reset;
 ($out, $err) = capture {
-  system ($^X, '-e', 'print "Foo"; print STDERR "Bar"');
+  system ($^X, '-e', 'print q{Foo}; print STDERR q{Bar}');
 };
 
 $label = "system STDOUT/STDERR";
