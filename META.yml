@@ -9,7 +9,6 @@ resources:
   license: http://www.apache.org/licenses/LICENSE-2.0.txt
 requires:
   Exporter: 0
-  Fatal: 0
   File::Temp: 0.14
   IO::Handle: 0
   perl: 5.006

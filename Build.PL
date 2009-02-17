@@ -7,6 +7,12 @@
 use 5.006;
 use strict;
 use lib 'inc';
+
+use Config;
+if ( $^O ne 'MSWin32' && ! $Config{d_fork} ) {
+  die "OS unsupported: requires working fork()\n";
+}
+
 eval "require Pod::WikiDoc";
 my $class = $@ ? "Module::Build" : "Module::Build::WikiDoc";
 eval "require $class";
@@ -15,11 +21,10 @@ my $build = $class->new(
   dist_author => 'David Golden <dagolden@cpan.org>',
   license => 'apache',
   create_readme => 1,
-  create_makefile_pl  => 'traditional',
+#  create_makefile_pl  => 'traditional',
   requires => {
     'perl' => 5.006,
     'Exporter' => 0,
-    'Fatal' => 0, 
     'File::Temp' => 0.14, 
     'IO::Handle' => 0,
   },

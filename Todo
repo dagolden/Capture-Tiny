@@ -12,3 +12,4 @@
 - Test utf8 output
 - Test closed handles
 - Test fake handles (open FH, ">", \$scalar), IO::String, etc.
+- Test with curses

@@ -11,7 +11,6 @@ use warnings;
 use Exporter ();
 use IO::Handle ();
 use File::Temp qw/tempfile tmpnam/;
-use Fatal qw/pipe open close/;
 
 our $VERSION = '0.02';
 $VERSION = eval $VERSION; ## no critic
@@ -21,21 +20,27 @@ our @EXPORT_OK = qw/capture tee/;
 my $use_system = $^O eq 'MSWin32';
 
 #--------------------------------------------------------------------------#
+# Error messages
+#--------------------------------------------------------------------------#
+
+sub _redirect_err { return "Error redirecting $_[0]: $!" }
+
+#--------------------------------------------------------------------------#
 # bulk filehandle manipulation
 #--------------------------------------------------------------------------#
 
 sub _copy_std {
   my @std = map { IO::Handle->new } 0 .. 2;
-  open $std[0], "<&STDIN";
-  open $std[1], ">&STDOUT";
-  open $std[2], ">&STDERR";
+  open $std[0], "<&STDIN"   or die _redirect_err("STDIN" );
+  open $std[1], ">&STDOUT"  or die _redirect_err("STDOUT");
+  open $std[2], ">&STDERR"  or die _redirect_err("STDERR");
   return @std;
 }
 
 sub _open_std {
-  open STDIN , "<&" . fileno( $_[0] );
-  open STDOUT, ">&" . fileno( $_[1] );
-  open STDERR, ">&" . fileno( $_[2] );
+  open STDIN , "<&" . fileno( $_[0] ) or die _redirect_err("STDIN" );
+  open STDOUT, ">&" . fileno( $_[1] ) or die _redirect_err("STDOUT");
+  open STDERR, ">&" . fileno( $_[2] ) or die _redirect_err("STDERR");
 }
 
 sub _autoflush {
@@ -49,7 +54,10 @@ sub _autoflush {
 sub _fork_exec {
   my ($tee, $in, $out, $err, @cmd) = @_;
   my $pid = fork; # XXX needs error handling
-  if ($pid == 0) { # child
+  if ( not defined $pid ) {
+    die "Couldn't fork(): $!";
+  }
+  elsif ($pid == 0) { # child
     untie *STDIN;
     untie *STDOUT;
     untie *STDOUT;
@@ -133,7 +141,7 @@ sub _capture_tee {
 
   # read back capture output
   my ($got_out, $got_err) = 
-    map { seek $_,0,0; do {local $/; <$_>} } @captures[1,2];
+    map { do { seek $_,0,0; local $/; scalar <$_> } } @captures[1,2];
 
   return wantarray ? ($got_out, $got_err) : $got_out;
 }
@@ -205,8 +213,9 @@ The following functions are available.  None are exported by default.
   $stdout = capture \&code;
 
 The {capture} function takes a code reference and returns what is sent to
-STDOUT and STDERR.  In scalar context, it returns only STDOUT.  Regardless of
-context, all output is captured -- nothing is passed to the existing handles.
+STDOUT and STDERR.  In scalar context, it returns only STDOUT.  If no output
+was received, returns an empty string.  Regardless of context, all output is
+captured -- nothing is passed to the existing handles.
 
 It is prototyped to take a subroutine reference as an argument. Thus, it
 can be called in block form:

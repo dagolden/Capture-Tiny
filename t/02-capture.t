@@ -10,19 +10,86 @@ use Test::More;
 
 use Capture::Tiny qw/capture/;
 
-plan tests => 2; 
+plan tests => 12; 
 
 my ($out, $err, $label);
-sub _reset { $_ = '' for ($out, $err ); 1};
+sub _reset { $_ = undef for ($out, $err ); 1};
 
-# Basic test
+#--------------------------------------------------------------------------#
+# Capture STDOUT from perl
+#--------------------------------------------------------------------------#
+
 _reset;
 ($out, $err) = capture {
-  print __PACKAGE__; print STDERR __FILE__;
+  print "Foo";
 };
 
-$label = "capture: ";
-is($out, __PACKAGE__, "$label captured stdout");
-is($err, __FILE__, "$label captured stderr");
+$label = "perl STDOUT: ";
+is($out, 'Foo', "$label captured stdout");
+is($err, '', "$label captured stderr");
 
+#--------------------------------------------------------------------------#
+# Capture STDERR from perl
+#--------------------------------------------------------------------------#
+
+_reset;
+($out, $err) = capture {
+  print STDERR "Bar";
+};
+
+$label = "perl STDERR: ";
+is($out, '', "$label captured stdout");
+is($err, 'Bar', "$label captured stderr");
+
+#--------------------------------------------------------------------------#
+# Capture STDOUT from perl
+#--------------------------------------------------------------------------#
+
+_reset;
+($out, $err) = capture {
+  print "Foo"; print STDERR "Bar";
+};
+
+$label = "perl STDOUT/STDERR: ";
+is($out, "Foo", "$label captured stdout");
+is($err, "Bar", "$label captured stderr");
+
+#--------------------------------------------------------------------------#
+# system -- STDOUT
+#--------------------------------------------------------------------------#
+
+_reset;
+($out, $err) = capture {
+  system ($^X, '-e', 'print "Foo"');
+};
+
+$label = "system STDOUT: ";
+is($out, "Foo", "$label captured stdout");
+is($err, '', "$label captured stderr");
+
+#--------------------------------------------------------------------------#
+# system -- STDERR
+#--------------------------------------------------------------------------#
+
+_reset;
+($out, $err) = capture {
+  system ($^X, '-e', 'print STDERR "Bar"');
+};
+
+$label = "system STDERR: ";
+is($out, '', "$label captured stdout");
+is($err, "Bar", "$label captured stderr");
+
+#--------------------------------------------------------------------------#
+# system -- STD
+#--------------------------------------------------------------------------#
+
+_reset;
+($out, $err) = capture {
+  system ($^X, '-e', 'print "Foo"; print STDERR "Bar"');
+};
+
+$label = "system STDOUT/STDERR";
+is($out, "Foo", "$label captured stdout");
+is($err, "Bar", "$label captured stderr");
 

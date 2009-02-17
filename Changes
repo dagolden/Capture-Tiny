@@ -7,6 +7,16 @@
 
 Revision history for Capture-Tiny
 
+0.02
+
+  Fixed: 
+
+    - Bug in recovering output when STDOUT is empty 
+      (reported by Vincent Pit)
+
+    - Removed Fatal.pm to avoid global action-at-a-distance
+
 0.01 Fri Feb 13 23:15:19 EST 2009
 
-    - Added: 'capture' and 'tee' functions
+  Added:
+    - 'capture' and 'tee' functions

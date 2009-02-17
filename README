@@ -36,9 +36,9 @@ USAGE
        $stdout = capture \&code;
 
     The "capture" function takes a code reference and returns what is sent
-    to STDOUT and STDERR. In scalar context, it returns only STDOUT.
-    Regardless of context, all output is captured -- nothing is passed to
-    the existing handles.
+    to STDOUT and STDERR. In scalar context, it returns only STDOUT. If no
+    output was received, returns an empty string. Regardless of context, all
+    output is captured -- nothing is passed to the existing handles.
 
     It is prototyped to take a subroutine reference as an argument. Thus, it
     can be called in block form:
@@ -75,7 +75,7 @@ SEE ALSO
     This is a selection of CPAN modules that provide some sort of output
     capture, albeit with various limitations that make them appropriate only
     in particular circumstances. I'm probably missing some. The long list is
-    provided show why I felt Capture::Tiny was necessary.
+    provided to show why I felt Capture::Tiny was necessary.
 
     *   IO::Capture
 
