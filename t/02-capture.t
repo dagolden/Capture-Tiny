@@ -37,7 +37,7 @@ _reset;
   print STDERR "Bar";
 };
 
-$label = "perl STDERR: ";
+$label = "perl STDERR:";
 is($out, '', "$label captured stdout");
 is($err, 'Bar', "$label captured stderr");
 
@@ -50,7 +50,7 @@ _reset;
   print "Foo"; print STDERR "Bar";
 };
 
-$label = "perl STDOUT/STDERR: ";
+$label = "perl STDOUT/STDERR:";
 is($out, "Foo", "$label captured stdout");
 is($err, "Bar", "$label captured stderr");
 
@@ -63,7 +63,7 @@ _reset;
   system ($^X, '-e', 'print q{Foo}');
 };
 
-$label = "system STDOUT: ";
+$label = "system STDOUT:";
 is($out, "Foo", "$label captured stdout");
 is($err, '', "$label captured stderr");
 
@@ -76,7 +76,7 @@ _reset;
   system ($^X, '-e', 'print STDERR q{Bar}');
 };
 
-$label = "system STDERR: ";
+$label = "system STDERR:";
 is($out, '', "$label captured stdout");
 is($err, "Bar", "$label captured stderr");
 
@@ -89,7 +89,7 @@ _reset;
   system ($^X, '-e', 'print q{Foo}; print STDERR q{Bar}');
 };
 
-$label = "system STDOUT/STDERR";
+$label = "system STDOUT/STDERR:";
 is($out, "Foo", "$label captured stdout");
 is($err, "Bar", "$label captured stderr");
 

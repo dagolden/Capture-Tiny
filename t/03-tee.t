@@ -10,23 +10,119 @@ use Test::More;
 
 use Capture::Tiny qw/capture tee/;
 
-plan tests => 4; 
+use Config;
+if ( $^O ne 'MSWin32' && ! $Config{d_fork} ) {
+  plan skip_all => "OS unsupported: requires working fork()\n";
+}
+
+plan tests => 24; 
 
 my ($out, $err, $out2, $err2, $label);
-sub _reset { $_ = '' for ($out, $err, $out2, $err2 ); 1};
+sub _reset { $_ = undef for ($out, $err, $out2, $err2 ); 1};
 
-# Basic test
+#--------------------------------------------------------------------------#
+# Perl - STDOUT
+#--------------------------------------------------------------------------#
+
 _reset;
 ($out2, $err2) = capture {
   ($out, $err) = tee {
-    print __PACKAGE__ ; print STDERR __FILE__;
+    print "Foo" ; 
   };
 };
 
-$label = "tee: ";
-is($out, __PACKAGE__, "$label captured stdout during tee");
-is($err, __FILE__, "$label captured stderr during tee");
-is($out2, __PACKAGE__, "$label captured stdout passed-through from tee");
-is($err2, __FILE__, "$label captured stderr passed-through from tee");
+$label = "perl STDOUT:";
+is($out, "Foo", "$label captured stdout during tee");
+is($err, '', "$label captured stderr during tee");
+is($out2, "Foo", "$label captured stdout passed-through from tee");
+is($err2, '', "$label captured stderr passed-through from tee");
+
+
+#--------------------------------------------------------------------------#
+# Perl - STDERR
+#--------------------------------------------------------------------------#
+
+_reset;
+($out2, $err2) = capture {
+  ($out, $err) = tee {
+    print STDERR "Bar";
+  };
+};
+
+$label = "perl STDERR:";
+is($out, "", "$label captured stdout during tee");
+is($err, "Bar", "$label captured stderr during tee");
+is($out2, "", "$label captured stdout passed-through from tee");
+is($err2, "Bar", "$label captured stderr passed-through from tee");
+
+#--------------------------------------------------------------------------#
+# Perl - STDOUT+STDERR
+#--------------------------------------------------------------------------#
+
+_reset;
+($out2, $err2) = capture {
+  ($out, $err) = tee {
+    print "Foo"; print STDERR "Bar";
+  };
+};
+
+$label = "perl STDOUT/STDERR:";
+is($out, "Foo", "$label captured stdout during tee");
+is($err, "Bar", "$label captured stderr during tee");
+is($out2, "Foo", "$label captured stdout passed-through from tee");
+is($err2, "Bar", "$label captured stderr passed-through from tee");
+
+
+#--------------------------------------------------------------------------#
+# system() - STDOUT
+#--------------------------------------------------------------------------#
+
+_reset;
+($out2, $err2) = capture {
+  ($out, $err) = tee {
+    system ($^X, '-e', 'print STDOUT q{Foo};');
+  };
+};
+
+$label = "system STDOUT:";
+is($out, "Foo", "$label captured stdout during tee");
+is($err, '', "$label captured stderr during tee");
+is($out2, "Foo", "$label captured stdout passed-through from tee");
+is($err2, '', "$label captured stderr passed-through from tee");
+
+
+#--------------------------------------------------------------------------#
+# system() - STDERR
+#--------------------------------------------------------------------------#
+
+_reset;
+($out2, $err2) = capture {
+  ($out, $err) = tee {
+    system ($^X, '-e', 'print STDERR q{Bar}');
+  };
+};
+
+$label = "system STDERR:";
+is($out, "", "$label captured stdout during tee");
+is($err, "Bar", "$label captured stderr during tee");
+is($out2, "", "$label captured stdout passed-through from tee");
+is($err2, "Bar", "$label captured stderr passed-through from tee");
+
+#--------------------------------------------------------------------------#
+# system() - STDOUT+STDERR
+#--------------------------------------------------------------------------#
+
+_reset;
+($out2, $err2) = capture {
+  ($out, $err) = tee {
+    system ($^X, '-e', 'print STDOUT q{Foo}; print STDERR q{Bar}');
+  };
+};
+
+$label = "system STDOUT/STDERR:";
+is($out, "Foo", "$label captured stdout during tee");
+is($err, "Bar", "$label captured stderr during tee");
+is($out2, "Foo", "$label captured stdout passed-through from tee");
+is($err2, "Bar", "$label captured stderr passed-through from tee");
 
 
