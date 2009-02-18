@@ -12,7 +12,7 @@ use Exporter ();
 use IO::Handle ();
 use File::Temp qw/tempfile tmpnam/;
 
-our $VERSION = '0.02';
+our $VERSION = '0.03';
 $VERSION = eval $VERSION; ## no critic
 our @ISA = qw/Exporter/;
 our @EXPORT_OK = qw/capture tee/;

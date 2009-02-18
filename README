@@ -3,7 +3,7 @@ NAME
     programs
 
 VERSION
-    This documentation describes version 0.02.
+    This documentation describes version 0.03.
 
 SYNOPSIS
          use Capture::Tiny qw/capture tee/;
