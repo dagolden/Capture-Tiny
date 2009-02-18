@@ -171,8 +171,8 @@ my %api = (
 );
 
 for my $sub ( keys %api ) {
-  my $unshift = join q{, }, @{$api{$sub}}; 
-  eval "sub $sub (&) { unshift \@_, $unshift; goto \\&_capture_tee; }";
+  my $args = join q{, }, @{$api{$sub}}; 
+  eval "sub $sub(&) {unshift \@_, $ars; goto \\&_capture_tee;}"; ## no critic
 }
 
 1;
