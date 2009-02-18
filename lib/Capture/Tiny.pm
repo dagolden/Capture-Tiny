@@ -15,32 +15,30 @@ use File::Temp qw/tempfile tmpnam/;
 our $VERSION = '0.03';
 $VERSION = eval $VERSION; ## no critic
 our @ISA = qw/Exporter/;
-our @EXPORT_OK = qw/capture tee/;
+our @EXPORT_OK = qw/capture capture_merged tee tee_merged/;
 
 my $use_system = $^O eq 'MSWin32';
 
 #--------------------------------------------------------------------------#
-# Error messages
+# filehandle manipulation
 #--------------------------------------------------------------------------#
 
-sub _redirect_err { return "Error redirecting $_[0]: $!" }
-
-#--------------------------------------------------------------------------#
-# bulk filehandle manipulation
-#--------------------------------------------------------------------------#
+sub _open {
+  open $_[0], $_[1] or die "Error from open( " . join(q{, }, @_) . "): $!";
+}
 
 sub _copy_std {
   my @std = map { IO::Handle->new } 0 .. 2;
-  open $std[0], "<&STDIN"   or die _redirect_err("STDIN" );
-  open $std[1], ">&STDOUT"  or die _redirect_err("STDOUT");
-  open $std[2], ">&STDERR"  or die _redirect_err("STDERR");
+  _open $std[0], "<&STDIN";
+  _open $std[1], ">&STDOUT";
+  _open $std[2], ">&STDERR";
   return @std;
 }
 
 sub _open_std {
-  open STDIN , "<&" . fileno( $_[0] ) or die _redirect_err("STDIN" );
-  open STDOUT, ">&" . fileno( $_[1] ) or die _redirect_err("STDOUT");
-  open STDERR, ">&" . fileno( $_[2] ) or die _redirect_err("STDERR");
+  _open \*STDIN , "<&" . fileno( $_[0] );
+  _open \*STDOUT, ">&" . fileno( $_[1] );
+  _open \*STDERR, ">&" . fileno( $_[2] );
 }
 
 sub _autoflush {
@@ -85,13 +83,16 @@ my @cmd = ($^X, '-e', '$SIG{HUP}=sub{exit}; '
 #--------------------------------------------------------------------------#
 
 sub _capture_tee {
-  my ($code, $tee) = @_;
+  my ($tee, $merge, $code) = @_;
   
   my @copy_of_std = _copy_std();
   my @captures    = ( undef, scalar tempfile(), scalar tempfile() );
   my @readers     = ( undef, IO::Handle->new, IO::Handle->new );
   my @tees        = ( undef, IO::Handle->new, IO::Handle->new );
   my @pids;
+
+  # if merging, redirect STDERR to STDOUT (and don't capture on STDERR)
+#  _open if ($merge) {
 
   # if teeing, redirect output to teeing subprocesses
   if ($tee) {
@@ -147,21 +148,19 @@ sub _capture_tee {
 }
 
 #--------------------------------------------------------------------------#
-# capture()
+# create API subroutines from [tee flag, merge flag]               
 #--------------------------------------------------------------------------#
 
-sub capture(&) { ## no critic
-  $_[1] = 0; # no tee
-  goto \&_capture_tee;
-}
+my %api = (
+  capture         => [0,0],
+  capture_merged  => [0,1],
+  tee             => [1,0],
+  tee_merged      => [1,1],
+);
 
-#--------------------------------------------------------------------------#
-# tee()
-#--------------------------------------------------------------------------#
-
-sub tee(&) { ## no critic
-  $_[1] = 1; # tee
-  goto \&_capture_tee;
+for my $sub ( keys %api ) {
+  my $unshift = join q{, }, @{$api{$sub}}; 
+  eval "sub $sub (&) { unshift \@_, $unshift; goto \\&_capture_tee; }";
 }
 
 1;

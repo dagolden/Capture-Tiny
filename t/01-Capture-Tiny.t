@@ -7,7 +7,18 @@
 use strict;
 use warnings;
 
-use Test::More tests => 1;
+use Test::More ;
+
+my @api = qw(
+  capture
+  capture_merged
+  tee
+  tee_merged
+);
+
+plan tests => 1 + @api;
 
 require_ok( 'Capture::Tiny' );
+
+can_ok('Capture::Tiny', $_) for @api;
 
