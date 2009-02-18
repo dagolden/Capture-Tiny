@@ -9,6 +9,10 @@ Revision history for Capture-Tiny
 
 0.03
 
+  Added:
+
+    - capture_merged() and tee_merged()
+
   Fixed:
 
     - Tests skip if not Win32 and no fork() (rather than Build.PL and

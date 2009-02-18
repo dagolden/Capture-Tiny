@@ -89,10 +89,7 @@ sub _capture_tee {
   my @captures    = ( undef, scalar tempfile(), scalar tempfile() );
   my @readers     = ( undef, IO::Handle->new, IO::Handle->new );
   my @tees        = ( undef, IO::Handle->new, IO::Handle->new );
-  my @pids;
-
-  # if merging, redirect STDERR to STDOUT (and don't capture on STDERR)
-#  _open if ($merge) {
+  my (@pids, @flag_files);
 
   # if teeing, redirect output to teeing subprocesses
   if ($tee) {
@@ -101,26 +98,33 @@ sub _capture_tee {
     _autoflush( @tees[1,2] );
     my @out_handles = ($readers[1], $copy_of_std[1], $captures[1]);
     my @err_handles = ($readers[2], $copy_of_std[2], $captures[2]);
-    my @flag_files = ( scalar tmpnam(), scalar tmpnam() );
     if ( $use_system ) {
       _open_std( @out_handles );
-      push @pids, system(1, @cmd, $flag_files[0]);
-      _open_std( @err_handles );
-      push @pids, system(1, @cmd, $flag_files[1]);
+      push @flag_files, scalar tmpnam();
+      push @pids, system(1, @cmd, $flag_files[-1]);
+      if ( ! $merge ) {
+        _open_std( @err_handles );
+        push @flag_files, scalar tmpnam();
+        push @pids, system(1, @cmd, $flag_files[-1]);
+      }
     }
     else { # use fork
-      push @pids, _fork_exec($tees[1] => @out_handles, @cmd, $flag_files[0] );
-      push @pids, _fork_exec($tees[2] => @err_handles, @cmd, $flag_files[1] );
+      push @flag_files, scalar tmpnam();
+      push @pids, _fork_exec($tees[1] => @out_handles, @cmd, $flag_files[-1] );
+      if ( ! $merge ) {
+        push @flag_files, scalar tmpnam();
+        push @pids, _fork_exec($tees[2] => @err_handles, @cmd, $flag_files[-1]);
+      }
     }
-    _open_std( $copy_of_std[0], @tees[1,2] );
+    _open_std( $copy_of_std[0], $tees[1], $tees[ $merge ? 1 : 2 ] );
     # wait for the OS get the processes set up
-    1 until -f $flag_files[0] && -f $flag_files[1];
+    1 until do { my $f = 0; $f += -f $_ ? 1 : 0 for @flag_files; $f };
     unlink $_ for @flag_files;
-    close $_ for @readers[1,2];
+    close $_ for ($readers[1], ($merge ? ($readers[2]) : () ) );
   }
   # if not teeing, redirect output to capture file
   else {
-    _open_std( $copy_of_std[0], @captures[1,2] );
+    _open_std( $copy_of_std[0], $captures[1], $captures[ $merge ? 1 : 2 ] );
   }
 
   # run code block
@@ -131,7 +135,8 @@ sub _capture_tee {
   
   # shut down kids
   if ( $tee ) {
-    close $_ for @tees[1,2];   # kids should stop when input closes
+    close $tees[1];
+    close $tees[2] if ! $merge;
     if ( $use_system ) {
       kill 1, $_ for @pids; # tell them to hang up if they haven't stopped
     }
@@ -141,10 +146,17 @@ sub _capture_tee {
   }
 
   # read back capture output
-  my ($got_out, $got_err) = 
-    map { do { seek $_,0,0; local $/; scalar <$_> } } @captures[1,2];
+  my ($got_out, $got_err) = (q(), q());
+  $got_out = do { seek $captures[1],0,0; local $/; scalar readline $captures[1] }; 
+  $got_err = do { seek $captures[2],0,0; local $/; scalar readline $captures[2] } 
+    if ! $merge;
 
-  return wantarray ? ($got_out, $got_err) : $got_out;
+  if ( $merge ) {
+    return $got_out;
+  }
+  else {
+    return wantarray ? ($got_out, $got_err) : $got_out;
+  }
 }
 
 #--------------------------------------------------------------------------#
@@ -189,6 +201,14 @@ This documentation describes version %%VERSION%%.
       # your code here 
     };
 
+    $merged = capture_merged {
+      # your code here
+    };
+
+    $merged = tee_merged {
+      # your code here
+    };
+
 = DESCRIPTION
 
 Capture::Tiny provides a simple, portable way to capture anything sent to
@@ -223,6 +243,18 @@ can be called in block form:
     # your code here ...
   };
 
+== capture_merged
+
+  $merged = capture_merged \&code;
+
+The {capture_merged} function works just like {capture} except STDOUT and
+STDERR are merged. (Technically, STDERR is redirected to STDOUT before
+executing the function.)  If no output was received, returns an empty string.
+As with {capture} it may be called in block form.
+
+Caution: STDOUT and STDERR output in the merged result are not guaranteed to be
+properly ordered due to buffering
+
 == tee
 
   ($stdout, $stderr) = tee \&code;
@@ -232,13 +264,22 @@ The {tee} function works just like {capture}, except that output is captured
 as well as passed on to the original STDOUT and STDERR.  As with {capture} it
 may be called in block form.
 
+== tee_merged
+
+  $merged = tee_merged \&code;
+
+The {tee_merged} function works just like {capture_merged} except that output
+is captured as well as passed on to STDOUT.  As with {capture} it may be called
+in block form.
+
+Caution: STDOUT and STDERR output in the merged result are not guaranteed to be
+properly ordered due to buffering
+
 = LIMITATIONS
 
 Portability is a goal, not a guarantee.  {tee} requires fork, except on 
 Windows where {system(1, @cmd)} is used instead.  Not tested on any
 esoteric platforms yet.  Minimal test suite so far.
-
-No support for merging STDERR with STDOUT.  This may be added in the future.
 
 = BUGS
 
