@@ -4,12 +4,9 @@
 # A copy of the License was distributed with this file or you may obtain a 
 # copy of the License from http://www.apache.org/licenses/LICENSE-2.0
 
-- Remove Fatal.pm
-- Add better error checking (e.g. fork)
-- Add capture_merged and tee_merged functions
 - Add tee_stdout and tee_stderr functions (?)
-- Test tied handles
-- Test utf8 output
 - Test closed handles
 - Test fake handles (open FH, ">", \$scalar), IO::String, etc.
+- Test utf8 output
+- Test tied handles
 - Test with curses
