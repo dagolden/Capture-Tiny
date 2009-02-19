@@ -15,10 +15,28 @@ if ( $^O ne 'MSWin32' && ! $Config{d_fork} ) {
   plan skip_all => "OS unsupported: requires working fork()\n";
 }
 
-plan tests => 24; 
+plan tests => 32; 
 
 my ($out, $err, $out2, $err2, $label);
 sub _reset { $_ = undef for ($out, $err, $out2, $err2 ); 1};
+
+#--------------------------------------------------------------------------#
+# Perl - Nothing
+#--------------------------------------------------------------------------#
+
+_reset;
+($out2, $err2) = capture {
+  ($out, $err) = tee {
+    my $foo = 1 ; 
+  };
+};
+
+$label = "perl NOP:";
+is($out, '', "$label captured stdout during tee");
+is($err, '', "$label captured stderr during tee");
+is($out2, '', "$label captured stdout passed-through from tee");
+is($err2, '', "$label captured stderr passed-through from tee");
+
 
 #--------------------------------------------------------------------------#
 # Perl - STDOUT
@@ -71,6 +89,23 @@ is($out, "Foo", "$label captured stdout during tee");
 is($err, "Bar", "$label captured stderr during tee");
 is($out2, "Foo", "$label captured stdout passed-through from tee");
 is($err2, "Bar", "$label captured stderr passed-through from tee");
+
+#--------------------------------------------------------------------------#
+# system() - Nothing
+#--------------------------------------------------------------------------#
+
+_reset;
+($out2, $err2) = capture {
+  ($out, $err) = tee {
+    system ($^X, '-e', 'my $foo = 1;');
+  };
+};
+
+$label = "system NOP:";
+is($out, '', "$label captured stdout during tee");
+is($err, '', "$label captured stderr during tee");
+is($out2, '', "$label captured stdout passed-through from tee");
+is($err2, '', "$label captured stderr passed-through from tee");
 
 
 #--------------------------------------------------------------------------#

@@ -10,10 +10,23 @@ use Test::More;
 
 use Capture::Tiny qw/capture/;
 
-plan tests => 12; 
+plan tests => 16; 
 
 my ($out, $err, $label);
 sub _reset { $_ = undef for ($out, $err ); 1};
+
+#--------------------------------------------------------------------------#
+# Capture nothing from perl
+#--------------------------------------------------------------------------#
+
+_reset;
+($out, $err) = capture {
+  my $foo = 1;
+};
+
+$label = "perl NOP: ";
+is($out, '', "$label captured stdout");
+is($err, '', "$label captured stderr");
 
 #--------------------------------------------------------------------------#
 # Capture STDOUT from perl
@@ -42,7 +55,7 @@ is($out, '', "$label captured stdout");
 is($err, 'Bar', "$label captured stderr");
 
 #--------------------------------------------------------------------------#
-# Capture STDOUT from perl
+# Capture STDOUT/STDERR from perl
 #--------------------------------------------------------------------------#
 
 _reset;
@@ -53,6 +66,19 @@ _reset;
 $label = "perl STDOUT/STDERR:";
 is($out, "Foo", "$label captured stdout");
 is($err, "Bar", "$label captured stderr");
+
+#--------------------------------------------------------------------------#
+# system -- nothing
+#--------------------------------------------------------------------------#
+
+_reset;
+($out, $err) = capture {
+  system ($^X, '-e', 'my $foo = 1');
+};
+
+$label = "system NOP:";
+is($out, '', "$label captured stdout");
+is($err, '', "$label captured stderr");
 
 #--------------------------------------------------------------------------#
 # system -- STDOUT
@@ -81,7 +107,7 @@ is($out, '', "$label captured stdout");
 is($err, "Bar", "$label captured stderr");
 
 #--------------------------------------------------------------------------#
-# system -- STD
+# system -- STDOUT/STDERR
 #--------------------------------------------------------------------------#
 
 _reset;
