@@ -10,3 +10,4 @@
 - Test utf8 output
 - Test tied handles
 - Test with curses
+- Add timeout if kid processes don't start
