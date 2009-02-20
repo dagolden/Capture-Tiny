@@ -4,3 +4,4 @@ _build/
 blib/
 *.tmp
 *.bak
+cover_db/
