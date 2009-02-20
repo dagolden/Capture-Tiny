@@ -21,6 +21,14 @@ This documentation describes version 0.03.
      ($stdout, $stderr) = tee {
        # your code here 
      };
+ 
+     $merged = capture_merged {
+       # your code here
+     };
+ 
+     $merged = tee_merged {
+       # your code here
+     };
 
 =head1 DESCRIPTION
 
@@ -56,6 +64,18 @@ can be called in block form:
      # your code here ...
    };
 
+=head2 capture_merged
+
+   $merged = capture_merged \&code;
+
+The C<<< capture_merged >>> function works just like C<<< capture >>> except STDOUT and
+STDERR are merged. (Technically, STDERR is redirected to STDOUT before
+executing the function.)  If no output was received, returns an empty string.
+As with C<<< capture >>> it may be called in block form.
+
+Caution: STDOUT and STDERR output in the merged result are not guaranteed to be
+properly ordered due to buffering
+
 =head2 tee
 
    ($stdout, $stderr) = tee \&code;
@@ -65,17 +85,26 @@ The C<<< tee >>> function works just like C<<< capture >>>, except that output i
 as well as passed on to the original STDOUT and STDERR.  As with C<<< capture >>> it
 may be called in block form.
 
+=head2 tee_merged
+
+   $merged = tee_merged \&code;
+
+The C<<< tee_merged >>> function works just like C<<< capture_merged >>> except that output
+is captured as well as passed on to STDOUT.  As with C<<< capture >>> it may be called
+in block form.
+
+Caution: STDOUT and STDERR output in the merged result are not guaranteed to be
+properly ordered due to buffering
+
 =head1 LIMITATIONS
 
 Portability is a goal, not a guarantee.  C<<< tee >>> requires fork, except on 
 Windows where C<<< system(1, @cmd) >>> is used instead.  Not tested on any
 esoteric platforms yet.  Minimal test suite so far.
 
-No support for merging STDERR with STDOUT.  This may be added in the future.
-
 =head1 BUGS
 
-Please report any bugs or feature using the CPAN Request Tracker.  
+Please report any bugs or feature requests using the CPAN Request Tracker.  
 Bugs can be submitted through the web interface at 
 L<http://rt.cpan.org/Dist/Display.html?Queue=Capture-Tiny>
 

@@ -15,6 +15,14 @@ SYNOPSIS
      ($stdout, $stderr) = tee {
            # your code here 
          };
+     
+     $merged = capture_merged {
+           # your code here
+         };
+     
+     $merged = tee_merged {
+           # your code here
+         };
 
 DESCRIPTION
     Capture::Tiny provides a simple, portable way to capture anything sent
@@ -47,6 +55,17 @@ USAGE
          # your code here ...
        };
 
+  capture_merged
+       $merged = capture_merged \&code;
+
+    The "capture_merged" function works just like "capture" except STDOUT
+    and STDERR are merged. (Technically, STDERR is redirected to STDOUT
+    before executing the function.) If no output was received, returns an
+    empty string. As with "capture" it may be called in block form.
+
+    Caution: STDOUT and STDERR output in the merged result are not
+    guaranteed to be properly ordered due to buffering
+
   tee
        ($stdout, $stderr) = tee \&code;
        $stdout = tee \&code;
@@ -55,17 +74,24 @@ USAGE
     captured as well as passed on to the original STDOUT and STDERR. As with
     "capture" it may be called in block form.
 
+  tee_merged
+       $merged = tee_merged \&code;
+
+    The "tee_merged" function works just like "capture_merged" except that
+    output is captured as well as passed on to STDOUT. As with "capture" it
+    may be called in block form.
+
+    Caution: STDOUT and STDERR output in the merged result are not
+    guaranteed to be properly ordered due to buffering
+
 LIMITATIONS
     Portability is a goal, not a guarantee. "tee" requires fork, except on
     Windows where "system(1, @cmd)" is used instead. Not tested on any
     esoteric platforms yet. Minimal test suite so far.
 
-    No support for merging STDERR with STDOUT. This may be added in the
-    future.
-
 BUGS
-    Please report any bugs or feature using the CPAN Request Tracker. Bugs
-    can be submitted through the web interface at
+    Please report any bugs or feature requests using the CPAN Request
+    Tracker. Bugs can be submitted through the web interface at
     <http://rt.cpan.org/Dist/Display.html?Queue=Capture-Tiny>
 
     When submitting a bug or request, please include a test-file or a patch

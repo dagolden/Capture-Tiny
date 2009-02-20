@@ -6,7 +6,7 @@ author:
 abstract: 'Capture STDOUT and STDERR from Perl, XS or external programs'
 license: apache
 resources:
-  license: http://apache.org/licenses/LICENSE-2.0
+  license: http://www.apache.org/licenses/LICENSE-2.0.txt
 requires:
   Exporter: 0
   File::Temp: 0.14
@@ -18,7 +18,7 @@ provides:
   Capture::Tiny:
     file: lib/Capture/Tiny.pm
     version: 0.03
-generated_by: Module::Build version 0.3
+generated_by: Module::Build version 0.3103
 meta-spec:
   url: http://module-build.sourceforge.net/META-spec-v1.2.html
   version: 1.2

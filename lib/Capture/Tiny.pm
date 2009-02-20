@@ -276,7 +276,7 @@ esoteric platforms yet.  Minimal test suite so far.
 
 = BUGS
 
-Please report any bugs or feature using the CPAN Request Tracker.  
+Please report any bugs or feature requests using the CPAN Request Tracker.  
 Bugs can be submitted through the web interface at 
 [http://rt.cpan.org/Dist/Display.html?Queue=Capture-Tiny]
 
