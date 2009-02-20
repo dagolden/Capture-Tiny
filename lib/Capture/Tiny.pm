@@ -111,6 +111,7 @@ sub _kill_tees {
   my ($stash) = @_;
   close $_ for values %{ $stash->{tee} };
   if ( $use_system ) {
+    eval { Win32::Sleep(25) }; # 25 ms pause for output to get flushed, I hope
     kill 1, $_ for values %{ $stash->{pid} }; # shut them down hard
   }
   else {
