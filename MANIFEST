@@ -14,6 +14,9 @@ README
 t/01-Capture-Tiny.t
 t/02-capture.t
 t/03-tee.t
+t/04-capture-merged.t
+t/05-tee-merged.t
+t/lib/Utils.pm
 Todo
 xt/critic.t
 xt/perlcriticrc
