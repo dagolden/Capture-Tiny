@@ -10,7 +10,9 @@ use strict;
 use warnings;
 use Exporter ();
 use IO::Handle ();
+use File::Spec ();
 use File::Temp qw/tempfile tmpnam/;
+use diagnostics;
 
 our $VERSION = '0.04';
 $VERSION = eval $VERSION; ## no critic
@@ -36,22 +38,47 @@ my @cmd = ($^X, '-e', '$SIG{HUP}=sub{exit}; '
 #--------------------------------------------------------------------------#
 
 sub _open {
+#  warn "# @_ : " . (defined fileno($_[0]) ? fileno($_[0]) : 'undef') . " , $_[1]\n" ;
   open $_[0], $_[1] or die "Error from open(" . join(q{, }, @_) . "): $!";
 }
 
+sub _proxy_std {
+  my %proxies;
+  if ( ! defined fileno STDOUT ) {
+    open STDOUT, ">", File::Spec->devnull;
+    $proxies{stdout} = \*STDOUT;
+  }
+  return %proxies;
+}
+
 sub _copy_std {
-  my %handles = map { $_, IO::Handle->new } qw/stdin stdout stderr/;
-  _open $handles{stdin},   "<&STDIN";
-  _open $handles{stdout},  ">&STDOUT";
-  _open $handles{stderr},  ">&STDERR";
+  my %handles = map { $_, IO::Handle->new } qw/stdout stderr stdin/;
+  _open $handles{stdout},  ">&STDOUT" if defined fileno STDOUT;
+  _open $handles{stderr},  ">&STDERR" if defined fileno STDERR;
+  _open $handles{stdin},   "<&STDIN" if defined fileno STDIN;
   return \%handles;
 }
 
 sub _open_std {
   my ($handles) = @_;
-  _open \*STDIN , "<&" . fileno( $handles->{stdin} );
-  _open \*STDOUT, ">&" . fileno( $handles->{stdout} );
-  _open \*STDERR, ">&" . fileno( $handles->{stderr} );
+  if ( defined fileno $handles->{stdin} ) {
+    _open \*STDIN, "<&" . fileno $handles->{stdin};
+  }
+  else {
+    close STDIN if defined fileno STDIN;
+  }
+  if ( defined fileno $handles->{stdout} ) {
+    _open \*STDOUT, ">&" . fileno $handles->{stdout};
+  }
+  else {
+    close STDOUT if defined fileno STDOUT;
+  }
+  if ( defined fileno $handles->{stderr} ) {
+    _open \*STDERR, ">&" . fileno $handles->{stderr};
+  }
+  else {
+    close STDERR if defined fileno STDERR;
+  }
 }
 
 #--------------------------------------------------------------------------#
@@ -130,6 +157,7 @@ sub _slurp {
 sub _capture_tee {
   my ($tee_stdout, $tee_stderr, $merge, $code) = @_;
   # save existing filehandles and setup captures
+  my %proxy_std = _proxy_std();
   my $stash = { old => _copy_std() };
   $stash->{new}{$_} = $stash->{capture}{$_} = tempfile() for qw/stdout stderr/;
   # tees may change $stash->{new}
@@ -144,6 +172,7 @@ sub _capture_tee {
   $code->();
   # restore prior filehandles and shut down tees
   _open_std( $stash->{old} );
+  close $_ for values %proxy_std;
   _kill_tees( $stash ) if $tee_stdout || $tee_stderr;
   # return captured output
   my $got_out = _slurp($stash->{capture}{stdout});
