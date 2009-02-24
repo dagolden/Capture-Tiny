@@ -44,18 +44,26 @@ sub _open {
 
 sub _proxy_std {
   my %proxies;
+  if ( ! defined fileno STDIN ) {
+    open STDIN, "<", File::Spec->devnull;
+    $proxies{stdin} = \*STDIN;
+  }
   if ( ! defined fileno STDOUT ) {
     open STDOUT, ">", File::Spec->devnull;
     $proxies{stdout} = \*STDOUT;
+  }
+  if ( ! defined fileno STDERR ) {
+    open STDERR, ">", File::Spec->devnull;
+    $proxies{stderr} = \*STDERR;
   }
   return %proxies;
 }
 
 sub _copy_std {
   my %handles = map { $_, IO::Handle->new } qw/stdout stderr stdin/;
-  _open $handles{stdout},  ">&STDOUT" if defined fileno STDOUT;
-  _open $handles{stderr},  ">&STDERR" if defined fileno STDERR;
-  _open $handles{stdin},   "<&STDIN" if defined fileno STDIN;
+  _open $handles{stdin},   "<&STDIN";
+  _open $handles{stdout},  ">&STDOUT";
+  _open $handles{stderr},  ">&STDERR";
   return \%handles;
 }
 
@@ -172,6 +180,7 @@ sub _capture_tee {
   $code->();
   # restore prior filehandles and shut down tees
   _open_std( $stash->{old} );
+  close $_ for values %{$stash->{old}}; # don't leak fds
   close $_ for values %proxy_std;
   _kill_tees( $stash ) if $tee_stdout || $tee_stderr;
   # return captured output
