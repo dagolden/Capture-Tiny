@@ -7,9 +7,9 @@
 use strict;
 use warnings;
 use Test::More;
-use t::lib::Tests qw/capture_tests capture_test_count/;
+use t::lib::Tests qw/capture_tests capture_count/;
 
-plan tests => capture_test_count(); 
+plan tests => capture_count(); 
 
 capture_tests();
 

@@ -5,20 +5,33 @@ use warnings;
 require Exporter;
 our @ISA = 'Exporter';
 our @EXPORT = qw(
-  capture_tests capture_test_count
-  tee_tests     tee_test_count
+  capture_tests         capture_count
+  capture_merged_tests  capture_merged_count
+  tee_tests             tee_count
+  tee_merged_tests      tee_merged_count
 );
 
 use Test::More;
-use Capture::Tiny qw/capture tee/;
+use Capture::Tiny qw/capture capture_merged tee tee_merged/;
 
-my ($out, $err, $out2, $err2);
+#--------------------------------------------------------------------------#
+# Fixtures
+#--------------------------------------------------------------------------#
+
+# autoflush to try for correct output order in tests
+select STDERR; $|++;
+select STDOUT; $|++;
+
+my ($out, $err, $out2, $err2, $label);
 sub _reset { $_ = undef for ($out, $err, $out2, $err2 ); 1};
 
-sub capture_test_count { 16 }
+#--------------------------------------------------------------------------#
+# capture
+#--------------------------------------------------------------------------#
 
+sub capture_count { 16 }
 sub capture_tests {
-  my $label;
+  my $sub = 'capture';
 
   # Capture nothing from perl
   _reset;
@@ -26,7 +39,7 @@ sub capture_tests {
     my $foo = 1;
   };
 
-  $label = "perl NOP: ";
+  $label = "[$sub] p-NOP:";
   is($out, '', "$label captured stdout");
   is($err, '', "$label captured stderr");
 
@@ -36,7 +49,7 @@ sub capture_tests {
     print "Foo";
   };
 
-  $label = "perl STDOUT: ";
+  $label ="[$sub] p-STDOUT: ";
   is($out, 'Foo', "$label captured stdout");
   is($err, '', "$label captured stderr");
 
@@ -46,7 +59,7 @@ sub capture_tests {
     print STDERR "Bar";
   };
 
-  $label = "perl STDERR:";
+  $label ="[$sub] p-STDERR:";
   is($out, '', "$label captured stdout");
   is($err, 'Bar', "$label captured stderr");
 
@@ -56,7 +69,7 @@ sub capture_tests {
     print "Foo"; print STDERR "Bar";
   };
 
-  $label = "perl STDOUT/STDERR:";
+  $label ="[$sub] p-STDOUT/STDERR:";
   is($out, "Foo", "$label captured stdout");
   is($err, "Bar", "$label captured stderr");
 
@@ -66,7 +79,7 @@ sub capture_tests {
     system ($^X, '-e', 'my $foo = 1');
   };
 
-  $label = "system NOP:";
+  $label ="[$sub] s-NOP:";
   is($out, '', "$label captured stdout");
   is($err, '', "$label captured stderr");
 
@@ -76,7 +89,7 @@ sub capture_tests {
     system ($^X, '-e', 'print q{Foo}');
   };
 
-  $label = "system STDOUT:";
+  $label ="[$sub] s-STDOUT:";
   is($out, "Foo", "$label captured stdout");
   is($err, '', "$label captured stderr");
 
@@ -86,7 +99,7 @@ sub capture_tests {
     system ($^X, '-e', 'print STDERR q{Bar}');
   };
 
-  $label = "system STDERR:";
+  $label ="[$sub] s-STDERR:";
   is($out, '', "$label captured stdout");
   is($err, "Bar", "$label captured stderr");
 
@@ -96,15 +109,82 @@ sub capture_tests {
     system ($^X, '-e', 'print q{Foo}; print STDERR q{Bar}');
   };
 
-  $label = "system STDOUT/STDERR:";
+  $label ="[$sub] s-STDOUT/STDERR:";
   is($out, "Foo", "$label captured stdout");
   is($err, "Bar", "$label captured stderr");
 
 }
 
-sub tee_test_count { 32 }
+#--------------------------------------------------------------------------#
+# capture_merged
+#--------------------------------------------------------------------------#
+
+sub capture_merged_count { 6 } 
+sub capture_merged_tests {
+  my $sub = 'capture_merged';
+
+  # Capture STDOUT from perl
+  _reset;
+  $out = capture_merged {
+    print "Foo";
+  };
+
+  $label ="[$sub] p-STDOUT: ";
+  is($out, 'Foo', "$label captured merged");
+
+  # Capture STDERR from perl
+  _reset;
+  $out = capture_merged {
+    print STDERR "Bar";
+  };
+
+  $label ="[$sub] p-STDERR:";
+  is($out, 'Bar', "$label captured merged");
+
+  # Capture STDOUT from perl
+  _reset;
+  $out = capture_merged {
+    print "Foo"; print STDERR "Bar";
+  };
+
+  $label ="[$sub] p-STDOUT/STDERR:";
+  is($out, "FooBar", "$label captured merged");
+
+  # system -- STDOUT
+  _reset;
+  $out = capture_merged {
+    system ($^X, '-e', 'print q{Foo}');
+  };
+
+  $label ="[$sub] s-STDOUT:";
+  is($out, 'Foo', "$label captured merged");
+
+  # system -- STDERR
+  _reset;
+  $out = capture_merged {
+    system ($^X, '-e', 'print STDERR q{Bar}');
+  };
+
+  $label ="[$sub] s-STDERR:";
+  is($out, "Bar", "$label captured merged");
+
+  # system -- STDOUT/STDERR
+  _reset;
+  $out = capture_merged {
+    system ($^X, '-e', 'select STDERR; $|++; select STDOUT; $|++; print q{Foo}; print STDERR q{Bar}');
+  };
+
+  $label ="[$sub] s-STDOUT/STDERR:";
+  is($out, "FooBar", "$label captured merged");
+}
+
+#--------------------------------------------------------------------------#
+# tee
+#--------------------------------------------------------------------------#
+
+sub tee_count { 32 }
 sub tee_tests {
-  my $label;
+  my $sub = 'tee';
   # Perl - Nothing
   _reset;
   ($out2, $err2) = capture {
@@ -113,7 +193,7 @@ sub tee_tests {
     };
   };
 
-  $label = "perl NOP:";
+  $label ="[$sub] p-NOP:";
   is($out, '', "$label captured stdout during tee");
   is($err, '', "$label captured stderr during tee");
   is($out2, '', "$label captured stdout passed-through from tee");
@@ -127,7 +207,7 @@ sub tee_tests {
     };
   };
 
-  $label = "perl STDOUT:";
+  $label ="[$sub] p-STDOUT:";
   is($out, "Foo", "$label captured stdout during tee");
   is($err, '', "$label captured stderr during tee");
   is($out2, "Foo", "$label captured stdout passed-through from tee");
@@ -141,7 +221,7 @@ sub tee_tests {
     };
   };
 
-  $label = "perl STDERR:";
+  $label ="[$sub] p-STDERR:";
   is($out, "", "$label captured stdout during tee");
   is($err, "Bar", "$label captured stderr during tee");
   is($out2, "", "$label captured stdout passed-through from tee");
@@ -155,7 +235,7 @@ sub tee_tests {
     };
   };
 
-  $label = "perl STDOUT/STDERR:";
+  $label ="[$sub] p-STDOUT/STDERR:";
   is($out, "Foo", "$label captured stdout during tee");
   is($err, "Bar", "$label captured stderr during tee");
   is($out2, "Foo", "$label captured stdout passed-through from tee");
@@ -169,7 +249,7 @@ sub tee_tests {
     };
   };
 
-  $label = "system NOP:";
+  $label ="[$sub] s-NOP:";
   is($out, '', "$label captured stdout during tee");
   is($err, '', "$label captured stderr during tee");
   is($out2, '', "$label captured stdout passed-through from tee");
@@ -184,7 +264,7 @@ sub tee_tests {
     };
   };
 
-  $label = "system STDOUT:";
+  $label ="[$sub] s-STDOUT:";
   is($out, "Foo", "$label captured stdout during tee");
   is($err, '', "$label captured stderr during tee");
   is($out2, "Foo", "$label captured stdout passed-through from tee");
@@ -199,7 +279,7 @@ sub tee_tests {
     };
   };
 
-  $label = "system STDERR:";
+  $label ="[$sub] s-STDERR:";
   is($out, "", "$label captured stdout during tee");
   is($err, "Bar", "$label captured stderr during tee");
   is($out2, "", "$label captured stdout passed-through from tee");
@@ -213,12 +293,100 @@ sub tee_tests {
     };
   };
 
-  $label = "system STDOUT/STDERR:";
+  $label ="[$sub] s-STDOUT/STDERR:";
   is($out, "Foo", "$label captured stdout during tee");
   is($err, "Bar", "$label captured stderr during tee");
   is($out2, "Foo", "$label captured stdout passed-through from tee");
   is($err2, "Bar", "$label captured stderr passed-through from tee");
 }
 
+#--------------------------------------------------------------------------#
+# tee_merged
+#--------------------------------------------------------------------------#
+
+sub tee_merged_count { 18 }
+sub tee_merged_tests {
+  my $sub = 'tee_merged';
+
+  # Perl - STDOUT
+  _reset;
+  ($out2, $err2) = capture {
+    $out = tee_merged {
+      print "Foo" ; 
+    };
+  };
+
+  $label ="[$sub] p-STDOUT:";
+  is($out, "Foo", "$label captured merged during tee");
+  is($out2, "Foo", "$label captured merged passed-through from tee");
+  is($err2, '', "$label captured stderr passed-through from tee");
+
+
+  # Perl - STDERR
+  _reset;
+  ($out2, $err2) = capture {
+    ($out, $err) = tee_merged {
+      print STDERR "Bar";
+    };
+  };
+
+  $label ="[$sub] p-STDERR:";
+  is($out, "Bar", "$label captured merged during tee");
+  is($out2, "Bar", "$label captured merged passed-through from tee");
+  is($err2, '', "$label captured stderr passed-through from tee");
+
+  # Perl - STDOUT+STDERR
+  _reset;
+  ($out2, $err2) = capture {
+    ($out, $err) = tee_merged {
+      print "Foo"; print STDERR "Bar";
+    };
+  };
+
+  $label ="[$sub] p-STDOUT/STDERR:";
+  is($out, "FooBar", "$label captured merged during tee");
+  is($out2, "FooBar", "$label captured merged passed-through from tee");
+  is($err2, "", "$label captured stderr passed-through from tee");
+
+  # system() - STDOUT
+  _reset;
+  ($out2, $err2) = capture {
+    ($out, $err) = tee_merged {
+      system ($^X, '-e', 'print STDOUT q{Foo};');
+    };
+  };
+
+  $label ="[$sub] s-STDOUT:";
+  is($out, "Foo", "$label captured merged during tee");
+  is($out2, "Foo", "$label captured merged passed-through from tee");
+  is($err2, '', "$label captured stderr passed-through from tee");
+
+  # system() - STDERR
+  _reset;
+  ($out2, $err2) = capture {
+    ($out, $err) = tee_merged {
+      system ($^X, '-e', 'print STDERR q{Bar}');
+    };
+  };
+
+  $label ="[$sub] s-STDERR:";
+  is($out, "Bar", "$label captured merged during tee");
+  is($out2, "Bar", "$label captured merged passed-through from tee");
+  is($err2, "", "$label captured stderr passed-through from tee");
+
+  # system() - STDOUT+STDERR
+  _reset;
+  ($out2, $err2) = capture {
+    ($out, $err) = tee_merged {
+      system ($^X, '-e', 'select STDERR; $|++; select STDOUT; $|++; print STDOUT q{Foo}; print STDERR q{Bar}');
+    };
+  };
+
+  $label ="[$sub] s-STDOUT/STDERR:";
+  is($out, "FooBar", "$label captured merged during tee");
+  is($out2, "FooBar", "$label captured merged passed-through from tee");
+  is($err2, "", "$label captured stderr passed-through from tee");
+
+}
 
 1;

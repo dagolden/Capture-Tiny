@@ -7,20 +7,35 @@
 use strict;
 use warnings;
 use Test::More;
+use Config;
 use t::lib::Utils qw/save_std restore_std/;
 use t::lib::Tests qw(
-  capture_tests   capture_test_count
-  tee_tests       tee_test_count
+  capture_tests           capture_count
+  capture_merged_tests    capture_merged_count
+  tee_tests               tee_count
+  tee_merged_tests        tee_merged_count
 );
 
-plan tests => 1 + capture_test_count() + tee_test_count; 
+#--------------------------------------------------------------------------#
+
+plan tests => 1 + capture_count() + capture_merged_count() 
+                + tee_count() + tee_merged_count(); 
+
+#--------------------------------------------------------------------------#
 
 save_std(qw/stdout/);
 ok( close STDOUT, "closed STDOUT" );
 
 capture_tests();
+capture_merged_tests();
 
-tee_tests();
+SKIP: {
+  if ( $^O ne 'MSWin32' && ! $Config{d_fork} ) {
+    skip tee_count() + tee_merged_count, "requires working fork()";
+  }
+  tee_tests();
+  tee_merged_tests();
+}
 
 restore_std(qw/stdout/);
 

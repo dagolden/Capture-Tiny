@@ -7,8 +7,13 @@
 use strict;
 use warnings;
 use Test::More;
-use t::lib::Tests qw/tee_tests tee_test_count/;
+use t::lib::Tests qw/tee_tests tee_count/;
 
-plan tests => tee_test_count();
+use Config;
+if ( $^O ne 'MSWin32' && ! $Config{d_fork} ) {
+  plan skip_all => "requires working fork()";
+}
 
-tee_tests;
+plan tests => tee_count();
+
+tee_tests();
