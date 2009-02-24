@@ -10,17 +10,22 @@ sub _open {
   open $_[0], $_[1] or die "Error from open( " . join(q{, }, @_) . "): $!";
 }
 
+my @saved;
 sub save_std {
-  my @std = map { IO::Handle->new } 0 .. 2;
-  _open $std[0], "<&STDIN";
-  _open $std[1], ">&STDOUT";
-  _open $std[2], ">&STDERR";
-  return @std;
+  for my $h ( @_ ) {
+    my $fh;
+    _open $fh, ($h eq 'stdin' ? "<&" : ">&") . uc $h;
+    push @saved, $fh;
+  }
 }
 
 sub restore_std {
-  _open \*STDIN , "<&" . fileno( $_[0] );
-  _open \*STDOUT, ">&" . fileno( $_[1] );
-  _open \*STDERR, ">&" . fileno( $_[2] );
+  for my $h ( @_ ) {
+    no strict 'refs';
+    my $fh = shift @saved;
+    _open \*{uc $h}, ($h eq 'stdin' ? "<&" : ">&") . fileno( $fh );
+    close $fh;
+  }
 }
 
+1;
