@@ -7,9 +7,13 @@
 use strict;
 use warnings;
 use Test::More;
+use t::lib::Utils qw/next_fd/;
 use t::lib::Tests qw/capture_tests capture_count/;
 
-plan tests => capture_count(); 
+plan tests => 1 + capture_count(); 
+
+my $fd = next_fd;
 
 capture_tests();
 
+is( next_fd, $fd, "no file descriptors leaked" );

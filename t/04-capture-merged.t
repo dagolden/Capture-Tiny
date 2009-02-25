@@ -7,9 +7,14 @@
 use strict;
 use warnings;
 use Test::More;
+use t::lib::Utils qw/next_fd/;
 use t::lib::Tests qw/capture_merged_tests capture_merged_count/;
 
-plan tests => capture_merged_count(); 
+plan tests => 1 + capture_merged_count(); 
+
+my $fd = next_fd;
 
 capture_merged_tests();
+
+is( next_fd, $fd, "no file descriptors leaked" );
 

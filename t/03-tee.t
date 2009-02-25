@@ -7,6 +7,7 @@
 use strict;
 use warnings;
 use Test::More;
+use t::lib::Utils qw/next_fd/;
 use t::lib::Tests qw/tee_tests tee_count/;
 
 use Config;
@@ -14,6 +15,10 @@ if ( $^O ne 'MSWin32' && ! $Config{d_fork} ) {
   plan skip_all => "requires working fork()";
 }
 
-plan tests => tee_count();
+plan tests => 1 + tee_count();
+
+my $fd = next_fd;
 
 tee_tests();
+
+is( next_fd, $fd, "no file descriptors leaked" );

@@ -7,6 +7,7 @@
 use strict;
 use warnings;
 use Test::More;
+use t::lib::Utils qw/next_fd/;
 use t::lib::Tests qw/ tee_merged_tests tee_merged_count /;
 
 use Config;
@@ -14,6 +15,11 @@ if ( $^O ne 'MSWin32' && ! $Config{d_fork} ) {
   plan skip_all => "requires working fork()";
 }
 
-plan tests => tee_merged_count;
+plan tests => 1 + tee_merged_count;
+
+my $fd = next_fd;
+
 tee_merged_tests();
+
+is( next_fd, $fd, "no file descriptors leaked" );
 
