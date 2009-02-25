@@ -81,32 +81,17 @@ sub _proxy_std {
 sub _copy_std {
   my %handles = map { $_, IO::Handle->new } qw/stdin stdout stderr/;
   _debug( "# copying std handles ...\n" ); 
-  _open $handles{stdin},   "<&STDIN" if defined fileno STDIN;
-  _open $handles{stdout},  ">&STDOUT" if defined fileno STDOUT;
-  _open $handles{stderr},  ">&STDERR" if defined fileno STDERR;
+  _open $handles{stdin},   "<&STDIN";
+  _open $handles{stdout},  ">&STDOUT";
+  _open $handles{stderr},  ">&STDERR";
   return \%handles;
 }
 
 sub _open_std {
   my ($handles) = @_;
-  if ( defined fileno $handles->{stdin} ) {
-    _open \*STDIN, "<&" . fileno $handles->{stdin};
-  }
-  else {
-    _close \*STDIN if defined fileno STDIN;
-  }
-  if ( defined fileno $handles->{stdout} ) {
-    _open \*STDOUT, ">&" . fileno $handles->{stdout};
-  }
-  else {
-    _close \*STDOUT if defined fileno STDOUT;
-  }
-  if ( defined fileno $handles->{stderr} ) {
-    _open \*STDERR, ">&" . fileno $handles->{stderr};
-  }
-  else {
-    _close \*STDERR if defined fileno STDERR;
-  }
+  _open \*STDIN, "<&" . fileno $handles->{stdin};
+  _open \*STDOUT, ">&" . fileno $handles->{stdout};
+  _open \*STDERR, ">&" . fileno $handles->{stderr};
 }
 
 #--------------------------------------------------------------------------#
@@ -336,7 +321,13 @@ properly ordered due to buffering
 
 Portability is a goal, not a guarantee.  {tee} requires fork, except on 
 Windows where {system(1, @cmd)} is used instead.  Not tested on any
-esoteric platforms yet.  Minimal test suite so far.
+esoteric platforms yet.  
+
+Capture::Tiny will work even if STDIN, STDOUT or STDERR have been previously
+closed.  However, since they may be reopened to capture or tee output, any code
+within the captured block that depends on finding them closed will, of course,
+not find them to be closed.  If they started closed, Capture::Tiny will reclose
+them again when the capture block finishes.
 
 = BUGS
 
