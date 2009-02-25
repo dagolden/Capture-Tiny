@@ -87,7 +87,14 @@ USAGE
 LIMITATIONS
     Portability is a goal, not a guarantee. "tee" requires fork, except on
     Windows where "system(1, @cmd)" is used instead. Not tested on any
-    esoteric platforms yet. Minimal test suite so far.
+    esoteric platforms yet.
+
+    Capture::Tiny will work even if STDIN, STDOUT or STDERR have been
+    previously closed. However, since they may be reopened to capture or tee
+    output, any code within the captured block that depends on finding them
+    closed will, of course, not find them to be closed. If they started
+    closed, Capture::Tiny will reclose them again when the capture block
+    finishes.
 
 BUGS
     Please report any bugs or feature requests using the CPAN Request

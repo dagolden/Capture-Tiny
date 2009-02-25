@@ -11,6 +11,7 @@ WriteMakefile
                            'Test::More' => '0.47',
                            'IO::Handle' => 0,
                            'File::Temp' => '0.14',
+                           'File::Spec' => 0,
                            'Exporter' => 0
                          }
         )

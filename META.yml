@@ -6,9 +6,11 @@ author:
 abstract: 'Capture STDOUT and STDERR from Perl, XS or external programs'
 license: apache
 resources:
-  license: http://www.apache.org/licenses/LICENSE-2.0.txt
+  bugtracker: http://rt.cpan.org/NoAuth/Bugs.html?Dist=Capture-Tiny
+  repository: http://github.com/dagolden/Capture-Tiny/
 requires:
   Exporter: 0
+  File::Spec: 0
   File::Temp: 0.14
   IO::Handle: 0
   perl: 5.006
