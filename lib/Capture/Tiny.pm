@@ -236,7 +236,7 @@ This documentation describes version %%VERSION%%.
 
 = SYNOPSIS
 
-    use Capture::Tiny qw/capture tee/;
+    use Capture::Tiny qw/capture tee capture_merged tee_merged/;
     
     ($stdout, $stderr) = capture {
       # your code here
