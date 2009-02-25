@@ -21,6 +21,8 @@ use t::lib::Tests qw(
 plan tests => 1 + capture_count() + capture_merged_count() 
                 + tee_count() + tee_merged_count(); 
 
+my $no_fork = $^O ne 'MSWin32' && ! $Config{d_fork};
+
 #--------------------------------------------------------------------------#
 
 save_std(qw/stderr/);
@@ -30,9 +32,7 @@ capture_tests();
 capture_merged_tests();
 
 SKIP: {
-  if ( $^O ne 'MSWin32' && ! $Config{d_fork} ) {
-    skip tee_count() + tee_merged_count, "requires working fork()";
-  }
+  skip tee_count() + tee_merged_count, "requires working fork()" if $no_fork;
   tee_tests();
   tee_merged_tests();
 }

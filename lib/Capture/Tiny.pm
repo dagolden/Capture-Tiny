@@ -12,7 +12,6 @@ use Exporter ();
 use IO::Handle ();
 use File::Spec ();
 use File::Temp qw/tempfile tmpnam/;
-use diagnostics;
 
 our $VERSION = '0.04';
 $VERSION = eval $VERSION; ## no critic
@@ -20,6 +19,12 @@ our @ISA = qw/Exporter/;
 our @EXPORT_OK = qw/capture capture_merged tee tee_merged/;
 
 my $use_system = $^O eq 'MSWin32';
+
+our $DEBUG = 0;
+my $DEBUGFH;
+open $DEBUGFH, ">&STDERR" if $DEBUG;
+
+*_debug = $DEBUG ? sub(@) { print {$DEBUGFH} @_ } : sub(){0};
 
 #--------------------------------------------------------------------------#
 # command to tee output -- the argument is a filename that must
@@ -37,33 +42,50 @@ my @cmd = ($^X, '-e', '$SIG{HUP}=sub{exit}; '
 # filehandle manipulation
 #--------------------------------------------------------------------------#
 
+sub _name {
+  my $glob = shift;
+  no strict 'refs';
+  return *{$glob}{NAME};
+}
+
+
 sub _open {
-#  warn "# @_ : " . (defined fileno($_[0]) ? fileno($_[0]) : 'undef') . " , $_[1]\n" ;
+#  warn "# @_ : ";# . (defined fileno($_[0]) ? fileno($_[0]) : 'undef') . " , $_[1]\n" ;
   open $_[0], $_[1] or die "Error from open(" . join(q{, }, @_) . "): $!";
+  _debug( "# open " . join( ", " , map { defined $_ ? _name($_) : 'undef' } @_ ) . " as " . fileno( $_[0] ) . "\n" );
+}
+
+sub _close {
+#  warn "# @_ : ";# . (defined fileno($_[0]) ? fileno($_[0]) : 'undef') . " , $_[1]\n" ;
+  close $_[0] or die "Error from close(" . join(q{, }, @_) . "): $!";
+  _debug( "# closed " . ( defined $_[0] ? _name($_[0]) : 'undef' ) . "\n" );
 }
 
 sub _proxy_std {
   my %proxies;
   if ( ! defined fileno STDIN ) {
-    open STDIN, "<", File::Spec->devnull;
+    _debug( "# proxying STDIN ...\n" ); 
+    _open \*STDIN, "<" . File::Spec->devnull;
+    _debug( "# proxyed STDIN as " . (defined fileno STDIN ? fileno STDIN : 'undef' ) . "\n" );
     $proxies{stdin} = \*STDIN;
   }
   if ( ! defined fileno STDOUT ) {
-    open STDOUT, ">", File::Spec->devnull;
+    _open \*STDOUT, ">" . File::Spec->devnull;
     $proxies{stdout} = \*STDOUT;
   }
   if ( ! defined fileno STDERR ) {
-    open STDERR, ">", File::Spec->devnull;
+    _open \*STDERR, ">" . File::Spec->devnull;
     $proxies{stderr} = \*STDERR;
   }
   return %proxies;
 }
 
 sub _copy_std {
-  my %handles = map { $_, IO::Handle->new } qw/stdout stderr stdin/;
-  _open $handles{stdin},   "<&STDIN";
-  _open $handles{stdout},  ">&STDOUT";
-  _open $handles{stderr},  ">&STDERR";
+  my %handles = map { $_, IO::Handle->new } qw/stdin stdout stderr/;
+  _debug( "# copying std handles ...\n" ); 
+  _open $handles{stdin},   "<&STDIN" if defined fileno STDIN;
+  _open $handles{stdout},  ">&STDOUT" if defined fileno STDOUT;
+  _open $handles{stderr},  ">&STDERR" if defined fileno STDERR;
   return \%handles;
 }
 
@@ -128,6 +150,7 @@ sub _fork_exec {
   elsif ($pid == 0) { # child
     untie *STDIN; untie *STDOUT; untie *STDERR;
     close $stash->{tee}{$which};
+    _debug( "# redirecting in child ...\n" ); 
     _open_std( $stash->{child}{$which} );
     exec @cmd, $stash->{flag_files}{$which};
   }
@@ -163,6 +186,7 @@ sub _slurp {
 #--------------------------------------------------------------------------#
 
 sub _capture_tee {
+  _debug( "# starting _capture_tee with (@_)...\n" ); 
   my ($tee_stdout, $tee_stderr, $merge, $code) = @_;
   # save existing filehandles and setup captures
   my %proxy_std = _proxy_std();
@@ -175,13 +199,16 @@ sub _capture_tee {
   # finalize redirection
   $stash->{new}{stderr} = $stash->{new}{stdout} if $merge;
   $stash->{new}{stdin} = $stash->{old}{stdin};
+  _debug( "# redirecting in parent ...\n" ); 
   _open_std( $stash->{new} );
   # execute user provided code
+  _debug( "# running code $code ...\n" ); 
   $code->();
   # restore prior filehandles and shut down tees
+  _debug( "# restoring ...\n" ); 
   _open_std( $stash->{old} );
-  close $_ for values %{$stash->{old}}; # don't leak fds
-  close $_ for values %proxy_std;
+  _close( $_ ) for values %{$stash->{old}}; # don't leak fds
+  _close( $_ ) for values %proxy_std;
   _kill_tees( $stash ) if $tee_stdout || $tee_stderr;
   # return captured output
   my $got_out = _slurp($stash->{capture}{stdout});
