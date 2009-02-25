@@ -4,10 +4,8 @@
 # A copy of the License was distributed with this file or you may obtain a 
 # copy of the License from http://www.apache.org/licenses/LICENSE-2.0
 
-- Add tee_stdout and tee_stderr functions (?)
-- Test closed handles
 - Test fake handles (open FH, ">", \$scalar), IO::String, etc.
 - Test utf8 output
 - Test tied handles
 - Test with curses
-- Add timeout if kid processes don't start
+- Add tee_stdout and tee_stderr functions (?)
