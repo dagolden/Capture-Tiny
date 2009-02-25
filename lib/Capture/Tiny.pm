@@ -48,15 +48,12 @@ sub _name {
   return *{$glob}{NAME};
 }
 
-
 sub _open {
-#  warn "# @_ : ";# . (defined fileno($_[0]) ? fileno($_[0]) : 'undef') . " , $_[1]\n" ;
   open $_[0], $_[1] or die "Error from open(" . join(q{, }, @_) . "): $!";
   _debug( "# open " . join( ", " , map { defined $_ ? _name($_) : 'undef' } @_ ) . " as " . fileno( $_[0] ) . "\n" );
 }
 
 sub _close {
-#  warn "# @_ : ";# . (defined fileno($_[0]) ? fileno($_[0]) : 'undef') . " , $_[1]\n" ;
   close $_[0] or die "Error from close(" . join(q{, }, @_) . "): $!";
   _debug( "# closed " . ( defined $_[0] ? _name($_[0]) : 'undef' ) . "\n" );
 }
@@ -64,17 +61,18 @@ sub _close {
 sub _proxy_std {
   my %proxies;
   if ( ! defined fileno STDIN ) {
-    _debug( "# proxying STDIN ...\n" ); 
     _open \*STDIN, "<" . File::Spec->devnull;
-    _debug( "# proxyed STDIN as " . (defined fileno STDIN ? fileno STDIN : 'undef' ) . "\n" );
+    _debug( "# proxied STDIN as " . (defined fileno STDIN ? fileno STDIN : 'undef' ) . "\n" );
     $proxies{stdin} = \*STDIN;
   }
   if ( ! defined fileno STDOUT ) {
     _open \*STDOUT, ">" . File::Spec->devnull;
+    _debug( "# proxied STDOUT as " . (defined fileno STDOUT ? fileno STDOUT : 'undef' ) . "\n" );
     $proxies{stdout} = \*STDOUT;
   }
   if ( ! defined fileno STDERR ) {
     _open \*STDERR, ">" . File::Spec->devnull;
+    _debug( "# proxied STDERR as " . (defined fileno STDERR ? fileno STDERR : 'undef' ) . "\n" );
     $proxies{stderr} = \*STDERR;
   }
   return %proxies;
@@ -95,19 +93,19 @@ sub _open_std {
     _open \*STDIN, "<&" . fileno $handles->{stdin};
   }
   else {
-    close STDIN if defined fileno STDIN;
+    _close \*STDIN if defined fileno STDIN;
   }
   if ( defined fileno $handles->{stdout} ) {
     _open \*STDOUT, ">&" . fileno $handles->{stdout};
   }
   else {
-    close STDOUT if defined fileno STDOUT;
+    _close \*STDOUT if defined fileno STDOUT;
   }
   if ( defined fileno $handles->{stderr} ) {
     _open \*STDERR, ">&" . fileno $handles->{stderr};
   }
   else {
-    close STDERR if defined fileno STDERR;
+    _close \*STDERR if defined fileno STDERR;
   }
 }
 
@@ -149,7 +147,7 @@ sub _fork_exec {
   }
   elsif ($pid == 0) { # child
     untie *STDIN; untie *STDOUT; untie *STDERR;
-    close $stash->{tee}{$which};
+    _close $stash->{tee}{$which};
     _debug( "# redirecting in child ...\n" ); 
     _open_std( $stash->{child}{$which} );
     exec @cmd, $stash->{flag_files}{$which};
@@ -167,7 +165,7 @@ sub _wait_for_tees {
 
 sub _kill_tees {
   my ($stash) = @_;
-  close $_ for values %{ $stash->{tee} };
+  _close $_ for values %{ $stash->{tee} };
   if ( $use_system ) {
     eval { Win32::Sleep(25) }; # 25 ms pause for output to get flushed, I hope
     kill 1, $_ for values %{ $stash->{pid} }; # shut them down hard
@@ -192,6 +190,7 @@ sub _capture_tee {
   my %proxy_std = _proxy_std();
   my $stash = { old => _copy_std() };
   $stash->{new}{$_} = $stash->{capture}{$_} = tempfile() for qw/stdout stderr/;
+  _debug("# will capture $_ on " .fileno($stash->{capture}{$_})."\n") for qw/stdout stderr/;
   # tees may change $stash->{new}
   _start_tee( stdout => $stash ) if $tee_stdout;
   _start_tee( stderr => $stash ) if $tee_stderr;
