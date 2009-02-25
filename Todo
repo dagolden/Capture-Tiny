@@ -5,6 +5,7 @@
 # copy of the License from http://www.apache.org/licenses/LICENSE-2.0
 
 - Test fake handles (open FH, ">", \$scalar), IO::String, etc.
+- Test that $? is preserved after tee block
 - Test utf8 output
 - Test tied handles
 - Test with curses
