@@ -140,12 +140,15 @@ sub _fork_exec {
   $stash->{pid}{$which} = $pid
 }
 
+sub _files_exist { -f $_ || return 0 for @_; return 1 }
+
 sub _wait_for_tees { 
   my ($stash) = @_;
-  for my $file ( values %{$stash->{flag_files}} ) { 
-    1 until -f $file; # XXX should add alarm and timeout 
-    unlink $file
-  };
+  my $start = time;
+  my @files = values %{$stash->{flag_files}};
+  1 until _files_exist(@files) || (time - $start > 30);
+  die "Timed out waiting for subprocesses to start" if ! _files_exist(@files);
+  unlink $_ for @files; 
 }
 
 sub _kill_tees {

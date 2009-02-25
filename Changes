@@ -9,7 +9,17 @@ Revision history for Capture-Tiny
 
 0.04
 
-  
+  Added:
+
+    - Can capture/tee even if STDIN, STDOUT or STDERR are closed prior to
+      capture/tee block
+
+    - Generally, added more error handling
+
+  Fixed:
+
+    - Will timeout instead of hang if subprocesses fail to start
+
 0.03 Fri Feb 20 13:03:08 EST 2009
 
   Added:
