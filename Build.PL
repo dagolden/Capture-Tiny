@@ -20,6 +20,7 @@ my $build = $class->new(
   requires => {
     'perl' => 5.006,
     'Exporter' => 0,
+    'File::Spec' => 0,
     'File::Temp' => 0.14, 
     'IO::Handle' => 0,
   },
@@ -29,7 +30,12 @@ my $build = $class->new(
   meta_add            => { 
     no_index => { 
       directory => [ qw/ examples inc t /],
-    } 
+    },
+    resources => {
+      repository => "http://github.com/dagolden/Capture-Tiny/", 
+      bugtracker => "http://rt.cpan.org/NoAuth/Bugs.html?Dist=Capture-Tiny",
+    },
   },
 );
 $build->create_build_script;
+
