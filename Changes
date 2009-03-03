@@ -9,7 +9,11 @@ Revision history for Capture-Tiny
 
 0.05
 
+  Fixed:
 
+    - On Win32, increased a delay waiting for buffers to flush to avoid losing
+      final output during tee()
+      
 0.04 Wed Feb 25 09:25:27 EST 2009
 
   Added:
