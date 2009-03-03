@@ -20,7 +20,7 @@ provides:
   Capture::Tiny:
     file: lib/Capture/Tiny.pm
     version: 0.05
-generated_by: Module::Build version 0.3103
+generated_by: Module::Build version 0.32
 meta-spec:
   url: http://module-build.sourceforge.net/META-spec-v1.2.html
   version: 1.2

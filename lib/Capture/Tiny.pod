@@ -12,7 +12,7 @@ This documentation describes version 0.05.
 
 =head1 SYNOPSIS
 
-     use Capture::Tiny qw/capture tee/;
+     use Capture::Tiny qw/capture tee capture_merged tee_merged/;
  
      ($stdout, $stderr) = capture {
        # your code here
