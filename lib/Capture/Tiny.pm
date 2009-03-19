@@ -191,6 +191,7 @@ sub _capture_tee {
   # execute user provided code
   _debug( "# running code $code ...\n" ); 
   $code->();
+  my $exit_code = $?; # save this for later
   # restore prior filehandles and shut down tees
   _debug( "# restoring ...\n" ); 
   _open_std( $stash->{old} );
@@ -200,6 +201,7 @@ sub _capture_tee {
   # return captured output
   my $got_out = _slurp($stash->{capture}{stdout});
   my $got_err = $merge ? q() : _slurp($stash->{capture}{stderr});
+  $? = $exit_code;
   return $got_out if $merge;
   return wantarray ? ($got_out, $got_err) : $got_out;
 }
