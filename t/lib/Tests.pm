@@ -441,9 +441,16 @@ sub tee_merged_tests {
   };
 
   $label ="[$sub] p-large-STDOUT/STDERR:";
-  is($out, $readme . $readme, "$label captured merged during tee");
-  is($out2, $readme . $readme, "$label captured merged passed-through from tee");
-  is($err2, "", "$label captured stderr passed-through from tee");
+  if ( $have_diff ) {
+    eq_or_diff($out, $readme . $readme, "$label captured merged during tee");
+    eq_or_diff($out2, $readme . $readme, "$label captured merged passed-through from tee");
+    eq_or_diff($err2, "", "$label captured stderr passed-through from tee");
+  }
+  else {
+    is($out, $readme . $readme, "$label captured merged during tee");
+    is($out2, $readme . $readme, "$label captured merged passed-through from tee");
+    is($err2, "", "$label captured stderr passed-through from tee");
+  }
 
   # system() - STDOUT
   _reset;

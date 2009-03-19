@@ -12,6 +12,7 @@ use Exporter ();
 use IO::Handle ();
 use File::Spec ();
 use File::Temp qw/tempfile tmpnam/;
+use PerlIO ();
 
 our $VERSION = '0.05_51';
 $VERSION = eval $VERSION; ## no critic
@@ -20,7 +21,7 @@ our @EXPORT_OK = qw/capture capture_merged tee tee_merged/;
 
 my $use_system = $^O eq 'MSWin32';
 
-our $DEBUG = 0;
+our $DEBUG = $ENV{PERL_CAPTURE_TINY_DEBUG};
 my $DEBUGFH;
 open $DEBUGFH, ">&STDERR" if $DEBUG;
 
@@ -103,6 +104,9 @@ sub _start_tee {
   # setup pipes
   $stash->{$_}{$which} = IO::Handle->new for qw/tee reader/;
   pipe $stash->{reader}{$which}, $stash->{tee}{$which};
+  _debug( "# pipe for $which\: " . 
+    *{$stash->{tee}{$which}}{NAME} . " " . fileno( $stash->{tee}{$which} ) 
+    . " => " . *{$stash->{reader}{$which}}{NAME} . " " . fileno( $stash->{reader}{$which}) . "\n" );
   select((select($stash->{tee}{$which}), $|=1)[0]); # autoflush
   # setup desired redirection for parent and child
   $stash->{new}{$which} = $stash->{tee}{$which};
@@ -131,10 +135,12 @@ sub _fork_exec {
     die "Couldn't fork(): $!";
   }
   elsif ($pid == 0) { # child
+    _debug( "# in child process ...\n" ); 
     untie *STDIN; untie *STDOUT; untie *STDERR;
     _close $stash->{tee}{$which};
-    _debug( "# redirecting in child ...\n" ); 
+    _debug( "# redirecting handles in child ...\n" ); 
     _open_std( $stash->{child}{$which} );
+    _debug( "# calling exec on command ...\n" ); 
     exec @cmd, $stash->{flag_files}{$which};
   }
   $stash->{pid}{$which} = $pid
@@ -182,6 +188,7 @@ sub _capture_tee {
   $localize{stdin}++, local *STDIN if grep { $_ eq 'scalar' } PerlIO::get_layers(\*STDIN);
   $localize{stdout}++, local *STDOUT if grep { $_ eq 'scalar' } PerlIO::get_layers(\*STDOUT);
   $localize{stderr}++, local *STDERR if grep { $_ eq 'scalar' } PerlIO::get_layers(\*STDERR);
+  _debug( "# localized $_\n" ) for keys %localize; 
   my %proxy_std = _proxy_std();
   my $stash = { old => _copy_std() };
   $stash->{new}{$_} = $stash->{capture}{$_} = tempfile() for qw/stdout stderr/;
@@ -214,6 +221,7 @@ sub _capture_tee {
   print CT_ORIG_STDOUT $got_out if $localize{stdout} && $tee_stdout; 
   print CT_ORIG_STDERR $got_err if !$merge && $localize{stderr} && $tee_stdout; 
   $? = $exit_code;
+  _debug( "# ending _capture_tee with (@_)...\n" ); 
   return $got_out if $merge;
   return wantarray ? ($got_out, $got_err) : $got_out;
 }
