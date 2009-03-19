@@ -14,6 +14,12 @@ our @EXPORT = qw(
 use Test::More;
 use Capture::Tiny qw/capture capture_merged tee tee_merged/;
 
+my $have_diff = eval { 
+  require Test::Differences; 
+  Test::Differences->import;
+  1;
+};
+
 #--------------------------------------------------------------------------#
 # Fixtures
 #--------------------------------------------------------------------------#
@@ -83,8 +89,14 @@ sub capture_tests {
   };
 
   $label ="[$sub] p-large-STDOUT/STDERR:";
-  is($out, $readme, "$label captured stdout");
-  is($err, $readme, "$label captured stderr");
+  if ( $have_diff ) {
+    eq_or_diff($out, $readme, "$label captured stdout"); 
+    eq_or_diff($err, $readme, "$label captured stderr");
+  }
+  else {
+    is($out, $readme, "$label captured stdout");
+    is($err, $readme, "$label captured stderr");
+  }
 
   # Capture STDOUT/STDERR from perl
   _reset;
@@ -180,7 +192,12 @@ sub capture_merged_tests {
   };
 
   $label ="[$sub] p-large-STDOUT/STDERR:";
-  is($out, $readme . $readme, "$label captured merged");
+  if ( $have_diff ) {
+    eq_or_diff($out, $readme x2, "$label captured stdout"); 
+  }
+  else {
+    is($out, $readme . $readme, "$label captured merged");
+  }
 
   # system -- STDOUT
   _reset;
@@ -282,10 +299,18 @@ sub tee_tests {
   };
 
   $label ="[$sub] p-large-STDOUT/STDERR:";
-  is($out, $readme, "$label captured stdout during tee");
-  is($err, $readme, "$label captured stderr during tee");
-  is($out2, $readme, "$label captured stdout passed-through from tee");
-  is($err2, $readme, "$label captured stderr passed-through from tee");
+  if ( $have_diff ) {
+    eq_or_diff($out, $readme, "$label captured stdout during tee");
+    eq_or_diff($err, $readme, "$label captured stderr during tee");
+    eq_or_diff($out2, $readme, "$label captured stdout passed-through from tee");
+    eq_or_diff($err2, $readme, "$label captured stderr passed-through from tee");
+  }
+  else {
+    is($out, $readme, "$label captured stdout during tee");
+    is($err, $readme, "$label captured stderr during tee");
+    is($out2, $readme, "$label captured stdout passed-through from tee");
+    is($err2, $readme, "$label captured stderr passed-through from tee");
+  }
 
   # Perl - STDOUT+STDERR
   _reset;

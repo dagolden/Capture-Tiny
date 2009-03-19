@@ -175,9 +175,13 @@ sub _capture_tee {
   _debug( "# starting _capture_tee with (@_)...\n" ); 
   my ($tee_stdout, $tee_stderr, $merge, $code) = @_;
   # save existing filehandles and setup captures
-  my $localize;
-  local *ORIG_STDOUT = *STDOUT;
-  $localize++, local *STDOUT if grep { $_ eq 'scalar' } PerlIO::get_layers(\*STDOUT);
+  my %localize;
+  local *CT_ORIG_STDIN  = *STDIN ;
+  local *CT_ORIG_STDOUT = *STDOUT;
+  local *CT_ORIG_STDERR = *STDERR;
+  $localize{stdin}++, local *STDIN if grep { $_ eq 'scalar' } PerlIO::get_layers(\*STDIN);
+  $localize{stdout}++, local *STDOUT if grep { $_ eq 'scalar' } PerlIO::get_layers(\*STDOUT);
+  $localize{stderr}++, local *STDERR if grep { $_ eq 'scalar' } PerlIO::get_layers(\*STDERR);
   my %proxy_std = _proxy_std();
   my $stash = { old => _copy_std() };
   $stash->{new}{$_} = $stash->{capture}{$_} = tempfile() for qw/stdout stderr/;
@@ -194,7 +198,7 @@ sub _capture_tee {
   # execute user provided code
   _debug( "# running code $code ...\n" ); 
   {
-    local *STDERR = *STDOUT if $merge; # minimize buffer mixups in perl code
+    local *STDERR = *STDOUT if $merge; # minimize buffer mixups during $code
     $code->();
   }
   my $exit_code = $?; # save this for later
@@ -207,7 +211,8 @@ sub _capture_tee {
   # return captured output
   my $got_out = _slurp($stash->{capture}{stdout});
   my $got_err = $merge ? q() : _slurp($stash->{capture}{stderr});
-  print ORIG_STDOUT $got_out if $localize && $tee_stdout; 
+  print CT_ORIG_STDOUT $got_out if $localize{stdout} && $tee_stdout; 
+  print CT_ORIG_STDERR $got_err if !$merge && $localize{stderr} && $tee_stdout; 
   $? = $exit_code;
   return $got_out if $merge;
   return wantarray ? ($got_out, $got_err) : $got_out;
