@@ -193,7 +193,10 @@ sub _capture_tee {
   _open_std( $stash->{new} );
   # execute user provided code
   _debug( "# running code $code ...\n" ); 
-  $code->();
+  {
+    local *STDERR = *STDOUT if $merge; # minimize buffer mixups in perl code
+    $code->();
+  }
   my $exit_code = $?; # save this for later
   # restore prior filehandles and shut down tees
   _debug( "# restoring ...\n" ); 
@@ -204,7 +207,7 @@ sub _capture_tee {
   # return captured output
   my $got_out = _slurp($stash->{capture}{stdout});
   my $got_err = $merge ? q() : _slurp($stash->{capture}{stderr});
-  print ORIG_STDOUT $got_out if $localize; 
+  print ORIG_STDOUT $got_out if $localize && $tee_stdout; 
   $? = $exit_code;
   return $got_out if $merge;
   return wantarray ? ($got_out, $got_err) : $got_out;

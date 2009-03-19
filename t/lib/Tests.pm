@@ -23,7 +23,7 @@ select STDERR; $|++;
 select STDOUT; $|++;
 
 # 'large' input file
-my $readme = do { local(@ARGV,$/)=qw/README/; <> } x 5;
+my $readme = do { local(@ARGV,$/)=qw/README/; <> } ;
 
 my ($out, $err, $out2, $err2, $label);
 sub _reset { $_ = undef for ($out, $err, $out2, $err2 ); 1};
@@ -141,7 +141,7 @@ sub capture_tests {
 # capture_merged
 #--------------------------------------------------------------------------#
 
-sub capture_merged_count { 7 } 
+sub capture_merged_count { 8 } 
 sub capture_merged_tests {
   my $sub = 'capture_merged';
 
@@ -170,7 +170,8 @@ sub capture_merged_tests {
   };
 
   $label ="[$sub] p-STDOUT/STDERR:";
-  is($out, "FooBar", "$label captured merged");
+  like($out, qr/Foo/, "$label captured merged STDOUT");
+  like($out, qr/Bar/, "$label captured merged STDERR");
 
   # Capture STDOUT+STDERR from perl - large text
   _reset;

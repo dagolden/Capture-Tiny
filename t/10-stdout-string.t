@@ -31,8 +31,10 @@ my $no_fork = $^O ne 'MSWin32' && ! $Config{d_fork};
 save_std(qw/stdout/);
 ok( close STDOUT, "closed STDOUT" );
 
-my $stdout_buf;
 ok( open( STDOUT, ">", \(my $stdout_buf)), "reopened STDOUT to string" ); 
+
+select STDERR; $|++;
+select STDOUT; $|++;
 
 capture_tests();
 capture_merged_tests();
