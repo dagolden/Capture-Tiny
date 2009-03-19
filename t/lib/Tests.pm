@@ -22,6 +22,9 @@ use Capture::Tiny qw/capture capture_merged tee tee_merged/;
 select STDERR; $|++;
 select STDOUT; $|++;
 
+# 'large' input file
+my $readme = do { local(@ARGV,$/)=qw/README/; <> } x 5;
+
 my ($out, $err, $out2, $err2, $label);
 sub _reset { $_ = undef for ($out, $err, $out2, $err2 ); 1};
 
@@ -29,7 +32,7 @@ sub _reset { $_ = undef for ($out, $err, $out2, $err2 ); 1};
 # capture
 #--------------------------------------------------------------------------#
 
-sub capture_count { 17 }
+sub capture_count { 19 }
 sub capture_tests {
   my $sub = 'capture';
 
@@ -72,6 +75,16 @@ sub capture_tests {
   $label ="[$sub] p-STDOUT/STDERR:";
   is($out, "Foo", "$label captured stdout");
   is($err, "Bar", "$label captured stderr");
+
+  # Capture STDOUT/STDERR from perl -- large text
+  _reset;
+  ($out, $err) = capture {
+    print $readme; print STDERR $readme;
+  };
+
+  $label ="[$sub] p-large-STDOUT/STDERR:";
+  is($out, $readme, "$label captured stdout");
+  is($err, $readme, "$label captured stderr");
 
   # Capture STDOUT/STDERR from perl
   _reset;
@@ -128,7 +141,7 @@ sub capture_tests {
 # capture_merged
 #--------------------------------------------------------------------------#
 
-sub capture_merged_count { 6 } 
+sub capture_merged_count { 7 } 
 sub capture_merged_tests {
   my $sub = 'capture_merged';
 
@@ -150,7 +163,7 @@ sub capture_merged_tests {
   $label ="[$sub] p-STDERR:";
   is($out, 'Bar', "$label captured merged");
 
-  # Capture STDOUT from perl
+  # Capture STDOUT+STDERR from perl
   _reset;
   $out = capture_merged {
     print "Foo"; print STDERR "Bar";
@@ -158,6 +171,15 @@ sub capture_merged_tests {
 
   $label ="[$sub] p-STDOUT/STDERR:";
   is($out, "FooBar", "$label captured merged");
+
+  # Capture STDOUT+STDERR from perl - large text
+  _reset;
+  $out = capture_merged {
+    print $readme; print STDERR $readme;
+  };
+
+  $label ="[$sub] p-large-STDOUT/STDERR:";
+  is($out, $readme . $readme, "$label captured merged");
 
   # system -- STDOUT
   _reset;
@@ -191,7 +213,7 @@ sub capture_merged_tests {
 # tee
 #--------------------------------------------------------------------------#
 
-sub tee_count { 35 }
+sub tee_count { 39 }
 sub tee_tests {
   my $sub = 'tee';
   # Perl - Nothing
@@ -249,6 +271,20 @@ sub tee_tests {
   is($err, "Bar", "$label captured stderr during tee");
   is($out2, "Foo", "$label captured stdout passed-through from tee");
   is($err2, "Bar", "$label captured stderr passed-through from tee");
+
+  # Perl - STDOUT+STDERR - large text
+  _reset;
+  ($out2, $err2) = capture {
+    ($out, $err) = tee {
+      print $readme; print STDERR $readme;
+    };
+  };
+
+  $label ="[$sub] p-large-STDOUT/STDERR:";
+  is($out, $readme, "$label captured stdout during tee");
+  is($err, $readme, "$label captured stderr during tee");
+  is($out2, $readme, "$label captured stdout passed-through from tee");
+  is($err2, $readme, "$label captured stderr passed-through from tee");
 
   # Perl - STDOUT+STDERR
   _reset;
@@ -326,7 +362,7 @@ sub tee_tests {
 # tee_merged
 #--------------------------------------------------------------------------#
 
-sub tee_merged_count { 18 }
+sub tee_merged_count { 21 }
 sub tee_merged_tests {
   my $sub = 'tee_merged';
 
@@ -368,6 +404,19 @@ sub tee_merged_tests {
   $label ="[$sub] p-STDOUT/STDERR:";
   is($out, "FooBar", "$label captured merged during tee");
   is($out2, "FooBar", "$label captured merged passed-through from tee");
+  is($err2, "", "$label captured stderr passed-through from tee");
+
+  # Perl - STDOUT+STDERR - large
+  _reset;
+  ($out2, $err2) = capture {
+    ($out, $err) = tee_merged {
+      print $readme; print STDERR $readme;
+    };
+  };
+
+  $label ="[$sub] p-large-STDOUT/STDERR:";
+  is($out, $readme . $readme, "$label captured merged during tee");
+  is($out2, $readme . $readme, "$label captured merged passed-through from tee");
   is($err2, "", "$label captured stderr passed-through from tee");
 
   # system() - STDOUT

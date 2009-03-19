@@ -3,7 +3,7 @@ NAME
     programs
 
 VERSION
-    This documentation describes version 0.05.
+    This documentation describes version 0.06.
 
 SYNOPSIS
          use Capture::Tiny qw/capture tee capture_merged tee_merged/;

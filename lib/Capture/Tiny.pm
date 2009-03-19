@@ -13,7 +13,7 @@ use IO::Handle ();
 use File::Spec ();
 use File::Temp qw/tempfile tmpnam/;
 
-our $VERSION = '0.05';
+our $VERSION = '0.06';
 $VERSION = eval $VERSION; ## no critic
 our @ISA = qw/Exporter/;
 our @EXPORT_OK = qw/capture capture_merged tee tee_merged/;
@@ -194,6 +194,7 @@ sub _capture_tee {
   # execute user provided code
   _debug( "# running code $code ...\n" ); 
   $code->();
+  my $exit_code = $?; # save this for later
   # restore prior filehandles and shut down tees
   _debug( "# restoring ...\n" ); 
   _open_std( $stash->{old} );
@@ -204,6 +205,7 @@ sub _capture_tee {
   my $got_out = _slurp($stash->{capture}{stdout});
   my $got_err = $merge ? q() : _slurp($stash->{capture}{stderr});
   print ORIG_STDOUT $got_out if $localize; 
+  $? = $exit_code;
   return $got_out if $merge;
   return wantarray ? ($got_out, $got_err) : $got_out;
 }
