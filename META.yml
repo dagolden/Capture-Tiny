@@ -1,6 +1,6 @@
 ---
 name: Capture-Tiny
-version: 0.06
+version: 0.05_51
 author:
   - 'David Golden <dagolden@cpan.org>'
 abstract: 'Capture STDOUT and STDERR from Perl, XS or external programs'
@@ -19,7 +19,7 @@ build_requires:
 provides:
   Capture::Tiny:
     file: lib/Capture/Tiny.pm
-    version: 0.06
+    version: 0.05_51
 generated_by: Module::Build version 0.3
 meta-spec:
   url: http://module-build.sourceforge.net/META-spec-v1.2.html
