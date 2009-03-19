@@ -59,12 +59,20 @@ sub _close {
   _debug( "# closed " . ( defined $_[0] ? _name($_[0]) : 'undef' ) . "\n" );
 }
 
+my $dup_stdin; # cache this so STDIN stays fd0
 sub _proxy_std {
   my %proxies;
   if ( ! defined fileno STDIN ) {
-    _open \*STDIN, "<" . File::Spec->devnull;
-    _debug( "# proxied STDIN as " . (defined fileno STDIN ? fileno STDIN : 'undef' ) . "\n" );
-    $proxies{stdin} = \*STDIN;
+    if (defined $dup_stdin) {
+      open STDIN, "<&=" . fileno($dup_stdin);
+      _debug( "# restored proxy STDIN as " . (defined fileno STDIN ? fileno STDIN : 'undef' ) . "\n" );
+    }
+    else {
+      _open \*STDIN, "<" . File::Spec->devnull;
+      _debug( "# proxied STDIN as " . (defined fileno STDIN ? fileno STDIN : 'undef' ) . "\n" );
+      $proxies{stdin} = \*STDIN;
+      open $dup_stdin, "<&=STDIN";
+    }
   }
   if ( ! defined fileno STDOUT ) {
     _open \*STDOUT, ">" . File::Spec->devnull;
@@ -82,7 +90,7 @@ sub _proxy_std {
 sub _copy_std {
   my %handles = map { $_, IO::Handle->new } qw/stdin stdout stderr/;
   _debug( "# copying std handles ...\n" ); 
-  _open $handles{stdin},   "<&STDIN";
+  _open $handles{stdin},   "<&STDIN" if fileno(STDIN) >= 0;
   _open $handles{stdout},  ">&STDOUT";
   _open $handles{stderr},  ">&STDERR";
   return \%handles;
@@ -90,7 +98,7 @@ sub _copy_std {
 
 sub _open_std {
   my ($handles) = @_;
-  _open \*STDIN, "<&" . fileno $handles->{stdin};
+  _open \*STDIN, "<&" . fileno $handles->{stdin} if defined fileno($handles->{stdin});
   _open \*STDOUT, ">&" . fileno $handles->{stdout};
   _open \*STDERR, ">&" . fileno $handles->{stderr};
 }
@@ -205,6 +213,7 @@ sub _capture_tee {
   # execute user provided code
   _debug( "# running code $code ...\n" ); 
   {
+    local *STDIN = *CT_ORIG_STDIN if $localize{stdin}; # get original, not proxy STDIN
     local *STDERR = *STDOUT if $merge; # minimize buffer mixups during $code
     $code->();
   }

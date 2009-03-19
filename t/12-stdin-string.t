@@ -41,13 +41,13 @@ ok( open( STDIN, "<", \(my $stdin_buf)), "reopened STDIN to string" );
 select STDERR; $|++;
 select STDOUT; $|++;
 
-#capture_tests();
-#capture_merged_tests();
+capture_tests();
+capture_merged_tests();
 
 SKIP: {
   skip tee_count() + tee_merged_count, "requires working fork()" if $no_fork;
   tee_tests();
-#  tee_merged_tests();
+  tee_merged_tests();
 }
 
 $stdin_buf = "Hello World\n";
