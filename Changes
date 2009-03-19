@@ -7,6 +7,12 @@
 
 Revision history for Capture-Tiny
 
+0.06
+
+  Testing:
+
+    - Verify that $? is preserved during capture { system(@cmd) };
+
 0.05 Tue Mar  3 06:56:05 EST 2009
 
   Fixed:

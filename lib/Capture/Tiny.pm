@@ -13,7 +13,7 @@ use IO::Handle ();
 use File::Spec ();
 use File::Temp qw/tempfile tmpnam/;
 
-our $VERSION = '0.05';
+our $VERSION = '0.06';
 $VERSION = eval $VERSION; ## no critic
 our @ISA = qw/Exporter/;
 our @EXPORT_OK = qw/capture capture_merged tee tee_merged/;
