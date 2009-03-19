@@ -175,6 +175,9 @@ sub _capture_tee {
   _debug( "# starting _capture_tee with (@_)...\n" ); 
   my ($tee_stdout, $tee_stderr, $merge, $code) = @_;
   # save existing filehandles and setup captures
+  my $localize;
+  local *ORIG_STDOUT = *STDOUT;
+  $localize++, local *STDOUT if grep { $_ eq 'scalar' } PerlIO::get_layers(\*STDOUT);
   my %proxy_std = _proxy_std();
   my $stash = { old => _copy_std() };
   $stash->{new}{$_} = $stash->{capture}{$_} = tempfile() for qw/stdout stderr/;
@@ -200,6 +203,7 @@ sub _capture_tee {
   # return captured output
   my $got_out = _slurp($stash->{capture}{stdout});
   my $got_err = $merge ? q() : _slurp($stash->{capture}{stderr});
+  print ORIG_STDOUT $got_out if $localize; 
   return $got_out if $merge;
   return wantarray ? ($got_out, $got_err) : $got_out;
 }
