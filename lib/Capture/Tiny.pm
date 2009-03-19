@@ -112,9 +112,9 @@ sub _start_tee {
   # setup pipes
   $stash->{$_}{$which} = IO::Handle->new for qw/tee reader/;
   pipe $stash->{reader}{$which}, $stash->{tee}{$which};
-  _debug( "# pipe for $which\: " . 
-    *{$stash->{tee}{$which}}{NAME} . " " . fileno( $stash->{tee}{$which} ) 
-    . " => " . *{$stash->{reader}{$which}}{NAME} . " " . fileno( $stash->{reader}{$which}) . "\n" );
+  _debug( "# pipe for $which\: " .  _name($stash->{tee}{$which}) . " "  
+    . fileno( $stash->{tee}{$which} ) . " => " . _name($stash->{reader}{$which}) 
+    . " " . fileno( $stash->{reader}{$which}) . "\n" );
   select((select($stash->{tee}{$which}), $|=1)[0]); # autoflush
   # setup desired redirection for parent and child
   $stash->{new}{$which} = $stash->{tee}{$which};
