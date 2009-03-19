@@ -90,7 +90,7 @@ sub _proxy_std {
 sub _copy_std {
   my %handles = map { $_, IO::Handle->new } qw/stdin stdout stderr/;
   _debug( "# copying std handles ...\n" ); 
-  _open $handles{stdin},   "<&STDIN" if fileno(STDIN) >= 0;
+  _open $handles{stdin},   "<&STDIN"; 
   _open $handles{stdout},  ">&STDOUT";
   _open $handles{stderr},  ">&STDERR";
   return \%handles;
@@ -98,7 +98,7 @@ sub _copy_std {
 
 sub _open_std {
   my ($handles) = @_;
-  _open \*STDIN, "<&" . fileno $handles->{stdin} if defined fileno($handles->{stdin});
+  _open \*STDIN, "<&" . fileno $handles->{stdin};
   _open \*STDOUT, ">&" . fileno $handles->{stdout};
   _open \*STDERR, ">&" . fileno $handles->{stderr};
 }
