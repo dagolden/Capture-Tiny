@@ -9,6 +9,10 @@ Revision history for Capture-Tiny
 
 0.05_51
 
+  Added:
+    - Experimental support for STDOUT, STDERR or STDIN opened to in-memory
+      files (open to scalar reference) or tied, albeit with some limitations
+
   Testing:
 
     - Verify that $? is preserved during capture { system(@cmd) };
