@@ -98,15 +98,33 @@ properly ordered due to buffering
 
 =head1 LIMITATIONS
 
+=head2 Portability
+
 Portability is a goal, not a guarantee.  C<<< tee >>> requires fork, except on 
 Windows where C<<< system(1, @cmd) >>> is used instead.  Not tested on any
-esoteric platforms yet.  
+particularly esoteric platforms yet.  
+
+=head2 Closing STDIN, STDOUT or STDERR
 
 Capture::Tiny will work even if STDIN, STDOUT or STDERR have been previously
 closed.  However, since they may be reopened to capture or tee output, any code
 within the captured block that depends on finding them closed will, of course,
 not find them to be closed.  If they started closed, Capture::Tiny will reclose
 them again when the capture block finishes.
+
+=head2 Modifying STDIN, STDOUT or STDERR
+
+If STDOUT or STDERR are modified -- e.g. tied or opened to a scalar reference
+-- prior to the call to C<<< capture >>> or C<<< tee >>>, then Capture::Tiny will override
+the tie or scalar reference handle for the duration of C<<< capture >>> or C<<< tee >>> call.
+In the case of a scalar reference handle and C<<< tee >>>, captured output will be
+sent to the scalar reference handle after C<<< tee >>> finishes.
+
+Capture::Tiny attempts to preserve the semantics of tied STDIN or STDIN opened
+to a scalar reference.
+
+Attempting to modify STDIN, STDOUT or STDERR I<during> C<<< capture >>> or C<<< tee >>> is
+almost certainly going to cause problems.  Don't do that.
 
 =head1 BUGS
 
