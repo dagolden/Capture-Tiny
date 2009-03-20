@@ -59,19 +59,19 @@ sub _close {
   _debug( "# closed " . ( defined $_[0] ? _name($_[0]) : 'undef' ) . "\n" );
 }
 
-my $dup_stdin; # cache this so STDIN stays fd0
+my %dup; # cache this so STDIN stays fd0
 sub _proxy_std {
   my %proxies;
   if ( ! defined fileno STDIN ) {
-    if (defined $dup_stdin) {
-      _open \*STDIN, "<&=" . fileno($dup_stdin);
+    if (defined $dup{stdin}) {
+      _open \*STDIN, "<&=" . fileno($dup{stdin});
       _debug( "# restored proxy STDIN as " . (defined fileno STDIN ? fileno STDIN : 'undef' ) . "\n" );
     }
     else {
       _open \*STDIN, "<" . File::Spec->devnull;
       _debug( "# proxied STDIN as " . (defined fileno STDIN ? fileno STDIN : 'undef' ) . "\n" );
       $proxies{stdin} = \*STDIN;
-      _open $dup_stdin, "<&=STDIN";
+      _open $dup{stdin}, "<&=STDIN";
     }
   }
   if ( ! defined fileno STDOUT ) {
