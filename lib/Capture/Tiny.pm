@@ -64,14 +64,14 @@ sub _proxy_std {
   my %proxies;
   if ( ! defined fileno STDIN ) {
     if (defined $dup_stdin) {
-      open STDIN, "<&=" . fileno($dup_stdin);
+      _open \*STDIN, "<&=" . fileno($dup_stdin);
       _debug( "# restored proxy STDIN as " . (defined fileno STDIN ? fileno STDIN : 'undef' ) . "\n" );
     }
     else {
       _open \*STDIN, "<" . File::Spec->devnull;
       _debug( "# proxied STDIN as " . (defined fileno STDIN ? fileno STDIN : 'undef' ) . "\n" );
       $proxies{stdin} = \*STDIN;
-      open $dup_stdin, "<&=STDIN";
+      _open $dup_stdin, "<&=STDIN";
     }
   }
   if ( ! defined fileno STDOUT ) {
@@ -194,8 +194,10 @@ sub _capture_tee {
   local *CT_ORIG_STDOUT = *STDOUT;
   local *CT_ORIG_STDERR = *STDERR;
   $localize{stdin}++, local *STDIN if grep { $_ eq 'scalar' } PerlIO::get_layers(\*STDIN);
-  $localize{stdout}++, local *STDOUT if grep { $_ eq 'scalar' } PerlIO::get_layers(\*STDOUT);
-  $localize{stderr}++, local *STDERR if grep { $_ eq 'scalar' } PerlIO::get_layers(\*STDERR);
+  $localize{stdout}++, local(*STDOUT) if grep { $_ eq 'scalar' } PerlIO::get_layers(\*STDOUT);
+  $localize{stderr}++, local(*STDERR) if grep { $_ eq 'scalar' } PerlIO::get_layers(\*STDERR);
+  $localize{stdout}++, local(*STDOUT), _open( \*STDOUT, ">&=1") if tied *STDOUT;
+  $localize{stderr}++, local(*STDERR), _open( \*STDERR, ">&=2") if tied *STDERR;
   _debug( "# localized $_\n" ) for keys %localize; 
   my %proxy_std = _proxy_std();
   my $stash = { old => _copy_std() };
