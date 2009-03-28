@@ -13,7 +13,8 @@ use Exporter ();
 use IO::Handle ();
 use File::Spec ();
 use File::Temp qw/tempfile tmpnam/;
-use PerlIO ();
+# Get PerlIO or fake it
+BEGIN { eval { require PerlIO; 1 } or *PerlIO::get_layers = sub { return () }; }
 
 our $VERSION = '0.05_51';
 $VERSION = eval $VERSION; ## no critic
