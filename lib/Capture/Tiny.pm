@@ -230,8 +230,8 @@ sub _capture_tee {
   $localize{stdin}++, local *STDIN if grep { $_ eq 'scalar' } PerlIO::get_layers(\*STDIN);
   $localize{stdout}++, local(*STDOUT) if grep { $_ eq 'scalar' } PerlIO::get_layers(\*STDOUT);
   $localize{stderr}++, local(*STDERR) if grep { $_ eq 'scalar' } PerlIO::get_layers(\*STDERR);
-  $localize{stdout}++, local(*STDOUT), _open( \*STDOUT, ">&=1") if tied *STDOUT;
-  $localize{stderr}++, local(*STDERR), _open( \*STDERR, ">&=2") if tied *STDERR;
+  $localize{stdout}++, local(*STDOUT), _open( \*STDOUT, ">&=1") if tied *STDOUT && $] >= 5.008;
+  $localize{stderr}++, local(*STDERR), _open( \*STDERR, ">&=2") if tied *STDERR && $] >= 5.008;
   _debug( "# localized $_\n" ) for keys %localize; 
   my %proxy_std = _proxy_std();
   _debug( "# proxy std is @{ [%proxy_std] }\n" );
@@ -410,7 +410,7 @@ If STDOUT or STDERR are modified -- e.g. tied or opened to a scalar reference
 -- prior to the call to {capture} or {tee}, then Capture::Tiny will override
 the tie or scalar reference handle for the duration of {capture} or {tee} call.
 In the case of a scalar reference handle and {tee}, captured output will be
-sent to the scalar reference handle after {tee} finishes.
+sent to the scalar reference handle after {tee} finishes.  (Requires Perl 5.8)
 
 Capture::Tiny attempts to preserve the semantics of tied STDIN or STDIN opened
 to a scalar reference.

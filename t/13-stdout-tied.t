@@ -8,7 +8,7 @@ use strict;
 use warnings;
 use Test::More;
 use Config;
-use t::lib::Utils qw/save_std restore_std/;
+use t::lib::Utils qw/save_std restore_std next_fd/;
 use t::lib::Tests qw(
   capture_tests           capture_count
   capture_merged_tests    capture_merged_count
@@ -19,10 +19,10 @@ use t::lib::TieLC;
 
 #--------------------------------------------------------------------------#
 
-#plan skip_all => "In memory files require Perl 5.8"
-#  if $] < 5.008;
+plan skip_all => "capture needs Perl 5.8 for tied STDOUT"
+  if $] < 5.008;
 
-plan tests => 2 + capture_count() + capture_merged_count() 
+plan tests => 3 + capture_count() + capture_merged_count() 
                 + tee_count() + tee_merged_count(); 
 
 my $no_fork = $^O ne 'MSWin32' && ! $Config{d_fork};
@@ -33,6 +33,8 @@ save_std(qw/stdout/);
 tie *STDOUT, 't::lib::TieLC', ">&=STDOUT";
 my $orig_tie = tied *STDOUT;
 ok( $orig_tie, "STDOUT is tied" ); 
+
+my $fd = next_fd;
 
 select STDERR; $|++;
 select STDOUT; $|++;
@@ -45,6 +47,8 @@ SKIP: {
   tee_tests();
   tee_merged_tests();
 }
+
+is( next_fd, $fd, "no file descriptors leaked" );
 
 is( tied *STDOUT, $orig_tie, "STDOUT is still tied" ); 
 restore_std(qw/stdout/);
