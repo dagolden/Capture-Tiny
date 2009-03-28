@@ -114,8 +114,9 @@ sub _unproxy {
     $proxy_count{$p}--;
     _debug( "# unproxied " . uc($p) . " ($proxy_count{$p} left)\n" );
     if ( ! $proxy_count{$p} ) {
-      _close delete $dup{$p};
       _close $proxies{$p};
+      _close $dup{$p} unless $] < 5.008; # 5.6 will have already closed this as dup 
+      delete $dup{$p};
     }
   }
 }
