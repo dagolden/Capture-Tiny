@@ -62,9 +62,11 @@ sub _close {
 }
 
 my %dup; # cache this so STDIN stays fd0
+my %proxy_count;  
 sub _proxy_std {
   my %proxies;
   if ( ! defined fileno STDIN ) {
+    $proxy_count{stdin}++;
     if (defined $dup{stdin}) {
       _open \*STDIN, "<&=" . fileno($dup{stdin});
       _debug( "# restored proxy STDIN as " . (defined fileno STDIN ? fileno STDIN : 'undef' ) . "\n" );
@@ -72,21 +74,50 @@ sub _proxy_std {
     else {
       _open \*STDIN, "<" . File::Spec->devnull;
       _debug( "# proxied STDIN as " . (defined fileno STDIN ? fileno STDIN : 'undef' ) . "\n" );
-      $proxies{stdin} = \*STDIN;
       _open $dup{stdin} = IO::Handle->new, "<&=STDIN";
     }
+    $proxies{stdin} = \*STDIN;
   }
   if ( ! defined fileno STDOUT ) {
-    _open \*STDOUT, ">" . File::Spec->devnull;
-    _debug( "# proxied STDOUT as " . (defined fileno STDOUT ? fileno STDOUT : 'undef' ) . "\n" );
+    $proxy_count{stdout}++;
+    if (defined $dup{stdout}) {
+      _open \*STDOUT, ">&=" . fileno($dup{stdout});
+      _debug( "# restored proxy STDOUT as " . (defined fileno STDOUT ? fileno STDOUT : 'undef' ) . "\n" );
+    }
+    else {
+      _open \*STDOUT, ">" . File::Spec->devnull;
+      _debug( "# proxied STDOUT as " . (defined fileno STDOUT ? fileno STDOUT : 'undef' ) . "\n" );
+      _open $dup{stdout} = IO::Handle->new, ">&=STDOUT";
+    }
     $proxies{stdout} = \*STDOUT;
   }
   if ( ! defined fileno STDERR ) {
-    _open \*STDERR, ">" . File::Spec->devnull;
-    _debug( "# proxied STDERR as " . (defined fileno STDERR ? fileno STDERR : 'undef' ) . "\n" );
+    $proxy_count{stderr}++;
+    if (defined $dup{stderr}) {
+      _open \*STDERR, ">&=" . fileno($dup{stderr});
+      _debug( "# restored proxy STDERR as " . (defined fileno STDERR ? fileno STDERR : 'undef' ) . "\n" );
+    }
+    else {
+      _open \*STDERR, ">" . File::Spec->devnull;
+      _debug( "# proxied STDERR as " . (defined fileno STDERR ? fileno STDERR : 'undef' ) . "\n" );
+      _open $dup{stderr} = IO::Handle->new, ">&=STDERR";
+    }
     $proxies{stderr} = \*STDERR;
   }
   return %proxies;
+}
+
+sub _unproxy {
+  my (%proxies) = @_;
+  _debug( "# unproxing " . join(" ", keys %proxies) . "\n" ); 
+  for my $p ( keys %proxies ) {
+    $proxy_count{$p}--;
+    _debug( "# unproxied " . uc($p) . " ($proxy_count{$p} left)\n" );
+    if ( ! $proxy_count{$p} ) {
+      _close delete $dup{$p};
+      _close $proxies{$p};
+    }
+  }
 }
 
 sub _copy_std {
@@ -191,10 +222,10 @@ sub _capture_tee {
   _debug( "# starting _capture_tee with (@_)...\n" ); 
   my ($tee_stdout, $tee_stderr, $merge, $code) = @_;
   # save existing filehandles and setup captures
-  my %localize;
   local *CT_ORIG_STDIN  = *STDIN ;
   local *CT_ORIG_STDOUT = *STDOUT;
   local *CT_ORIG_STDERR = *STDERR;
+  my %localize;
   $localize{stdin}++, local *STDIN if grep { $_ eq 'scalar' } PerlIO::get_layers(\*STDIN);
   $localize{stdout}++, local(*STDOUT) if grep { $_ eq 'scalar' } PerlIO::get_layers(\*STDOUT);
   $localize{stderr}++, local(*STDERR) if grep { $_ eq 'scalar' } PerlIO::get_layers(\*STDERR);
@@ -202,6 +233,7 @@ sub _capture_tee {
   $localize{stderr}++, local(*STDERR), _open( \*STDERR, ">&=2") if tied *STDERR;
   _debug( "# localized $_\n" ) for keys %localize; 
   my %proxy_std = _proxy_std();
+  _debug( "# proxy std is @{ [%proxy_std] }\n" );
   my $stash = { old => _copy_std() };
   $stash->{new}{$_} = $stash->{capture}{$_} = tempfile() for qw/stdout stderr/;
   _debug("# will capture $_ on " .fileno($stash->{capture}{$_})."\n") for qw/stdout stderr/;
@@ -226,7 +258,7 @@ sub _capture_tee {
   _debug( "# restoring ...\n" ); 
   _open_std( $stash->{old} );
   _close( $_ ) for values %{$stash->{old}}; # don't leak fds
-  _close( $_ ) for values %proxy_std;
+  _unproxy( %proxy_std );
   _kill_tees( $stash ) if $tee_stdout || $tee_stderr;
   # return captured output
   my $got_out = _slurp($stash->{capture}{stdout});

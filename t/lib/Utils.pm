@@ -31,6 +31,7 @@ sub restore_std {
 }
 
 sub next_fd {
+  no warnings 'io';
   open my $fh, ">", File::Spec->devnull;
   my $fileno = fileno $fh;
   close $fh;
