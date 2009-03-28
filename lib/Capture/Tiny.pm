@@ -8,6 +8,7 @@ package Capture::Tiny;
 use 5.006;
 use strict;
 use warnings;
+use Carp ();
 use Exporter ();
 use IO::Handle ();
 use File::Spec ();
@@ -50,12 +51,12 @@ sub _name {
 }
 
 sub _open {
-  open $_[0], $_[1] or die "Error from open(" . join(q{, }, @_) . "): $!";
+  open $_[0], $_[1] or Carp::confess "Error from open(" . join(q{, }, @_) . "): $!";
   _debug( "# open " . join( ", " , map { defined $_ ? _name($_) : 'undef' } @_ ) . " as " . fileno( $_[0] ) . "\n" );
 }
 
 sub _close {
-  close $_[0] or die "Error from close(" . join(q{, }, @_) . "): $!";
+  close $_[0] or Carp::confess "Error from close(" . join(q{, }, @_) . "): $!";
   _debug( "# closed " . ( defined $_[0] ? _name($_[0]) : 'undef' ) . "\n" );
 }
 
@@ -140,7 +141,7 @@ sub _fork_exec {
   my ($which, $stash) = @_;
   my $pid = fork; 
   if ( not defined $pid ) {
-    die "Couldn't fork(): $!";
+    Carp::confess "Couldn't fork(): $!";
   }
   elsif ($pid == 0) { # child
     _debug( "# in child process ...\n" ); 
@@ -161,7 +162,7 @@ sub _wait_for_tees {
   my $start = time;
   my @files = values %{$stash->{flag_files}};
   1 until _files_exist(@files) || (time - $start > 30);
-  die "Timed out waiting for subprocesses to start" if ! _files_exist(@files);
+  Carp::confess "Timed out waiting for subprocesses to start" if ! _files_exist(@files);
   unlink $_ for @files; 
 }
 
