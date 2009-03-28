@@ -29,7 +29,7 @@ select STDERR; $|++;
 select STDOUT; $|++;
 
 # 'large' input file
-my $readme = do { local(@ARGV,$/)=qw/README/; <> } ;
+my $readme = do { local *FH; open FH, '<README'; local $/; <FH> } ;
 
 my ($out, $err, $out2, $err2, $label);
 sub _reset { $_ = undef for ($out, $err, $out2, $err2 ); 1};
