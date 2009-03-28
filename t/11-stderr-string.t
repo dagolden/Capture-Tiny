@@ -18,7 +18,7 @@ use t::lib::Tests qw(
 
 #--------------------------------------------------------------------------#
 
-plan skip_all => "In memory files not supported before Perl 5.8"
+plan skip_all => "In memory files require Perl 5.8"
   if $] < 5.008;
 
 plan tests => 2 + capture_count() + capture_merged_count() 
