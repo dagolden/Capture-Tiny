@@ -73,7 +73,7 @@ sub _proxy_std {
       _open \*STDIN, "<" . File::Spec->devnull;
       _debug( "# proxied STDIN as " . (defined fileno STDIN ? fileno STDIN : 'undef' ) . "\n" );
       $proxies{stdin} = \*STDIN;
-      _open $dup{stdin}, "<&=STDIN";
+      _open $dup{stdin} = IO::Handle->new, "<&=STDIN";
     }
   }
   if ( ! defined fileno STDOUT ) {
