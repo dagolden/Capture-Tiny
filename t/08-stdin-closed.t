@@ -8,7 +8,7 @@ use strict;
 use warnings;
 use Test::More;
 use Config;
-use t::lib::Utils qw/save_std restore_std/;
+use t::lib::Utils qw/save_std restore_std next_fd/;
 use t::lib::Tests qw(
   capture_tests           capture_count
   capture_merged_tests    capture_merged_count
@@ -18,7 +18,7 @@ use t::lib::Tests qw(
 
 #--------------------------------------------------------------------------#
 
-plan tests => 1 + capture_count() + capture_merged_count() 
+plan tests => 2 + capture_count() + capture_merged_count() 
                 + tee_count() + tee_merged_count(); 
 
 my $no_fork = $^O ne 'MSWin32' && ! $Config{d_fork};
@@ -28,6 +28,8 @@ my $no_fork = $^O ne 'MSWin32' && ! $Config{d_fork};
 save_std(qw/stdin/);
 ok( close STDIN, "closed STDIN" );
 
+my $fd = next_fd;
+
 capture_tests();
 capture_merged_tests();
 
@@ -36,6 +38,8 @@ SKIP: {
   tee_tests();
   tee_merged_tests();
 }
+
+is( next_fd, $fd, "no file descriptors leaked" );
 
 restore_std(qw/stdin/);
 
