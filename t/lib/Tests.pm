@@ -28,8 +28,17 @@ my $have_diff = eval {
 select STDERR; $|++;
 select STDOUT; $|++;
 
+# 'short' text
+my $multiline = "First line\nSecond line\n";
+
 # 'large' input file
 my $readme = do { local *FH; open FH, '<README'; local $/; <FH> } ;
+
+# unicode
+my $unicode;
+if ( $] >= 5.008 ) {
+  $unicode = "Hi! \x{263A}\n";
+}
 
 my ($out, $err, $out2, $err2, $label);
 sub _reset { $_ = undef for ($out, $err, $out2, $err2 ); 1};
@@ -38,7 +47,7 @@ sub _reset { $_ = undef for ($out, $err, $out2, $err2 ); 1};
 # capture
 #--------------------------------------------------------------------------#
 
-sub capture_count { 19 }
+sub capture_count { 23 }
 sub capture_tests {
   my $sub = 'capture';
 
@@ -81,6 +90,48 @@ sub capture_tests {
   $label ="[$sub] p-STDOUT/STDERR:";
   is($out, "Foo", "$label captured stdout");
   is($err, "Bar", "$label captured stderr");
+
+  # Capture STDOUT/STDERR from perl -- multiline text
+  _reset;
+  ($out, $err) = capture {
+    print $multiline; print STDERR $multiline;
+  };
+
+  $label ="[$sub] p-multi-STDOUT/STDERR:";
+  if ( $have_diff ) {
+    eq_or_diff($out, $multiline, "$label captured stdout"); 
+    eq_or_diff($err, $multiline, "$label captured stderr");
+  }
+  else {
+    is($out, $multiline, "$label captured stdout");
+    is($err, $multiline, "$label captured stderr");
+  }
+
+
+  # Capture STDOUT/STDERR from perl -- unicode line
+  SKIP: {
+    skip "unicode support requires perl 5.8", 2 unless $] >= 5.008;
+    _reset;
+    my %seen;
+    my @orig_layers = grep {$_ ne 'unix' and $seen{$_}++} PerlIO::get_layers(STDOUT);
+    binmode(STDOUT, ":utf8"); binmode(STDERR, ":utf8"); 
+    ($out, $err) = capture {
+      print $unicode; print STDERR $unicode;
+    };
+
+    $label ="[$sub] p-unicode-STDOUT/STDERR:";
+    if ( $have_diff ) {
+      eq_or_diff($out, $unicode, "$label captured stdout"); 
+      eq_or_diff($err, $unicode, "$label captured stderr");
+    }
+    else {
+      is($out, $unicode, "$label captured stdout");
+      is($err, $unicode, "$label captured stderr");
+    }
+    binmode(STDOUT, join( ":", "", "raw", @orig_layers)); 
+    binmode(STDERR, join( ":", "", "raw", @orig_layers)); 
+  }
+
 
   # Capture STDOUT/STDERR from perl -- large text
   _reset;
