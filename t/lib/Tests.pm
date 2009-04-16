@@ -47,7 +47,7 @@ sub _reset { $_ = undef for ($out, $err, $out2, $err2 ); 1};
 # capture
 #--------------------------------------------------------------------------#
 
-sub capture_count { 23 }
+sub capture_count { 25 }
 sub capture_tests {
   my $sub = 'capture';
 
@@ -114,7 +114,8 @@ sub capture_tests {
     _reset;
     my %seen;
     my @orig_layers = grep {$_ ne 'unix' and $seen{$_}++} PerlIO::get_layers(STDOUT);
-    binmode(STDOUT, ":utf8"); binmode(STDERR, ":utf8"); 
+    binmode(STDOUT, ":utf8") if fileno(STDOUT); 
+    binmode(STDERR, ":utf8") if fileno(STDERR); 
     ($out, $err) = capture {
       print $unicode; print STDERR $unicode;
     };
@@ -128,8 +129,8 @@ sub capture_tests {
       is($out, $unicode, "$label captured stdout");
       is($err, $unicode, "$label captured stderr");
     }
-    binmode(STDOUT, join( ":", "", "raw", @orig_layers)); 
-    binmode(STDERR, join( ":", "", "raw", @orig_layers)); 
+    binmode(STDOUT, join( ":", "", "raw", @orig_layers)) if fileno(STDOUT); 
+    binmode(STDERR, join( ":", "", "raw", @orig_layers)) if fileno(STDERR); 
   }
 
 
@@ -197,6 +198,31 @@ sub capture_tests {
   $label ="[$sub] s-STDOUT/STDERR:";
   is($out, "Foo", "$label captured stdout");
   is($err, "Bar", "$label captured stderr");
+
+  # Capture STDOUT/STDERR from perl -- unicode line
+  SKIP: {
+    skip "unicode support requires perl 5.8", 2 unless $] >= 5.008;
+    _reset;
+    my %seen;
+    my @orig_layers = grep {$_ ne 'unix' and $seen{$_}++} PerlIO::get_layers(STDOUT);
+    binmode(STDOUT, ":utf8") if fileno(STDOUT); 
+    binmode(STDERR, ":utf8") if fileno(STDERR); 
+    ($out, $err) = capture {
+      system ($^X, '-e', 'binmode(STDOUT,q{:utf8});binmode(STDERR,q{:utf8});print qq{Hi! \x{263a}\n}; print STDERR qq{Hi! \x{263a}\n}');
+    };
+
+    $label ="[$sub] s-unicode-STDOUT/STDERR:";
+    if ( $have_diff ) {
+      eq_or_diff($out, $unicode, "$label captured stdout"); 
+      eq_or_diff($err, $unicode, "$label captured stderr");
+    }
+    else {
+      is($out, $unicode, "$label captured stdout");
+      is($err, $unicode, "$label captured stderr");
+    }
+    binmode(STDOUT, join( ":", "", "raw", @orig_layers)) if fileno(STDOUT); 
+    binmode(STDERR, join( ":", "", "raw", @orig_layers)) if fileno(STDERR); 
+  }
 
 }
 

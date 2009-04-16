@@ -86,6 +86,7 @@ sub _proxy_std {
       _open $dup{stdin} = IO::Handle->new, "<&=STDIN";
     }
     $proxies{stdin} = \*STDIN;
+    binmode(STDIN, ':utf8');
   }
   if ( ! defined fileno STDOUT ) {
     $proxy_count{stdout}++;
@@ -99,6 +100,7 @@ sub _proxy_std {
       _open $dup{stdout} = IO::Handle->new, ">&=STDOUT";
     }
     $proxies{stdout} = \*STDOUT;
+    binmode(STDOUT, ':utf8');
   }
   if ( ! defined fileno STDERR ) {
     $proxy_count{stderr}++;
@@ -112,6 +114,7 @@ sub _proxy_std {
       _open $dup{stderr} = IO::Handle->new, ">&=STDERR";
     }
     $proxies{stderr} = \*STDERR;
+    binmode(STDERR, ':utf8');
   }
   return %proxies;
 }
@@ -235,6 +238,7 @@ sub _capture_tee {
   local *CT_ORIG_STDIN  = *STDIN ;
   local *CT_ORIG_STDOUT = *STDOUT;
   local *CT_ORIG_STDERR = *STDERR;
+  # find initial layers
   my %layers = (
     stdin   => [PerlIO::get_layers(\*STDIN) ],
     stdout  => [PerlIO::get_layers(\*STDOUT)],
@@ -252,6 +256,12 @@ sub _capture_tee {
   my %proxy_std = _proxy_std();
   _debug( "# proxy std is @{ [%proxy_std] }\n" );
   my $stash = { old => _copy_std() };
+  # update layers after any proxying
+  %layers = (
+    stdin   => [PerlIO::get_layers(\*STDIN) ],
+    stdout  => [PerlIO::get_layers(\*STDOUT)],
+    stderr  => [PerlIO::get_layers(\*STDERR)],
+  );
   # get handles for capture and apply existing IO layers
   $stash->{new}{$_} = $stash->{capture}{$_} = tempfile() for qw/stdout stderr/;
   _debug("# will capture $_ on " .fileno($stash->{capture}{$_})."\n" ) for qw/stdout stderr/;
@@ -265,6 +275,7 @@ sub _capture_tee {
   _debug( "# redirecting in parent ...\n" ); 
   _open_std( $stash->{new} );
   # execute user provided code
+  my $exit_code;
   {
     local *STDIN = *CT_ORIG_STDIN if $localize{stdin}; # get original, not proxy STDIN
     local *STDERR = *STDOUT if $merge; # minimize buffer mixups during $code
@@ -273,8 +284,8 @@ sub _capture_tee {
     _relayer(\*STDERR, $layers{stderr}) unless $merge;
     _debug( "# running code $code ...\n" ); 
     $code->();
+    $exit_code = $?; # save this for later
   }
-  my $exit_code = $?; # save this for later
   # restore prior filehandles and shut down tees
   _debug( "# restoring ...\n" ); 
   _open_std( $stash->{old} );
