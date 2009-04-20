@@ -2,7 +2,7 @@ package t::lib::Cases;
 use strict;
 use warnings;
 use Test::More;
-use Capture::Tiny qw/capture/;
+use Capture::Tiny ':all';
 
 require Exporter;
 our @ISA = 'Exporter';
@@ -15,6 +15,12 @@ my $have_diff = eval {
   Test::Differences->import;
   1;
 };
+
+sub _is_or_diff {
+  my ($g,$e,$l) = @_;
+  if ( $have_diff ) { eq_or_diff( $g, $e, $l ); }
+  else { is( $g, $e, $l ); }
+}
 
 sub _binmode {
   my $text = shift;
@@ -84,16 +90,29 @@ my %tests = (
         $methods{$m}->( $channels{$c}{output}->($t) );
       };
       my @expected = $channels{$c}{expect}->($t);
-      if ( $have_diff ) {
-        eq_or_diff( $got_out, $expected[0], "$m|$c|$t - got STDOUT" );
-        eq_or_diff( $got_err, $expected[1], "$m|$c|$t - got STDERR" );
-      }
-      else {
-        is( $got_out, $expected[0], "$m|$c|$t - got STDOUT" );
-        is( $got_err, $expected[1], "$m|$c|$t - got STDERR" );
-      }
+      _is_or_diff( $got_out, $expected[0], "$m|$c|$t - got STDOUT" );
+      _is_or_diff( $got_err, $expected[1], "$m|$c|$t - got STDERR" );
       _restore_layers($t, @orig_layers);
     },
+  },
+  tee => {
+    cnt => 4,
+    test => sub {
+      my ($m, $c, $t) = @_;
+      my @orig_layers = _set_utf8($t);
+      my ($got_out, $got_err);
+      my ($tee_out, $tee_err) = capture {
+        ($got_out, $got_err) = tee {
+          $methods{$m}->( $channels{$c}{output}->($t) );
+        };
+      };
+      my @expected = $channels{$c}{expect}->($t);
+      _is_or_diff( $got_out, $expected[0], "$m|$c|$t - got STDOUT" );
+      _is_or_diff( $tee_out, $expected[0], "$m|$c|$t - tee STDOUT" );
+      _is_or_diff( $got_err, $expected[1], "$m|$c|$t - got STDERR" );
+      _is_or_diff( $tee_err, $expected[1], "$m|$c|$t - tee STDERR" );
+      _restore_layers($t, @orig_layers);
+    }
   },
 );
 
