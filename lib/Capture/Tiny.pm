@@ -45,6 +45,15 @@ my @cmd = ($^X, '-e', '$SIG{HUP}=sub{exit}; '
 # filehandle manipulation
 #--------------------------------------------------------------------------#
 
+sub _relayer {
+  my ($fh, $layers) = @_;
+  _debug("# requested layers (@{$layers}) to $fh\n");
+  my %seen;
+  my @unique = grep { $_ ne 'unix' and $_ ne 'perlio' and !$seen{$_}++ } @$layers;
+  _debug("# applying unique layers (@unique) to $fh\n");
+  binmode($fh, join(":", "", "raw", @unique));
+}
+
 sub _name {
   my $glob = shift;
   no strict 'refs';
