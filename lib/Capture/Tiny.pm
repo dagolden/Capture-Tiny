@@ -20,6 +20,7 @@ our $VERSION = '0.05_51';
 $VERSION = eval $VERSION; ## no critic
 our @ISA = qw/Exporter/;
 our @EXPORT_OK = qw/capture capture_merged tee tee_merged/;
+our %EXPORT_TAGS = ( 'all' => \@EXPORT_OK );
 
 my $use_system = $^O eq 'MSWin32';
 
@@ -47,7 +48,7 @@ my @cmd = ($^X, '-e', '$SIG{HUP}=sub{exit}; '
 
 sub _relayer {
   my ($fh, $layers) = @_;
-  _debug("# requested layers (@{$layers}) to $fh\n");
+  _debug("# requested layers (@{$layers}) for $fh\n");
   my %seen;
   my @unique = grep { $_ ne 'unix' and !$seen{$_}++ } @$layers;
   _debug("# applying unique layers (@unique) to $fh\n");
