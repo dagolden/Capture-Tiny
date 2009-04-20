@@ -42,8 +42,8 @@ sub _restore_layers {
 
 my %texts = (
   short => 'Hello World',
-  multiline => "First line\nSecond line\n",
-  ( $] < 5.008 ? () : ( unicode => "Hi! \x{263a}\n") ),
+  multiline => 'First line\nSecond line\n',
+  ( $] < 5.008 ? () : ( unicode => 'Hi! \x{263a}\n') ),
 );
 
 #--------------------------------------------------------------------------#
@@ -52,7 +52,7 @@ my %texts = (
 
 my %methods = (
   perl    => sub { eval $_[0] },
-  sys  => sub { system($^X, '-e', "eval q{$_[0]}") },
+  sys  => sub { system($^X, '-e', $_[0]) },
 );
 
 #--------------------------------------------------------------------------#
@@ -60,15 +60,15 @@ my %methods = (
 my %channels = (
   stdout  => {
     output => sub { _binmode($_[0]) . "print STDOUT qq{STDOUT:$texts{$_[0]}}" },
-    expect => sub { "STDOUT:$texts{$_[0]}", "" },
+    expect => sub { eval "qq{STDOUT:$texts{$_[0]}}", "" },
   },
   stderr  => {
     output => sub { _binmode($_[0]) . "print STDERR qq{STDERR:$texts{$_[0]}}" },
-    expect => sub { "", "STDERR:$texts{$_[0]}" },
+    expect => sub { "", eval "qq{STDERR:$texts{$_[0]}}" },
   },
   both    => {
     output => sub { _binmode($_[0]) . "print STDOUT qq{STDOUT:$texts{$_[0]}}; print STDERR qq{STDERR:$texts{$_[0]}}" },
-    expect => sub { "STDOUT:$texts{$_[0]}", "STDERR:$texts{$_[0]}" },
+    expect => sub { eval "qq{STDOUT:$texts{$_[0]}}", eval "qq{STDERR:$texts{$_[0]}}" },
   },
 );
 
