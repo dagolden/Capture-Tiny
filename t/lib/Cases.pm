@@ -84,22 +84,42 @@ my %tests = (
   capture => {
     cnt   => 2,
     test  => sub {
-      my ($m, $c, $t) = @_;
-      my @orig_layers = _set_utf8($t);
+      my ($m, $c, $t, $l) = @_;
       my ($got_out, $got_err) = capture {
         $methods{$m}->( $channels{$c}{output}->($t) );
       };
       my @expected = $channels{$c}{expect}->($t);
-      _is_or_diff( $got_out, $expected[0], "$m|$c|$t - got STDOUT" );
-      _is_or_diff( $got_err, $expected[1], "$m|$c|$t - got STDERR" );
-      _restore_layers($t, @orig_layers);
+      _is_or_diff( $got_out, $expected[0], "$l|$m|$c|$t - got STDOUT" );
+      _is_or_diff( $got_err, $expected[1], "$l|$m|$c|$t - got STDERR" );
+    },
+  },
+  capture_scalar => {
+    cnt   => 1,
+    test  => sub {
+      my ($m, $c, $t, $l) = @_;
+      my $got_out = capture {
+        $methods{$m}->( $channels{$c}{output}->($t) );
+      };
+      my @expected = $channels{$c}{expect}->($t);
+      _is_or_diff( $got_out, $expected[0], "$l|$m|$c|$t - got STDOUT" );
+    },
+  },
+  capture_merged => {
+    cnt   => 2,
+    test  => sub {
+      my ($m, $c, $t, $l) = @_;
+      my $got_out = capture_merged {
+        $methods{$m}->( $channels{$c}{output}->($t) );
+      };
+      my @expected = $channels{$c}{expect}->($t);
+      like( $got_out, qr/\Q$expected[0]\E/, "$l|$m|$c|$t - got STDOUT" );
+      like( $got_out, qr/\Q$expected[1]\E/, "$l|$m|$c|$t - got STDERR" );
     },
   },
   tee => {
     cnt => 4,
     test => sub {
-      my ($m, $c, $t) = @_;
-      my @orig_layers = _set_utf8($t);
+      my ($m, $c, $t, $l) = @_;
       my ($got_out, $got_err);
       my ($tee_out, $tee_err) = capture {
         ($got_out, $got_err) = tee {
@@ -107,11 +127,44 @@ my %tests = (
         };
       };
       my @expected = $channels{$c}{expect}->($t);
-      _is_or_diff( $got_out, $expected[0], "$m|$c|$t - got STDOUT" );
-      _is_or_diff( $tee_out, $expected[0], "$m|$c|$t - tee STDOUT" );
-      _is_or_diff( $got_err, $expected[1], "$m|$c|$t - got STDERR" );
-      _is_or_diff( $tee_err, $expected[1], "$m|$c|$t - tee STDERR" );
-      _restore_layers($t, @orig_layers);
+      _is_or_diff( $got_out, $expected[0], "$l|$m|$c|$t - got STDOUT" );
+      _is_or_diff( $tee_out, $expected[0], "$l|$m|$c|$t - tee STDOUT" );
+      _is_or_diff( $got_err, $expected[1], "$l|$m|$c|$t - got STDERR" );
+      _is_or_diff( $tee_err, $expected[1], "$l|$m|$c|$t - tee STDERR" );
+    }
+  },
+  tee_scalar => {
+    cnt => 3,
+    test => sub {
+      my ($m, $c, $t, $l) = @_;
+      my ($got_out, $got_err);
+      my ($tee_out, $tee_err) = capture {
+        $got_out = tee {
+          $methods{$m}->( $channels{$c}{output}->($t) );
+        };
+      };
+      my @expected = $channels{$c}{expect}->($t);
+      _is_or_diff( $got_out, $expected[0], "$l|$m|$c|$t - got STDOUT" );
+      _is_or_diff( $tee_out, $expected[0], "$l|$m|$c|$t - tee STDOUT" );
+      _is_or_diff( $tee_err, $expected[1], "$l|$m|$c|$t - tee STDERR" );
+    }
+  },
+  tee_merged => {
+    cnt => 5,
+    test => sub {
+      my ($m, $c, $t, $l) = @_;
+      my ($got_out, $got_err);
+      my ($tee_out, $tee_err) = capture {
+        $got_out = tee_merged {
+          $methods{$m}->( $channels{$c}{output}->($t) );
+        };
+      };
+      my @expected = $channels{$c}{expect}->($t);
+      like( $got_out, qr/\Q$expected[0]\E/, "$l|$m|$c|$t - got STDOUT" );
+      like( $got_out, qr/\Q$expected[1]\E/, "$l|$m|$c|$t - got STDERR" );
+      like( $tee_out, qr/\Q$expected[0]\E/, "$l|$m|$c|$t - tee STDOUT (STDOUT)" );
+      like( $tee_out, qr/\Q$expected[1]\E/, "$l|$m|$c|$t - tee STDOUT (STDERR)" );
+      _is_or_diff( $tee_err, '', "$l|$m|$c|$t - tee STDERR" );
     }
   },
 );
@@ -130,7 +183,9 @@ sub run_test {
   for my $m ( keys %methods ) {
     for my $c ( keys %channels ) {
       for my $t ( keys %texts     ) {
-        $tests{$test_type}{test}->($m, $c, $t);
+        my @orig_layers = _set_utf8($t);
+        $tests{$test_type}{test}->($m, $c, $t, $test_type);
+        _restore_layers($t, @orig_layers);
       }
     }
   }
