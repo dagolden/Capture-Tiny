@@ -263,6 +263,7 @@ sub _capture_tee {
     stdout  => [PerlIO::get_layers(\*STDOUT)],
     stderr  => [PerlIO::get_layers(\*STDERR)],
   );
+  _debug( "# post-proxy layers for $_\: @{$layers{$_}}\n" ) for qw/stdin stdout stderr/;
   # get handles for capture and apply existing IO layers
   $stash->{new}{$_} = $stash->{capture}{$_} = tempfile() for qw/stdout stderr/;
   _debug("# will capture $_ on " .fileno($stash->{capture}{$_})."\n" ) for qw/stdout stderr/;
