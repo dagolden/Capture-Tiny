@@ -11,7 +11,7 @@ use t::lib::Utils qw/next_fd sig_num/;
 use Capture::Tiny qw/capture/;
 use Config;
 
-plan tests => 3;
+plan tests => 4;
 
 my $builder = Test::More->builder;
 binmode($builder->failure_output, ':utf8');
@@ -28,9 +28,10 @@ SKIP: {
     unless $Config{d_alarm};
 
   capture {
-    system($^X, '-e', 'alarm 1; sleep 5');
+    system($^X, '-e', 'alarm 1; $now = time; 1 while (time - $now < 5)');
   };
-  is( $? & 127, sig_num('ALRM'), "caught SIGALRM" );
+  ok( $?, '$? is non-zero' );
+  is( ($^O eq 'MSWin32' ? $? >> 8 : $? & 127), sig_num('ALRM'), "caught SIGALRM" );
 }
 
 is( next_fd, $fd, "no file descriptors leaked" );
