@@ -10,7 +10,14 @@ use Test::More;
 use t::lib::Utils qw/next_fd/;
 use t::lib::Cases qw/run_test/;
 
-plan 'no_plan';
+use Config;
+my $no_fork = $^O ne 'MSWin32' && ! $Config{d_fork};
+if ( $no_fork ) {
+  plan skip_all => 'tee() requires fork';
+}
+else {
+  plan 'no_plan';
+}
 
 my $fd = next_fd;
 

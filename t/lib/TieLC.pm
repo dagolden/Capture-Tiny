@@ -6,6 +6,7 @@ sub TIEHANDLE
  my $fh    = \do { local *HANDLE};
  bless $fh,$class;
  $fh->OPEN(@_) if (@_);
+ $fh->BINMODE(':utf8');
  return $fh;
 }
 
@@ -14,7 +15,7 @@ sub TELL    { tell($_[0]) }
 sub FILENO  { fileno($_[0]) }
 sub SEEK    { seek($_[0],$_[1],$_[2]) }
 sub CLOSE   { close($_[0]) }
-sub BINMODE { binmode($_[0]) }
+sub BINMODE { binmode($_[0],$_[1]) }
 
 sub OPEN
 {

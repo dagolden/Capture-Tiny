@@ -30,5 +30,4 @@ SKIP: {
   is( $? & 127, sig_num('ALRM'), "caught SIGALRM" );
 }
 
-
 is( next_fd, $fd, "no file descriptors leaked" );

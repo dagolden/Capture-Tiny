@@ -7,47 +7,38 @@
 use strict;
 use warnings;
 use Test::More;
-use Config;
 use t::lib::Utils qw/save_std restore_std next_fd/;
-use t::lib::Tests qw(
-  capture_tests           capture_count
-  capture_merged_tests    capture_merged_count
-  tee_tests               tee_count
-  tee_merged_tests        tee_merged_count
-);
+use t::lib::Cases qw/run_test/;
 
-#--------------------------------------------------------------------------#
+use Config;
+my $no_fork = $^O ne 'MSWin32' && ! $Config{d_fork};
 
 plan skip_all => "In memory files require Perl 5.8"
   if $] < 5.008;
 
-plan tests => 3 + capture_count() + capture_merged_count() 
-                + tee_count() + tee_merged_count(); 
-
-my $no_fork = $^O ne 'MSWin32' && ! $Config{d_fork};
-
-#--------------------------------------------------------------------------#
+plan 'no_plan';
 
 save_std(qw/stdout/);
 ok( close STDOUT, "closed STDOUT" );
-
 ok( open( STDOUT, ">", \(my $stdout_buf)), "reopened STDOUT to string" ); 
 
 my $fd = next_fd;
 
-select STDERR; $|++;
-select STDOUT; $|++;
+run_test($_) for qw(
+  capture
+  capture_scalar
+  capture_merged
+);
 
-capture_tests();
-capture_merged_tests();
-
-SKIP: {
-  skip tee_count() + tee_merged_count, "requires working fork()" if $no_fork;
-  tee_tests();
-  tee_merged_tests();
+if ( ! $no_fork ) {
+  run_test($_) for qw(
+    tee
+    tee_scalar
+    tee_merged
+  );
 }
 
 is( next_fd, $fd, "no file descriptors leaked" );
-
 restore_std(qw/stdout/);
+
 
