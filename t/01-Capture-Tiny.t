@@ -16,9 +16,12 @@ my @api = qw(
   tee_merged
 );
 
-plan tests => 1 + @api;
+plan tests => 2 + 2 * @api;
 
 require_ok( 'Capture::Tiny' );
 
 can_ok('Capture::Tiny', $_) for @api;
 
+ok( eval "package Foo; use Capture::Tiny ':all'; 1", "import ':all' to Foo" );
+
+can_ok('Foo', $_) for @api;
