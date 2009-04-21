@@ -19,7 +19,7 @@ plan skip_all => "In memory files require Perl 5.8"
 plan 'no_plan';
 
 my $builder = Test::More->builder;
-binmode($builder->failure_output, ':utf8');
+binmode($builder->failure_output, ':utf8') if $] >= 5.008;
 
 save_std(qw/stderr/);
 ok( close STDERR, "closed STDERR" );

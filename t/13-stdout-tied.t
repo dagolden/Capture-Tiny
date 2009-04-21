@@ -20,8 +20,8 @@ plan skip_all => "capture needs Perl 5.8 for tied STDOUT"
 plan 'no_plan';
 
 my $builder = Test::More->builder;
-binmode($builder->failure_output, ':utf8');
-binmode($builder->todo_output, ':utf8');
+binmode($builder->failure_output, ':utf8') if $] >= 5.008;
+binmode($builder->todo_output, ':utf8') if $] >= 5.008;
 
 save_std(qw/stdout/);
 tie *STDOUT, 't::lib::TieLC', ">&=STDOUT";

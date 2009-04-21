@@ -20,7 +20,7 @@ else {
 }
 
 my $builder = Test::More->builder;
-binmode($builder->failure_output, ':utf8');
+binmode($builder->failure_output, ':utf8') if $] >= 5.008;
 
 my $fd = next_fd;
 
