@@ -18,6 +18,9 @@ plan skip_all => "In memory files require Perl 5.8"
 
 plan 'no_plan';
 
+my $builder = Test::More->builder;
+binmode($builder->failure_output, ':utf8');
+
 save_std(qw/stderr/);
 ok( close STDERR, "closed STDERR" );
 ok( open( STDERR, ">", \(my $stderr_buf)), "reopened STDERR to string" ); 

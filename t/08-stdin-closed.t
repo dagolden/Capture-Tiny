@@ -15,6 +15,9 @@ my $no_fork = $^O ne 'MSWin32' && ! $Config{d_fork};
 
 plan 'no_plan';
 
+my $builder = Test::More->builder;
+binmode($builder->failure_output, ':utf8');
+
 save_std(qw/stdin/);
 ok( close STDIN, "closed STDIN" );
 

@@ -1,7 +1,7 @@
 # Copyright (c) 2009 by David Golden. All rights reserved.
 # Licensed under Apache License, Version 2.0 (the "License").
 # You may not use this file except in compliance with the License.
-# A copy of the License was distributed with this file or you may obtain a 
+# A copy of the License was distributed with this file or you may obtain a
 # copy of the License from http://www.apache.org/licenses/LICENSE-2.0
 
 use 5.006;
@@ -11,7 +11,7 @@ use lib 'inc';
 eval "require Pod::WikiDoc";
 my $class = $@ ? "Module::Build" : "Module::Build::WikiDoc";
 eval "require $class";
-my $build = $class->new( 
+my $build = $class->new(
   module_name => 'Capture::Tiny',
   dist_author => 'David Golden <dagolden@cpan.org>',
   license => 'apache',
@@ -21,18 +21,18 @@ my $build = $class->new(
     'perl' => 5.006,
     'Exporter' => 0,
     'File::Spec' => 0,
-    'File::Temp' => 0.14, 
+    'File::Temp' => 0.14,
     'IO::Handle' => 0,
   },
   build_requires => {
-    'Test::More' => 0.47, # 0.47 in perl 5.006002; 0.62 in perl 5.008008; 
+    'Test::More' => 0.62,
   },
-  meta_add            => { 
-    no_index => { 
+  meta_add            => {
+    no_index => {
       directory => [ qw/ examples inc t /],
     },
     resources => {
-      repository => "http://github.com/dagolden/Capture-Tiny/", 
+      repository => "http://github.com/dagolden/Capture-Tiny/",
       bugtracker => "http://rt.cpan.org/NoAuth/Bugs.html?Dist=Capture-Tiny",
     },
   },

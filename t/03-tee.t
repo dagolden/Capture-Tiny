@@ -19,6 +19,9 @@ else {
   plan 'no_plan';
 }
 
+my $builder = Test::More->builder;
+binmode($builder->failure_output, ':utf8');
+
 my $fd = next_fd;
 
 run_test('tee');

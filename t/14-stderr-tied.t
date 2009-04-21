@@ -19,6 +19,9 @@ plan skip_all => "capture needs Perl 5.8 for tied STDERR"
 
 plan 'no_plan';
 
+my $builder = Test::More->builder;
+binmode($builder->failure_output, ':utf8');
+
 save_std(qw/stderr/);
 tie *STDERR, 't::lib::TieLC', ">&=STDERR";
 my $orig_tie = tied *STDERR;

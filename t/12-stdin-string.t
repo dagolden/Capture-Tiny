@@ -18,6 +18,9 @@ plan skip_all => "In memory files require Perl 5.8"
 
 plan 'no_plan';
 
+my $builder = Test::More->builder;
+binmode($builder->failure_output, ':utf8');
+
 #--------------------------------------------------------------------------#
 
 # pre-load PerlIO::scalar to avoid it opening on FD 0; c.f.

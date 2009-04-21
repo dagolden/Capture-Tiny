@@ -18,6 +18,9 @@ plan skip_all => "In memory files require Perl 5.8"
 
 plan 'no_plan';
 
+my $builder = Test::More->builder;
+binmode($builder->failure_output, ':utf8');
+
 save_std(qw/stdout/);
 ok( close STDOUT, "closed STDOUT" );
 ok( open( STDOUT, ">", \(my $stdout_buf)), "reopened STDOUT to string" ); 

@@ -13,6 +13,9 @@ use Config;
 
 plan tests => 3;
 
+my $builder = Test::More->builder;
+binmode($builder->failure_output, ':utf8');
+
 my $fd = next_fd;
 
 capture {
