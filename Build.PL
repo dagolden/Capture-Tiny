@@ -32,7 +32,7 @@ my $build = $class->new(
       directory => [ qw/ examples inc t /],
     },
     resources => {
-      repository => "http://github.com/dagolden/Capture-Tiny/",
+      repository => "http://github.com/dagolden/capture-tiny/",
       bugtracker => "http://rt.cpan.org/NoAuth/Bugs.html?Dist=Capture-Tiny",
     },
   },
