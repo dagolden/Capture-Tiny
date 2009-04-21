@@ -180,10 +180,13 @@ my %tests = (
 
 sub run_test {
   my $test_type = shift or return;
+  my $todo = shift || '';
   for my $m ( keys %methods ) {
     for my $c ( keys %channels ) {
       for my $t ( keys %texts     ) {
         my @orig_layers = _set_utf8($t);
+        local $TODO = "not yet supported"
+          if $t eq $todo;
         $tests{$test_type}{test}->($m, $c, $t, $test_type);
         _restore_layers($t, @orig_layers);
       }

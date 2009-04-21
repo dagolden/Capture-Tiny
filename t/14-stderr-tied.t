@@ -21,6 +21,7 @@ plan 'no_plan';
 
 my $builder = Test::More->builder;
 binmode($builder->failure_output, ':utf8');
+binmode($builder->todo_output, ':utf8');
 
 save_std(qw/stderr/);
 tie *STDERR, 't::lib::TieLC', ">&=STDERR";
@@ -29,14 +30,14 @@ ok( $orig_tie, "STDERR is tied" );
 
 my $fd = next_fd;
 
-run_test($_) for qw(
+run_test($_, 'unicode') for qw(
   capture
   capture_scalar
   capture_merged
 );
 
 if ( ! $no_fork ) {
-  run_test($_) for qw(
+  run_test($_, 'unicode') for qw(
     tee
     tee_scalar
     tee_merged
