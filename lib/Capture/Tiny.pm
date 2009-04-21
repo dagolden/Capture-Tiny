@@ -101,7 +101,7 @@ sub _proxy_std {
       _open $dup{stdout} = IO::Handle->new, ">&=STDOUT";
     }
     $proxies{stdout} = \*STDOUT;
-    binmode(STDIN, ':utf8') if $] >= 5.008;
+    binmode(STDOUT, ':utf8') if $] >= 5.008;
   }
   if ( ! defined fileno STDERR ) {
     $proxy_count{stderr}++;
@@ -115,7 +115,7 @@ sub _proxy_std {
       _open $dup{stderr} = IO::Handle->new, ">&=STDERR";
     }
     $proxies{stderr} = \*STDERR;
-    binmode(STDIN, ':utf8') if $] >= 5.008;
+    binmode(STDERR, ':utf8') if $] >= 5.008;
   }
   return %proxies;
 }
