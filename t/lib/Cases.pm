@@ -31,7 +31,7 @@ sub _set_utf8 {
   my $t = shift;
   return unless $t eq 'unicode';
   my %seen;
-  my @orig_layers = grep {$_ ne 'unix' and $seen{$_}++} PerlIO::get_layers(STDOUT);
+  my @orig_layers = grep {$_ ne 'unix' and $_ ne 'perlio' and $seen{$_}++} PerlIO::get_layers(STDOUT);
   binmode(STDOUT, ":utf8") if fileno(STDOUT); 
   binmode(STDERR, ":utf8") if fileno(STDERR); 
   return @orig_layers;
