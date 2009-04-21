@@ -341,13 +341,13 @@ This documentation describes version %%VERSION%%.
 = SYNOPSIS
 
     use Capture::Tiny qw/capture tee capture_merged tee_merged/;
-    
+
     ($stdout, $stderr) = capture {
       # your code here
     };
 
     ($stdout, $stderr) = tee {
-      # your code here 
+      # your code here
     };
 
     $merged = capture_merged {
@@ -367,7 +367,7 @@ captured while being passed through to the original handles.  Yes, it even
 works on Windows.  Stop guessing which of a dozen capturing modules to use in
 any particular situation and just use this one.
 
-This module was heavily inspired by [IO::CaptureOutput], which provides 
+This module was heavily inspired by [IO::CaptureOutput], which provides
 similar functionality without the ability to tee output and with more
 complicated code and API.
 
@@ -402,7 +402,7 @@ executing the function.)  If no output was received, returns an empty string.
 As with {capture} it may be called in block form.
 
 Caution: STDOUT and STDERR output in the merged result are not guaranteed to be
-properly ordered due to buffering
+properly ordered due to buffering.
 
 == tee
 
@@ -422,17 +422,17 @@ is captured as well as passed on to STDOUT.  As with {capture} it may be called
 in block form.
 
 Caution: STDOUT and STDERR output in the merged result are not guaranteed to be
-properly ordered due to buffering
+properly ordered due to buffering.
 
 = LIMITATIONS
 
 == Portability
 
-Portability is a goal, not a guarantee.  {tee} requires fork, except on 
+Portability is a goal, not a guarantee.  {tee} requires fork, except on
 Windows where {system(1, @cmd)} is used instead.  Not tested on any
-particularly esoteric platforms yet.  
+particularly esoteric platforms yet.
 
-== Closing STDIN, STDOUT or STDERR
+== Closed STDIN, STDOUT or STDERR
 
 Capture::Tiny will work even if STDIN, STDOUT or STDERR have been previously
 closed.  However, since they may be reopened to capture or tee output, any code
@@ -440,24 +440,38 @@ within the captured block that depends on finding them closed will, of course,
 not find them to be closed.  If they started closed, Capture::Tiny will reclose
 them again when the capture block finishes.
 
-== Modifying STDIN, STDOUT or STDERR
+==  Scalar filehandles and STDIN, STDOUT or STDERR
 
-If STDOUT or STDERR are modified -- e.g. tied or opened to a scalar reference
--- prior to the call to {capture} or {tee}, then Capture::Tiny will override
-the tie or scalar reference handle for the duration of {capture} or {tee} call.
-In the case of a scalar reference handle and {tee}, captured output will be
-sent to the scalar reference handle after {tee} finishes.  (Requires Perl 5.8)
+If STDOUT or STDERR are reopened to scalar filehandles prior to the call to
+{capture} or {tee}, then Capture::Tiny will override the output handle for the
+duration of the {capture} or {tee} call and then send captured output to the
+output handle after the capture is complete.  (Requires Perl 5.8)
 
-Capture::Tiny attempts to preserve the semantics of tied STDIN or STDIN opened
-to a scalar reference.
+Capture::Tiny attempts to preserve the semantics of STDIN opened to a scalar
+reference.
+
+==  Tied STDIN, STDOUT or STDERR
+
+If STDOUT or STDERR are tied prior to the call to {capture} or {tee}, then
+Capture::Tiny will attempt to override the tie for the duration of the
+{capture} or {tee} call and then send captured output to the tied handle after
+the capture is complete.  (Requires Perl 5.8)
+
+Capture::Tiny does not (yet) support resending utf8 encoded data to a tied
+STDOUT or STDERR handle.  Characters will appear as bytes.
+
+Capture::Tiny attempts to preserve the semantics of tied STDIN, but capturing
+or teeing when STDIN is tied is currently broken on Windows.
+
+== Modifiying STDIN, STDOUT or STDERR during a capture
 
 Attempting to modify STDIN, STDOUT or STDERR ~during~ {capture} or {tee} is
 almost certainly going to cause problems.  Don't do that.
 
 = BUGS
 
-Please report any bugs or feature requests using the CPAN Request Tracker.  
-Bugs can be submitted through the web interface at 
+Please report any bugs or feature requests using the CPAN Request Tracker.
+Bugs can be submitted through the web interface at
 [http://rt.cpan.org/Dist/Display.html?Queue=Capture-Tiny]
 
 When submitting a bug or request, please include a test-file or a patch to an
@@ -468,7 +482,7 @@ existing test-file that illustrates the bug or desired feature.
 This is a selection of CPAN modules that provide some sort of output capture,
 albeit with various limitations that make them appropriate only in particular
 circumstances.  I'm probably missing some.  The long list is provided to show
-why I felt Capture::Tiny was necessary. 
+why I felt Capture::Tiny was necessary.
 
 * [IO::Capture]
 * [IO::Capture::Extended]
@@ -500,10 +514,10 @@ David A. Golden (DAGOLDEN)
 
 Copyright (c) 2009 by David A. Golden. All rights reserved.
 
-Licensed under Apache License, Version 2.0 (the "License").
-You may not use this file except in compliance with the License.
-A copy of the License was distributed with this file or you may obtain a 
-copy of the License from http://www.apache.org/licenses/LICENSE-2.0
+Licensed under Apache License, Version 2.0 (the "License").  You may not use
+this file except in compliance with the License.  A copy of the License was
+distributed with this file or you may obtain a copy of the License from
+http://www.apache.org/licenses/LICENSE-2.0
 
 Files produced as output though the use of this software, shall not be
 considered Derivative Works, but shall be considered the original work of the
