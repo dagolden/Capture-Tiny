@@ -432,6 +432,12 @@ Portability is a goal, not a guarantee.  {tee} requires fork, except on
 Windows where {system(1, @cmd)} is used instead.  Not tested on any
 particularly esoteric platforms yet.
 
+== PerlIO layers
+
+Capture::Tiny does it's best to preserve PerlIO layers such as ':utf8' or
+':crlf' when capturing.   Layers should be applied to STDOUT or STDERR ~before~
+the call to {capture} or {tee}.
+
 == Closed STDIN, STDOUT or STDERR
 
 Capture::Tiny will work even if STDIN, STDOUT or STDERR have been previously

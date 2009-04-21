@@ -7,10 +7,13 @@
 
 Revision history for Capture-Tiny
 
-0.05_51
+0.05_51 Tue Apr 21 07:00:38 EDT 2009
 
   Added:
-    - Experimental support for STDOUT, STDERR or STDIN opened to in-memory
+
+    - Support for wide characters on handles opened to utf8
+
+    - Support for STDOUT, STDERR or STDIN opened to in-memory
       files (open to scalar reference) or tied, albeit with some limitations
 
   Testing:
@@ -23,7 +26,7 @@ Revision history for Capture-Tiny
 
     - On Win32, increased a delay waiting for buffers to flush to avoid losing
       final output during tee()
-      
+
 0.04 Wed Feb 25 09:25:27 EST 2009
 
   Added:
