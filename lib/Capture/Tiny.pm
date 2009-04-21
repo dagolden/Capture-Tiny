@@ -20,6 +20,7 @@ our $VERSION = '0.05_51';
 $VERSION = eval $VERSION; ## no critic
 our @ISA = qw/Exporter/;
 our @EXPORT_OK = qw/capture capture_merged tee tee_merged/;
+our %EXPORT_TAGS = ( 'all' => \@EXPORT_OK );
 
 my $use_system = $^O eq 'MSWin32';
 
@@ -86,6 +87,7 @@ sub _proxy_std {
       _open $dup{stdin} = IO::Handle->new, "<&=STDIN";
     }
     $proxies{stdin} = \*STDIN;
+    binmode(STDIN, ':utf8');
   }
   if ( ! defined fileno STDOUT ) {
     $proxy_count{stdout}++;
@@ -99,6 +101,7 @@ sub _proxy_std {
       _open $dup{stdout} = IO::Handle->new, ">&=STDOUT";
     }
     $proxies{stdout} = \*STDOUT;
+    binmode(STDOUT, ':utf8');
   }
   if ( ! defined fileno STDERR ) {
     $proxy_count{stderr}++;
@@ -112,6 +115,7 @@ sub _proxy_std {
       _open $dup{stderr} = IO::Handle->new, ">&=STDERR";
     }
     $proxies{stderr} = \*STDERR;
+    binmode(STDERR, ':utf8');
   }
   return %proxies;
 }
@@ -221,7 +225,7 @@ sub _kill_tees {
 }
 
 sub _slurp { 
-  seek $_[0],0,0; local $/; scalar readline $_[0]; 
+  seek $_[0],0,0; local $/; return scalar readline $_[0]; 
 }
 
 #--------------------------------------------------------------------------#
@@ -235,18 +239,33 @@ sub _capture_tee {
   local *CT_ORIG_STDIN  = *STDIN ;
   local *CT_ORIG_STDOUT = *STDOUT;
   local *CT_ORIG_STDERR = *STDERR;
+  # find initial layers
+  my %layers = (
+    stdin   => [PerlIO::get_layers(\*STDIN) ],
+    stdout  => [PerlIO::get_layers(\*STDOUT)],
+    stderr  => [PerlIO::get_layers(\*STDERR)],
+  );
+  _debug( "# existing layers for $_\: @{$layers{$_}}\n" ) for qw/stdin stdout stderr/;
+  # bypass scalar filehandles and tied handles
   my %localize;
-  $localize{stdin}++, local *STDIN if grep { $_ eq 'scalar' } PerlIO::get_layers(\*STDIN);
-  $localize{stdout}++, local(*STDOUT) if grep { $_ eq 'scalar' } PerlIO::get_layers(\*STDOUT);
-  $localize{stderr}++, local(*STDERR) if grep { $_ eq 'scalar' } PerlIO::get_layers(\*STDERR);
+  $localize{stdin}++,  local(*STDIN)  if grep { $_ eq 'scalar' } @{$layers{stdin}};
+  $localize{stdout}++, local(*STDOUT) if grep { $_ eq 'scalar' } @{$layers{stdout}};
+  $localize{stderr}++, local(*STDERR) if grep { $_ eq 'scalar' } @{$layers{stderr}};
   $localize{stdout}++, local(*STDOUT), _open( \*STDOUT, ">&=1") if tied *STDOUT && $] >= 5.008;
   $localize{stderr}++, local(*STDERR), _open( \*STDERR, ">&=2") if tied *STDERR && $] >= 5.008;
   _debug( "# localized $_\n" ) for keys %localize; 
   my %proxy_std = _proxy_std();
   _debug( "# proxy std is @{ [%proxy_std] }\n" );
   my $stash = { old => _copy_std() };
+  # update layers after any proxying
+  %layers = (
+    stdin   => [PerlIO::get_layers(\*STDIN) ],
+    stdout  => [PerlIO::get_layers(\*STDOUT)],
+    stderr  => [PerlIO::get_layers(\*STDERR)],
+  );
+  # get handles for capture and apply existing IO layers
   $stash->{new}{$_} = $stash->{capture}{$_} = tempfile() for qw/stdout stderr/;
-  _debug("# will capture $_ on " .fileno($stash->{capture}{$_})."\n") for qw/stdout stderr/;
+  _debug("# will capture $_ on " .fileno($stash->{capture}{$_})."\n" ) for qw/stdout stderr/;
   # tees may change $stash->{new}
   _start_tee( stdout => $stash ) if $tee_stdout;
   _start_tee( stderr => $stash ) if $tee_stderr;
@@ -257,13 +276,17 @@ sub _capture_tee {
   _debug( "# redirecting in parent ...\n" ); 
   _open_std( $stash->{new} );
   # execute user provided code
-  _debug( "# running code $code ...\n" ); 
+  my $exit_code;
   {
     local *STDIN = *CT_ORIG_STDIN if $localize{stdin}; # get original, not proxy STDIN
     local *STDERR = *STDOUT if $merge; # minimize buffer mixups during $code
+    _debug( "# finalizing layers ...\n" ); 
+    _relayer(\*STDOUT, $layers{stdout});
+    _relayer(\*STDERR, $layers{stderr}) unless $merge;
+    _debug( "# running code $code ...\n" ); 
     $code->();
+    $exit_code = $?; # save this for later
   }
-  my $exit_code = $?; # save this for later
   # restore prior filehandles and shut down tees
   _debug( "# restoring ...\n" ); 
   _open_std( $stash->{old} );
@@ -271,6 +294,9 @@ sub _capture_tee {
   _unproxy( %proxy_std );
   _kill_tees( $stash ) if $tee_stdout || $tee_stderr;
   # return captured output
+  _relayer($stash->{capture}{stdout}, $layers{stdout});
+  _relayer($stash->{capture}{stderr}, $layers{stderr}) unless $merge;
+  _debug( "# slurping captured $_ with layers: @{[PerlIO::get_layers($stash->{capture}{$_})]}\n") for qw/stdout stderr/;
   my $got_out = _slurp($stash->{capture}{stdout});
   my $got_err = $merge ? q() : _slurp($stash->{capture}{stderr});
   print CT_ORIG_STDOUT $got_out if $localize{stdout} && $tee_stdout; 
