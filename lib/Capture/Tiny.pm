@@ -57,7 +57,7 @@ sub _relayer {
 
 sub _name {
   my $glob = shift;
-  no strict 'refs';
+  no strict 'refs'; ## no critic
   return *{$glob}{NAME};
 }
 
