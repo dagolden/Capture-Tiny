@@ -23,6 +23,7 @@ my $build = $class->new(
     'File::Spec' => 0,
     'File::Temp' => 0.14,
     'IO::Handle' => 0,
+    ( $^O eq 'MSWin32' ? ('Win32API::File' => 0) : () ),
   },
   build_requires => {
     'Test::More' => 0.62,

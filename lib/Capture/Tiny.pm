@@ -22,7 +22,7 @@ our @ISA = qw/Exporter/;
 our @EXPORT_OK = qw/capture capture_merged tee tee_merged/;
 our %EXPORT_TAGS = ( 'all' => \@EXPORT_OK );
 
-my $use_system = $^O eq 'MSWin32';
+my $IS_WIN32 = $^O eq 'MSWin32';
 
 our $DEBUG = $ENV{PERL_CAPTURE_TINY_DEBUG};
 my $DEBUGFH;
@@ -173,7 +173,17 @@ sub _start_tee {
   # flag file is used to signal the child is ready
   $stash->{flag_files}{$which} = scalar tmpnam();
   # execute @cmd as a separate process
-  if ( $use_system ) {
+  if ( $IS_WIN32 ) {
+    eval "use Win32API::File qw/CloseHandle GetOsFHandle SetHandleInformation fileLastError HANDLE_FLAG_INHERIT INVALID_HANDLE_VALUE/ ";
+    _debug( "# Win32API::File loaded\n") unless $@;
+    my $os_fhandle = GetOsFHandle( $stash->{tee}{$which} );
+    _debug( "# Couldn't get OS handle: " . fileLastError() . "\n") if ! defined $os_fhandle || $os_fhandle == INVALID_HANDLE_VALUE();
+    if ( SetHandleInformation( $os_fhandle, HANDLE_FLAG_INHERIT(), 0) ) {
+      _debug( "# set no-inherit flag on $which tee\n" );
+    }
+    else {
+      _debug( "# can't disable tee handle flag inherit: " . fileLastError() . "\n");
+    }
     _open_std( $stash->{child}{$which} );
     $stash->{pid}{$which} = system(1, @cmd, $stash->{flag_files}{$which});
     # not restoring std here as it all gets redirected again shortly anyway
@@ -214,12 +224,16 @@ sub _wait_for_tees {
 
 sub _kill_tees {
   my ($stash) = @_;
-  _close $_ for values %{ $stash->{tee} };
-  if ( $use_system ) {
-    eval { Win32::Sleep(250) }; # 250ms pause for output to get flushed, I hope
-    kill 1, $_ for values %{ $stash->{pid} }; # shut them down hard
+  if ( $IS_WIN32 ) {
+    _debug( "# calling CloseHandle...\n");
+    CloseHandle( GetOsFHandle($_) ) for values %{ $stash->{tee} };
+    _debug( "# finished CloseHandle...\n");
+#    eval { Win32::Sleep(250) }; # 250ms pause for output to get flushed, I hope
+#    kill 1, $_ for values %{ $stash->{pid} }; # shut them down hard
+    1 until wait == -1
   }
   else {
+    _close $_ for values %{ $stash->{tee} };
     waitpid $_, 0 for values %{ $stash->{pid} };
   }
 }
@@ -265,7 +279,7 @@ sub _capture_tee {
   );
   _debug( "# post-proxy layers for $_\: @{$layers{$_}}\n" ) for qw/stdin stdout stderr/;
   # get handles for capture and apply existing IO layers
-  $stash->{new}{$_} = $stash->{capture}{$_} = tempfile() for qw/stdout stderr/;
+  $stash->{new}{$_} = $stash->{capture}{$_} = File::Temp->new for qw/stdout stderr/;
   _debug("# will capture $_ on " .fileno($stash->{capture}{$_})."\n" ) for qw/stdout stderr/;
   # tees may change $stash->{new}
   _start_tee( stdout => $stash ) if $tee_stdout;
