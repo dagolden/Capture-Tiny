@@ -225,12 +225,11 @@ sub _wait_for_tees {
 sub _kill_tees {
   my ($stash) = @_;
   if ( $IS_WIN32 ) {
-    _debug( "# calling CloseHandle...\n");
+    _debug( "# closing handles with CloseHandle\n");
     CloseHandle( GetOsFHandle($_) ) for values %{ $stash->{tee} };
-    _debug( "# finished CloseHandle...\n");
-#    eval { Win32::Sleep(250) }; # 250ms pause for output to get flushed, I hope
-#    kill 1, $_ for values %{ $stash->{pid} }; # shut them down hard
-    1 until wait == -1
+    _debug( "# waiting for subprocesses to finish\n");
+    my $start = time;
+    1 until wait == -1 || (time - $start > 30);
   }
   else {
     _close $_ for values %{ $stash->{tee} };
