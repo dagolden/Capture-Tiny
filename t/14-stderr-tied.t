@@ -48,3 +48,4 @@ is( next_fd, $fd, "no file descriptors leaked" );
 is( tied *STDERR, $orig_tie, "STDERR is still tied" );
 restore_std(qw/stderr/);
 
+exit 0;

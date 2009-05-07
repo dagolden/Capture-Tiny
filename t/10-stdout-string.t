@@ -44,4 +44,5 @@ if ( ! $no_fork ) {
 is( next_fd, $fd, "no file descriptors leaked" );
 restore_std(qw/stdout/);
 
+exit 0;
 

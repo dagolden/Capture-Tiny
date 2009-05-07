@@ -50,3 +50,4 @@ is( next_fd, $fd, "no file descriptors leaked" );
 is( tied *STDIN, $orig_tie, "STDIN is still tied" );
 restore_std(qw/stdin/);
 
+exit 0;

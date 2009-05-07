@@ -35,3 +35,6 @@ SKIP: {
 }
 
 is( next_fd, $fd, "no file descriptors leaked" );
+
+exit 0;
+

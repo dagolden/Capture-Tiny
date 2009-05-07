@@ -25,3 +25,5 @@ can_ok('Capture::Tiny', $_) for @api;
 ok( eval "package Foo; use Capture::Tiny ':all'; 1", "import ':all' to Foo" );
 
 can_ok('Foo', $_) for @api;
+
+exit 0;

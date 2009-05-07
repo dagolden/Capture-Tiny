@@ -48,3 +48,4 @@ is( next_fd, $fd, "no file descriptors leaked" );
 is( tied *STDOUT, $orig_tie, "STDOUT is still tied" );
 restore_std(qw/stdout/);
 
+exit 0;
