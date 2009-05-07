@@ -25,7 +25,6 @@ t/13-stdout-tied.t
 t/14-stderr-tied.t
 t/15-stdin-tied.t
 t/lib/Cases.pm
-t/lib/Tests.pm
 t/lib/TieLC.pm
 t/lib/Utils.pm
 Todo

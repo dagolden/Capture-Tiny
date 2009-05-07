@@ -7,6 +7,13 @@
 
 Revision history for Capture-Tiny
 
+0.06 Thu May  7 06:54:53 EDT 2009
+
+  Fixed:
+
+    - On Win32, subprocesses now close themselves on EOF instead of being
+      killed with a signal
+
 0.05_51 Tue Apr 21 07:00:38 EDT 2009
 
   Added:
