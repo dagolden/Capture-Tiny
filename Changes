@@ -7,6 +7,12 @@
 
 Revision history for Capture-Tiny
 
+0.07
+
+  Fixed:
+
+  - Changed test for $? preservation to be more portable
+
 0.06 Thu May  7 06:54:53 EDT 2009
 
   Fixed:

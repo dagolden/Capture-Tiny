@@ -3,24 +3,24 @@ NAME
     programs
 
 VERSION
-    This documentation describes version 0.06.
+    This documentation describes version 0.07.
 
 SYNOPSIS
          use Capture::Tiny qw/capture tee capture_merged tee_merged/;
-     
-     ($stdout, $stderr) = capture {
+ 
+         ($stdout, $stderr) = capture {
            # your code here
          };
-     
-     ($stdout, $stderr) = tee {
+ 
+         ($stdout, $stderr) = tee {
            # your code here
          };
-     
-     $merged = capture_merged {
+ 
+         $merged = capture_merged {
            # your code here
          };
-     
-     $merged = tee_merged {
+ 
+         $merged = tee_merged {
            # your code here
          };
 
@@ -43,7 +43,7 @@ USAGE
        ($stdout, $stderr) = capture \&code;
        $stdout = capture \&code;
 
-    The "capture" function takes a code reference and returns what is sent
+    The `capture' function takes a code reference and returns what is sent
     to STDOUT and STDERR. In scalar context, it returns only STDOUT. If no
     output was received, returns an empty string. Regardless of context, all
     output is captured -- nothing is passed to the existing handles.
@@ -58,10 +58,10 @@ USAGE
   capture_merged
        $merged = capture_merged \&code;
 
-    The "capture_merged" function works just like "capture" except STDOUT
+    The `capture_merged' function works just like `capture' except STDOUT
     and STDERR are merged. (Technically, STDERR is redirected to STDOUT
     before executing the function.) If no output was received, returns an
-    empty string. As with "capture" it may be called in block form.
+    empty string. As with `capture' it may be called in block form.
 
     Caution: STDOUT and STDERR output in the merged result are not
     guaranteed to be properly ordered due to buffering.
@@ -70,15 +70,15 @@ USAGE
        ($stdout, $stderr) = tee \&code;
        $stdout = tee \&code;
 
-    The "tee" function works just like "capture", except that output is
+    The `tee' function works just like `capture', except that output is
     captured as well as passed on to the original STDOUT and STDERR. As with
-    "capture" it may be called in block form.
+    `capture' it may be called in block form.
 
   tee_merged
        $merged = tee_merged \&code;
 
-    The "tee_merged" function works just like "capture_merged" except that
-    output is captured as well as passed on to STDOUT. As with "capture" it
+    The `tee_merged' function works just like `capture_merged' except that
+    output is captured as well as passed on to STDOUT. As with `capture' it
     may be called in block form.
 
     Caution: STDOUT and STDERR output in the merged result are not
@@ -86,14 +86,14 @@ USAGE
 
 LIMITATIONS
   Portability
-    Portability is a goal, not a guarantee. "tee" requires fork, except on
-    Windows where "system(1, @cmd)" is used instead. Not tested on any
+    Portability is a goal, not a guarantee. `tee' requires fork, except on
+    Windows where `system(1, @cmd)' is used instead. Not tested on any
     particularly esoteric platforms yet.
 
   PerlIO layers
     Capture::Tiny does it's best to preserve PerlIO layers such as ':utf8'
     or ':crlf' when capturing. Layers should be applied to STDOUT or STDERR
-    *before* the call to "capture" or "tee".
+    *before* the call to `capture' or `tee'.
 
   Closed STDIN, STDOUT or STDERR
     Capture::Tiny will work even if STDIN, STDOUT or STDERR have been
@@ -105,8 +105,8 @@ LIMITATIONS
 
   Scalar filehandles and STDIN, STDOUT or STDERR
     If STDOUT or STDERR are reopened to scalar filehandles prior to the call
-    to "capture" or "tee", then Capture::Tiny will override the output
-    handle for the duration of the "capture" or "tee" call and then send
+    to `capture' or `tee', then Capture::Tiny will override the output
+    handle for the duration of the `capture' or `tee' call and then send
     captured output to the output handle after the capture is complete.
     (Requires Perl 5.8)
 
@@ -114,9 +114,9 @@ LIMITATIONS
     scalar reference.
 
   Tied STDIN, STDOUT or STDERR
-    If STDOUT or STDERR are tied prior to the call to "capture" or "tee",
+    If STDOUT or STDERR are tied prior to the call to `capture' or `tee',
     then Capture::Tiny will attempt to override the tie for the duration of
-    the "capture" or "tee" call and then send captured output to the tied
+    the `capture' or `tee' call and then send captured output to the tied
     handle after the capture is complete. (Requires Perl 5.8)
 
     Capture::Tiny does not (yet) support resending utf8 encoded data to a
@@ -126,13 +126,13 @@ LIMITATIONS
     capturing or teeing when STDIN is tied is currently broken on Windows.
 
   Modifiying STDIN, STDOUT or STDERR during a capture
-    Attempting to modify STDIN, STDOUT or STDERR *during* "capture" or "tee"
+    Attempting to modify STDIN, STDOUT or STDERR *during* `capture' or `tee'
     is almost certainly going to cause problems. Don't do that.
 
 BUGS
     Please report any bugs or feature requests using the CPAN Request
     Tracker. Bugs can be submitted through the web interface at
-    <http://rt.cpan.org/Dist/Display.html?Queue=Capture-Tiny>
+    http://rt.cpan.org/Dist/Display.html?Queue=Capture-Tiny
 
     When submitting a bug or request, please include a test-file or a patch
     to an existing test-file that illustrates the bug or desired feature.
@@ -194,7 +194,8 @@ COPYRIGHT AND LICENSE
     Licensed under Apache License, Version 2.0 (the "License"). You may not
     use this file except in compliance with the License. A copy of the
     License was distributed with this file or you may obtain a copy of the
-    License from http://www.apache.org/licenses/LICENSE-2.0
+    License from
+    http:E<sol>E<sol>www.apache.orgE<sol>licensesE<sol>LICENSE-2.0
 
     Files produced as output though the use of this software, shall not be
     considered Derivative Works, but shall be considered the original work
