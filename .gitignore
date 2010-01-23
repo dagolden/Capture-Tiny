@@ -5,3 +5,4 @@ blib/
 *.tmp
 *.bak
 cover_db/
+MYMETA.yml
