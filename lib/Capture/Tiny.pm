@@ -1,7 +1,7 @@
 # Copyright (c) 2009 by David Golden. All rights reserved.
 # Licensed under Apache License, Version 2.0 (the "License").
 # You may not use this file except in compliance with the License.
-# A copy of the License was distributed with this file or you may obtain a 
+# A copy of the License was distributed with this file or you may obtain a
 # copy of the License from http://www.apache.org/licenses/LICENSE-2.0
 
 package Capture::Tiny;
@@ -39,10 +39,10 @@ open $DEBUGFH, ">&STDERR" if $DEBUG;
 # This is annoying, but seems to be the best that can be done
 # as a simple, portable IPC technique
 #--------------------------------------------------------------------------#
-my @cmd = ($^X, '-e', '$SIG{HUP}=sub{exit}; ' 
+my @cmd = ($^X, '-e', '$SIG{HUP}=sub{exit}; '
   . 'if( my $fn=shift ){ open my $fh, qq{>$fn}; print {$fh} $$; close $fh;} '
   . 'my $buf; while (sysread(STDIN, $buf, 2048)) { '
-  . 'syswrite(STDOUT, $buf); syswrite(STDERR, $buf)}' 
+  . 'syswrite(STDOUT, $buf); syswrite(STDERR, $buf)}'
 );
 
 #--------------------------------------------------------------------------#
@@ -75,7 +75,7 @@ sub _close {
 }
 
 my %dup; # cache this so STDIN stays fd0
-my %proxy_count;  
+my %proxy_count;
 sub _proxy_std {
   my %proxies;
   if ( ! defined fileno STDIN ) {
@@ -125,13 +125,13 @@ sub _proxy_std {
 
 sub _unproxy {
   my (%proxies) = @_;
-  _debug( "# unproxing " . join(" ", keys %proxies) . "\n" ); 
+  _debug( "# unproxing " . join(" ", keys %proxies) . "\n" );
   for my $p ( keys %proxies ) {
     $proxy_count{$p}--;
     _debug( "# unproxied " . uc($p) . " ($proxy_count{$p} left)\n" );
     if ( ! $proxy_count{$p} ) {
       _close $proxies{$p};
-      _close $dup{$p} unless $] < 5.008; # 5.6 will have already closed this as dup 
+      _close $dup{$p} unless $] < 5.008; # 5.6 will have already closed this as dup
       delete $dup{$p};
     }
   }
@@ -139,8 +139,8 @@ sub _unproxy {
 
 sub _copy_std {
   my %handles = map { $_, IO::Handle->new } qw/stdin stdout stderr/;
-  _debug( "# copying std handles ...\n" ); 
-  _open $handles{stdin},   "<&STDIN"; 
+  _debug( "# copying std handles ...\n" );
+  _open $handles{stdin},   "<&STDIN";
   _open $handles{stdout},  ">&STDOUT";
   _open $handles{stderr},  ">&STDERR";
   return \%handles;
@@ -162,8 +162,8 @@ sub _start_tee {
   # setup pipes
   $stash->{$_}{$which} = IO::Handle->new for qw/tee reader/;
   pipe $stash->{reader}{$which}, $stash->{tee}{$which};
-  _debug( "# pipe for $which\: " .  _name($stash->{tee}{$which}) . " "  
-    . fileno( $stash->{tee}{$which} ) . " => " . _name($stash->{reader}{$which}) 
+  _debug( "# pipe for $which\: " .  _name($stash->{tee}{$which}) . " "
+    . fileno( $stash->{tee}{$which} ) . " => " . _name($stash->{reader}{$which})
     . " " . fileno( $stash->{reader}{$which}) . "\n" );
   select((select($stash->{tee}{$which}), $|=1)[0]); # autoflush
   # setup desired redirection for parent and child
@@ -198,17 +198,17 @@ sub _start_tee {
 
 sub _fork_exec {
   my ($which, $stash) = @_;
-  my $pid = fork; 
+  my $pid = fork;
   if ( not defined $pid ) {
     Carp::confess "Couldn't fork(): $!";
   }
   elsif ($pid == 0) { # child
-    _debug( "# in child process ...\n" ); 
+    _debug( "# in child process ...\n" );
     untie *STDIN; untie *STDOUT; untie *STDERR;
     _close $stash->{tee}{$which};
-    _debug( "# redirecting handles in child ...\n" ); 
+    _debug( "# redirecting handles in child ...\n" );
     _open_std( $stash->{child}{$which} );
-    _debug( "# calling exec on command ...\n" ); 
+    _debug( "# calling exec on command ...\n" );
     exec @cmd, $stash->{flag_files}{$which};
   }
   $stash->{pid}{$which} = $pid
@@ -216,13 +216,13 @@ sub _fork_exec {
 
 sub _files_exist { -f $_ || return 0 for @_; return 1 }
 
-sub _wait_for_tees { 
+sub _wait_for_tees {
   my ($stash) = @_;
   my $start = time;
   my @files = values %{$stash->{flag_files}};
   1 until _files_exist(@files) || (time - $start > 30);
   Carp::confess "Timed out waiting for subprocesses to start" if ! _files_exist(@files);
-  unlink $_ for @files; 
+  unlink $_ for @files;
 }
 
 sub _kill_tees {
@@ -240,8 +240,8 @@ sub _kill_tees {
   }
 }
 
-sub _slurp { 
-  seek $_[0],0,0; local $/; return scalar readline $_[0]; 
+sub _slurp {
+  seek $_[0],0,0; local $/; return scalar readline $_[0];
 }
 
 #--------------------------------------------------------------------------#
@@ -249,7 +249,7 @@ sub _slurp {
 #--------------------------------------------------------------------------#
 
 sub _capture_tee {
-  _debug( "# starting _capture_tee with (@_)...\n" ); 
+  _debug( "# starting _capture_tee with (@_)...\n" );
   my ($tee_stdout, $tee_stderr, $merge, $code) = @_;
   # save existing filehandles and setup captures
   local *CT_ORIG_STDIN  = *STDIN ;
@@ -269,7 +269,7 @@ sub _capture_tee {
   $localize{stderr}++, local(*STDERR) if grep { $_ eq 'scalar' } @{$layers{stderr}};
   $localize{stdout}++, local(*STDOUT), _open( \*STDOUT, ">&=1") if tied *STDOUT && $] >= 5.008;
   $localize{stderr}++, local(*STDERR), _open( \*STDERR, ">&=2") if tied *STDERR && $] >= 5.008;
-  _debug( "# localized $_\n" ) for keys %localize; 
+  _debug( "# localized $_\n" ) for keys %localize;
   my %proxy_std = _proxy_std();
   _debug( "# proxy std is @{ [%proxy_std] }\n" );
   my $stash = { old => _copy_std() };
@@ -290,22 +290,22 @@ sub _capture_tee {
   # finalize redirection
   $stash->{new}{stderr} = $stash->{new}{stdout} if $merge;
   $stash->{new}{stdin} = $stash->{old}{stdin};
-  _debug( "# redirecting in parent ...\n" ); 
+  _debug( "# redirecting in parent ...\n" );
   _open_std( $stash->{new} );
   # execute user provided code
   my $exit_code;
   {
     local *STDIN = *CT_ORIG_STDIN if $localize{stdin}; # get original, not proxy STDIN
     local *STDERR = *STDOUT if $merge; # minimize buffer mixups during $code
-    _debug( "# finalizing layers ...\n" ); 
+    _debug( "# finalizing layers ...\n" );
     _relayer(\*STDOUT, $layers{stdout});
     _relayer(\*STDERR, $layers{stderr}) unless $merge;
-    _debug( "# running code $code ...\n" ); 
+    _debug( "# running code $code ...\n" );
     $code->();
     $exit_code = $?; # save this for later
   }
   # restore prior filehandles and shut down tees
-  _debug( "# restoring ...\n" ); 
+  _debug( "# restoring ...\n" );
   _open_std( $stash->{old} );
   _close( $_ ) for values %{$stash->{old}}; # don't leak fds
   _unproxy( %proxy_std );
@@ -316,16 +316,16 @@ sub _capture_tee {
   _debug( "# slurping captured $_ with layers: @{[PerlIO::get_layers($stash->{capture}{$_})]}\n") for qw/stdout stderr/;
   my $got_out = _slurp($stash->{capture}{stdout});
   my $got_err = $merge ? q() : _slurp($stash->{capture}{stderr});
-  print CT_ORIG_STDOUT $got_out if $localize{stdout} && $tee_stdout; 
-  print CT_ORIG_STDERR $got_err if !$merge && $localize{stderr} && $tee_stdout; 
+  print CT_ORIG_STDOUT $got_out if $localize{stdout} && $tee_stdout;
+  print CT_ORIG_STDERR $got_err if !$merge && $localize{stderr} && $tee_stdout;
   $? = $exit_code;
-  _debug( "# ending _capture_tee with (@_)...\n" ); 
+  _debug( "# ending _capture_tee with (@_)...\n" );
   return $got_out if $merge;
   return wantarray ? ($got_out, $got_err) : $got_out;
 }
 
 #--------------------------------------------------------------------------#
-# create API subroutines from [tee STDOUT flag, tee STDERR, merge flag]               
+# create API subroutines from [tee STDOUT flag, tee STDERR, merge flag]
 #--------------------------------------------------------------------------#
 
 my %api = (
@@ -336,7 +336,7 @@ my %api = (
 );
 
 for my $sub ( keys %api ) {
-  my $args = join q{, }, @{$api{$sub}}; 
+  my $args = join q{, }, @{$api{$sub}};
   eval "sub $sub(&) {unshift \@_, $args; goto \\&_capture_tee;}"; ## no critic
 }
 
