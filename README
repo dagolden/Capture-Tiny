@@ -129,6 +129,9 @@ LIMITATIONS
     Attempting to modify STDIN, STDOUT or STDERR *during* `capture' or `tee'
     is almost certainly going to cause problems. Don't do that.
 
+  No support for Perl 5.8.0
+    It's just too buggy when it comes to layers and UTF8.
+
 BUGS
     Please report any bugs or feature requests using the CPAN Request
     Tracker. Bugs can be submitted through the web interface at

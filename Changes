@@ -13,8 +13,8 @@ Revision history for Capture-Tiny
 
   - Changed test for $? preservation to be more portable
 
-  - Mocks PerlIO::get_layers on Perl 5.8.0, since it wasn't introduced
-    until Perl 5.8.1
+  - Dropped support for Perl 5.8.0 specifically due to excessive bugs.
+    Tests will bail out. (5.6.X is still supported)
 
 0.06 Thu May  7 06:54:53 EDT 2009
 

@@ -18,6 +18,10 @@ my @api = qw(
 
 plan tests => 2 + 2 * @api;
 
+if ( $] eq '5.008' ) {
+  BAIL_OUT("OS unsupported: Perl 5.8.0 is too buggy for Capture::Tiny");
+}
+
 require_ok( 'Capture::Tiny' );
 
 can_ok('Capture::Tiny', $_) for @api;

@@ -49,7 +49,7 @@ sub _restore_layers {
 my %texts = (
   short => 'Hello World',
   multiline => 'First line\nSecond line\n',
-  ( $] < 5.008 ? () : ( unicode => 'Hi! \x{263a}\n') ),
+  ( $] lt "5.008" ? () : ( unicode => 'Hi! \x{263a}\n') ),
 );
 
 #--------------------------------------------------------------------------#

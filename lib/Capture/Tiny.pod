@@ -146,6 +146,10 @@ or teeing when STDIN is tied is currently broken on Windows.
 Attempting to modify STDIN, STDOUT or STDERR I<during> C<<< capture >>> or C<<< tee >>> is
 almost certainly going to cause problems.  Don't do that.
 
+=head2 No support for Perl 5.8.0
+
+It's just too buggy when it comes to layers and UTF8.
+
 =head1 BUGS
 
 Please report any bugs or feature requests using the CPAN Request Tracker.
