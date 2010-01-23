@@ -14,7 +14,10 @@ use IO::Handle ();
 use File::Spec ();
 use File::Temp qw/tempfile tmpnam/;
 # Get PerlIO or fake it
-BEGIN { eval { require PerlIO; 1 } or *PerlIO::get_layers = sub { return () }; }
+BEGIN {
+  eval { require PerlIO; PerlIO->can('get_layers') }
+    or *PerlIO::get_layers = sub { return () };
+}
 
 our $VERSION = '0.07';
 $VERSION = eval $VERSION; ## no critic
