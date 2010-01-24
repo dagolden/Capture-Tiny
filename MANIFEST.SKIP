@@ -22,6 +22,7 @@
 ^_build
 ^cover_db
 ^.*\.bat$
+^MYMETA\.
 
 # Temp, old, vi and emacs files.
 ~$
