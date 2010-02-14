@@ -52,10 +52,10 @@ my @cmd = ($^X, '-e', '$SIG{HUP}=sub{exit}; '
 sub _relayer {
   my ($fh, $layers) = @_;
   _debug("# requested layers (@{$layers}) to $fh\n");
-  my %seen;
-  my @unique = grep { $_ ne 'unix' and $_ ne 'perlio' and !$seen{$_}++ } @$layers;
+  my %seen = ( unix => 1, perlio => 1 ); # filter these out
+  my @unique = grep { !$seen{$_}++ } @$layers;
   _debug("# applying unique layers (@unique) to $fh\n");
-  binmode($fh, join(":", "", "raw", @unique));
+  binmode($fh, join(":", ":raw", @unique));
 }
 
 sub _name {
