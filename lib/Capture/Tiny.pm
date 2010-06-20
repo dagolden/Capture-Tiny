@@ -19,7 +19,7 @@ BEGIN {
     or *PerlIO::get_layers = sub { return () };
 }
 
-our $VERSION = '0.07';
+our $VERSION = '0.08';
 $VERSION = eval $VERSION; ## no critic
 our @ISA = qw/Exporter/;
 our @EXPORT_OK = qw/capture capture_merged tee tee_merged/;

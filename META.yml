@@ -20,7 +20,7 @@ no_index:
 provides:
   Capture::Tiny:
     file: lib/Capture/Tiny.pm
-    version: 0.07
+    version: 0.08
 requires:
   Exporter: 0
   File::Spec: 0
@@ -30,4 +30,4 @@ requires:
 resources:
   bugtracker: http://rt.cpan.org/NoAuth/Bugs.html?Dist=Capture-Tiny
   repository: http://github.com/dagolden/capture-tiny/
-version: 0.07
+version: 0.08
