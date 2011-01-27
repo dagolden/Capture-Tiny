@@ -15,6 +15,7 @@ use File::Spec ();
 use File::Temp qw/tempfile tmpnam/;
 # Get PerlIO or fake it
 BEGIN {
+  local $@;
   eval { require PerlIO; PerlIO->can('get_layers') }
     or *PerlIO::get_layers = sub { return () };
 }
@@ -179,6 +180,7 @@ sub _start_tee {
   $stash->{flag_files}{$which} = scalar tmpnam();
   # execute @cmd as a separate process
   if ( $IS_WIN32 ) {
+    local $@;
     eval "use Win32API::File qw/CloseHandle GetOsFHandle SetHandleInformation fileLastError HANDLE_FLAG_INHERIT INVALID_HANDLE_VALUE/ ";
     _debug( "# Win32API::File loaded\n") unless $@;
     my $os_fhandle = GetOsFHandle( $stash->{tee}{$which} );
@@ -296,7 +298,7 @@ sub _capture_tee {
   _debug( "# redirecting in parent ...\n" );
   _open_std( $stash->{new} );
   # execute user provided code
-  my ($exit_code, $error);
+  my ($exit_code, $inner_error, $outer_error);
   {
     local *STDIN = *CT_ORIG_STDIN if $localize{stdin}; # get original, not proxy STDIN
     local *STDERR = *STDOUT if $merge; # minimize buffer mixups during $code
@@ -304,9 +306,10 @@ sub _capture_tee {
     _relayer(\*STDOUT, $layers{stdout});
     _relayer(\*STDERR, $layers{stderr}) unless $merge;
     _debug( "# running code $code ...\n" );
-    eval { $code->() };
+    local $@;
+    eval { $code->(); $inner_error = $@ };
     $exit_code = $?; # save this for later
-    $error = $@; # save this for later
+    $outer_error = $@; # save this for later
   }
   # restore prior filehandles and shut down tees
   _debug( "# restoring ...\n" );
@@ -323,7 +326,8 @@ sub _capture_tee {
   print CT_ORIG_STDOUT $got_out if $localize{stdout} && $tee_stdout;
   print CT_ORIG_STDERR $got_err if !$merge && $localize{stderr} && $tee_stdout;
   $? = $exit_code;
-  die $error if $error;
+  $@ = $inner_error if $inner_error;
+  die $outer_error if $outer_error;
   _debug( "# ending _capture_tee with (@_)...\n" );
   return $got_out if $merge;
   return wantarray ? ($got_out, $got_err) : $got_out;

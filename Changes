@@ -12,6 +12,12 @@ Revision history for Capture-Tiny
   - Added support for $ENV{PERL_CAPTURE_TINY_TIMEOUT} to control
     the timeout period under 'tee'
 
+  Fixed:
+
+  - $@ set within a captured block is no longer lost when the capture
+    is completed; likewise, the initial value of $@ is not lost
+    during capture (when no subsequent error occurs) (RT #65139)
+
 0.08 Sun Jun 20 19:13:19 EDT 2010
 
   Fixed:

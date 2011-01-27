@@ -11,7 +11,7 @@ use t::lib::Utils qw/next_fd sig_num/;
 use Capture::Tiny qw/capture tee/;
 use Config;
 
-plan tests => 4;
+plan tests => 5;
 
 local $ENV{PERL_CAPTURE_TINY_TIMEOUT} = 0; # no timeouts
 
@@ -19,8 +19,12 @@ my $builder = Test::More->builder;
 binmode($builder->failure_output, ':utf8') if $] >= 5.008;
 
 my $fd = next_fd;
-my $error;
-my ($out, $err) = capture {
+$@ = "initial error";
+my ($out, $err) = capture { print "foo\n" };
+is( $@, 'initial error', "Initial \$\@ not lost during capture" );
+
+
+($out, $err) = capture {
   eval {
     tee {
       local $|=1;
@@ -29,8 +33,8 @@ my ($out, $err) = capture {
       die "Fatal error in capture\n";
     }
   };
-  $error = $@;
 };
+my $error = $@;
 
 is( $error, "Fatal error in capture\n", "\$\@ preserved after capture" );
 is( $out, "foo\n", "STDOUT still captured" );
