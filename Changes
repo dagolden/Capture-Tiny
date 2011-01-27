@@ -10,7 +10,8 @@ Revision history for Capture-Tiny
   Added:
 
   - Added support for $ENV{PERL_CAPTURE_TINY_TIMEOUT} to control
-    the timeout period under 'tee'
+    the timeout period under 'tee'; tests set not to timeout to
+    avoid false FAIL reports on overloaded virtual machine smokers
 
   Fixed:
 
