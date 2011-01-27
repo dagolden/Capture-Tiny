@@ -181,6 +181,7 @@ my %tests = (
 sub run_test {
   my $test_type = shift or return;
   my $todo = shift || '';
+  local $ENV{PERL_CAPTURE_TINY_TIMEOUT} = 0; # don't timeout during testing
   for my $m ( keys %methods ) {
     for my $c ( keys %channels ) {
       for my $t ( keys %texts     ) {

@@ -13,6 +13,8 @@ use Config;
 
 plan tests => 4;
 
+local $ENV{PERL_CAPTURE_TINY_TIMEOUT} = 0; # no timeouts
+
 my $builder = Test::More->builder;
 binmode($builder->failure_output, ':utf8') if $] >= 5.008;
 
