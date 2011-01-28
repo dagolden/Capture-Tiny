@@ -1,4 +1,4 @@
-package t::lib::TieLC;
+package TieLC;
 
 sub TIEHANDLE 
 {

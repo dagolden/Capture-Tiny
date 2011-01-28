@@ -7,8 +7,9 @@
 use strict;
 use warnings;
 use Test::More;
-use t::lib::Utils qw/next_fd/;
-use t::lib::Cases qw/run_test/;
+use lib 't/lib';
+use Utils qw/next_fd/;
+use Cases qw/run_test/;
 
 plan 'no_plan';
 

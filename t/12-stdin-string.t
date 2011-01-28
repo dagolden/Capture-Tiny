@@ -7,8 +7,9 @@
 use strict;
 use warnings;
 use Test::More;
-use t::lib::Utils qw/save_std restore_std next_fd/;
-use t::lib::Cases qw/run_test/;
+use lib 't/lib';
+use Utils qw/save_std restore_std next_fd/;
+use Cases qw/run_test/;
 
 use Config;
 my $no_fork = $^O ne 'MSWin32' && ! $Config{d_fork};

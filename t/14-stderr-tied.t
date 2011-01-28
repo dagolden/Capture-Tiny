@@ -7,9 +7,10 @@
 use strict;
 use warnings;
 use Test::More;
-use t::lib::Utils qw/save_std restore_std next_fd/;
-use t::lib::Cases qw/run_test/;
-use t::lib::TieLC;
+use lib 't/lib';
+use Utils qw/save_std restore_std next_fd/;
+use Cases qw/run_test/;
+use TieLC;
 
 use Config;
 my $no_fork = $^O ne 'MSWin32' && ! $Config{d_fork};
@@ -24,7 +25,7 @@ binmode($builder->failure_output, ':utf8') if $] >= 5.008;
 binmode($builder->todo_output, ':utf8') if $] >= 5.008;
 
 save_std(qw/stderr/);
-tie *STDERR, 't::lib::TieLC', ">&=STDERR";
+tie *STDERR, 'TieLC', ">&=STDERR";
 my $orig_tie = tied *STDERR;
 ok( $orig_tie, "STDERR is tied" );
 

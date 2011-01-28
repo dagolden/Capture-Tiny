@@ -1,13 +1,8 @@
-# Copyright (c) 2009 by David Golden. All rights reserved.
-# Licensed under Apache License, Version 2.0 (the "License").
-# You may not use this file except in compliance with the License.
-# A copy of the License was distributed with this file or you may obtain a
-# copy of the License from http://www.apache.org/licenses/LICENSE-2.0
-
-package Capture::Tiny;
 use 5.006;
 use strict;
 use warnings;
+package Capture::Tiny;
+# ABSTRACT: Capture STDOUT and STDERR from Perl, XS or external programs
 use Carp ();
 use Exporter ();
 use IO::Handle ();
@@ -355,14 +350,6 @@ __END__
 
 =begin wikidoc
 
-= NAME
-
-Capture::Tiny - Capture STDOUT and STDERR from Perl, XS or external programs
-
-= VERSION
-
-This documentation describes version %%VERSION%%.
-
 = SYNOPSIS
 
     use Capture::Tiny qw/capture tee capture_merged tee_merged/;
@@ -550,29 +537,6 @@ why I felt Capture::Tiny was necessary.
 * [Tie::STDERR]
 * [Tie::STDOUT]
 * [Test::Output]
-
-= AUTHOR
-
-David A. Golden (DAGOLDEN)
-
-= COPYRIGHT AND LICENSE
-
-Copyright (c) 2009 by David A. Golden. All rights reserved.
-
-Licensed under Apache License, Version 2.0 (the "License").  You may not use
-this file except in compliance with the License.  A copy of the License was
-distributed with this file or you may obtain a copy of the License from
-http://www.apache.org/licenses/LICENSE-2.0
-
-Files produced as output though the use of this software, shall not be
-considered Derivative Works, but shall be considered the original work of the
-Licensor.
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
 
 =end wikidoc
 

@@ -1,4 +1,4 @@
-package t::lib::Utils;
+package Utils;
 use strict;
 use warnings;
 use File::Spec;

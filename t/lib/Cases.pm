@@ -1,4 +1,4 @@
-package t::lib::Cases;
+package Cases;
 use strict;
 use warnings;
 use Test::More;

@@ -7,7 +7,8 @@
 use strict;
 use warnings;
 use Test::More;
-use t::lib::Utils qw/next_fd sig_num/;
+use lib 't/lib';
+use Utils qw/next_fd sig_num/;
 use Capture::Tiny qw/capture tee/;
 use Config;
 
