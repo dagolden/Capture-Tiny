@@ -2,6 +2,8 @@ Revision history for Capture-Tiny
 
 {{$NEXT}}
 
+0.09      2011-01-27 23:52:16 EST5EDT
+
   Added:
 
   - Added support for $ENV{PERL_CAPTURE_TINY_TIMEOUT} to control
