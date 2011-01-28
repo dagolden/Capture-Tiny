@@ -6,3 +6,5 @@ blib/
 *.bak
 cover_db/
 MYMETA.yml
+.build
+/Capture-Tiny-*

@@ -15,8 +15,6 @@ BEGIN {
     or *PerlIO::get_layers = sub { return () };
 }
 
-our $VERSION = '0.08';
-$VERSION = eval $VERSION; ## no critic
 our @ISA = qw/Exporter/;
 our @EXPORT_OK = qw/capture capture_merged tee tee_merged/;
 our %EXPORT_TAGS = ( 'all' => \@EXPORT_OK );
@@ -352,23 +350,23 @@ __END__
 
 = SYNOPSIS
 
-    use Capture::Tiny qw/capture tee capture_merged tee_merged/;
+  use Capture::Tiny qw/capture tee capture_merged tee_merged/;
 
-    ($stdout, $stderr) = capture {
-      # your code here
-    };
+  ($stdout, $stderr) = capture {
+    # your code here
+  };
 
-    ($stdout, $stderr) = tee {
-      # your code here
-    };
+  ($stdout, $stderr) = tee {
+    # your code here
+  };
 
-    $merged = capture_merged {
-      # your code here
-    };
+  $merged = capture_merged {
+    # your code here
+  };
 
-    $merged = tee_merged {
-      # your code here
-    };
+  $merged = tee_merged {
+    # your code here
+  };
 
 = DESCRIPTION
 
