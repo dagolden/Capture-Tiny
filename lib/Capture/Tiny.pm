@@ -217,8 +217,9 @@ sub _wait_for_tees {
   my ($stash) = @_;
   my $start = time;
   my @files = values %{$stash->{flag_files}};
-  my $timeout = $ENV{PERL_CAPTURE_TINY_TIMEOUT} || $TIMEOUT;
-  1 until _files_exist(@files) || ($TIMEOUT && (time - $start > $timeout));
+  my $timeout = defined $ENV{PERL_CAPTURE_TINY_TIMEOUT}
+              ? $ENV{PERL_CAPTURE_TINY_TIMEOUT} : $TIMEOUT;
+  1 until _files_exist(@files) || ($timeout && (time - $start > $timeout));
   Carp::confess "Timed out waiting for subprocesses to start" if ! _files_exist(@files);
   unlink $_ for @files;
 }
@@ -496,7 +497,7 @@ Capture::Tiny uses subprocesses for {tee}.  By default, Capture::Tiny will
 timeout with an error if the subprocesses are not ready to receive data within
 30 seconds (or whatever is the value of {$Capture::Tiny::TIMEOUT}).  An
 alternate timeout may be specified by setting the {PERL_CAPTURE_TINY_TIMEOUT}
-environment variable.
+environment variable.  Setting it to zero will disable timeouts.
 
 = BUGS
 

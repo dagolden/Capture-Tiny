@@ -2,6 +2,10 @@ Revision history for Capture-Tiny
 
 {{$NEXT}}
 
+  Fixed:
+
+  - Setting PERL_CAPTURE_TINY_TIMEOUT to 0 will disable timeouts
+
 0.09      2011-01-27 23:52:16 EST5EDT
 
   Added:
