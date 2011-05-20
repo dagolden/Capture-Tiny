@@ -2,6 +2,10 @@ Revision history for Capture-Tiny
 
 {{$NEXT}}
 
+  Fixed:
+
+  - Tests will not use Test::Differences version 0.60 or greater
+
 0.10      2011-02-07 07:01:44 EST5EDT
 
   Fixed:

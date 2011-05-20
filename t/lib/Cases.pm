@@ -13,7 +13,7 @@ our @EXPORT_OK = qw(
 my $have_diff = eval { 
   require Test::Differences; 
   Test::Differences->import;
-  1;
+  $Test::Differences::VERSION < 0.60; # 0.60+ is causing strange failures
 };
 
 sub _is_or_diff {
