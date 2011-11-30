@@ -211,7 +211,12 @@ sub _fork_exec {
   $stash->{pid}{$which} = $pid
 }
 
-sub _files_exist { -f $_ || return 0 for @_; return 1 }
+my $have_usleep = eval "use Time::HiRes 'usleep'; 1";
+sub _files_exist {
+  return 1 if @_ == grep { -f } @_;
+  Time::HiRes::usleep(1000) if $have_usleep;
+  return 0;
+}
 
 sub _wait_for_tees {
   my ($stash) = @_;

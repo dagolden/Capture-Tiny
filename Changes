@@ -2,6 +2,12 @@ Revision history for Capture-Tiny
 
 {{$NEXT}}
 
+  Changed:
+
+  - When Time::HiRes::usleep is available, tee operations will
+    sleep during the busy-loop waiting for tee processes to be ready
+    [rt.cpan.org #67858]
+
 0.11      2011-05-19 23:34:23 America/New_York
 
   Fixed:
