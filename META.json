@@ -37,6 +37,7 @@
             "File::Spec" : 0,
             "File::Temp" : 0,
             "IO::Handle" : 0,
+            "Scalar::Util" : 0,
             "perl" : "5.006",
             "strict" : 0,
             "warnings" : 0

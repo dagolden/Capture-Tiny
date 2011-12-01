@@ -2,6 +2,11 @@ Revision history for Capture-Tiny
 
 {{$NEXT}}
 
+  Fixed:
+
+  - Tied filehandles based on Tie::StdHandle can now use the ":utf8"
+    layer; removed remaining TODO tests; adds Scalar::Util as a dependency
+
   Changed:
 
   - When Time::HiRes::usleep is available, tee operations will
