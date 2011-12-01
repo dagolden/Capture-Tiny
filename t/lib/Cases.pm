@@ -197,6 +197,22 @@ my %tests = (
       my @expected = $channels{$c}{expect}->($t);
       _is_or_diff( $inner_out, $expected[0], "$l|$m|$c|$t - inner STDOUT" );
       _is_or_diff( $tee_out, $expected[0], "$l|$m|$c|$t - teed STDOUT" );
+      _is_or_diff( $tee_err, $expected[1], "$l|$m|$c|$t - unmodified STDERR" );
+    }
+  },
+  tee_stderr => {
+    cnt => 3,
+    test => sub {
+      my ($m, $c, $t, $l) = @_;
+      my ($inner_out, $inner_err);
+      my ($tee_out, $tee_err) = capture {
+        $inner_err = tee_stderr {
+          $methods{$m}->( $channels{$c}{output}->($t) );
+        };
+      };
+      my @expected = $channels{$c}{expect}->($t);
+      _is_or_diff( $inner_err, $expected[1], "$l|$m|$c|$t - inner STDOUT" );
+      _is_or_diff( $tee_out, $expected[0], "$l|$m|$c|$t - unmodified STDOUT" );
       _is_or_diff( $tee_err, $expected[1], "$l|$m|$c|$t - teed STDERR" );
     }
   },

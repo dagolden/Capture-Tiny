@@ -29,6 +29,7 @@ run_test('tee');
 run_test('tee_scalar');
 run_test('tee_merged');
 run_test('tee_stdout');
+run_test('tee_stderr');
 
 is( next_fd, $fd, "no file descriptors leaked" );
 
