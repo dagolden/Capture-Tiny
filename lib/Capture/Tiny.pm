@@ -309,11 +309,11 @@ sub _capture_tee {
   $localize{stdout}++, local(*STDOUT)
     if $do_stdout && grep { $_ eq 'scalar' } @{$layers{stdout}};
   $localize{stderr}++, local(*STDERR)
-    if $do_stderr && grep { $_ eq 'scalar' } @{$layers{stderr}};
+    if ($do_stderr || $do_merge) && grep { $_ eq 'scalar' } @{$layers{stderr}};
   $localize{stdout}++, local(*STDOUT), _open( \*STDOUT, ">&=1")
     if $do_stdout && tied *STDOUT && $] >= 5.008;
   $localize{stderr}++, local(*STDERR), _open( \*STDERR, ">&=2")
-    if $do_stderr && tied *STDERR && $] >= 5.008;
+    if ($do_stderr || $do_merge) && tied *STDERR && $] >= 5.008;
   _debug( "# localized $_\n" ) for keys %localize;
   # proxy any closed/localized handles so we don't use fds 0, 1 or 2
   my %proxy_std = _proxy_std();

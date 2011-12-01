@@ -20,9 +20,9 @@ my $fd = next_fd;
 
 run_test('capture');
 run_test('capture_scalar');
-run_test('capture_merged');
 run_test('capture_stdout');
 run_test('capture_stderr');
+run_test('capture_merged');
 
 is( next_fd, $fd, "no file descriptors leaked" );
 

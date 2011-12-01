@@ -11,8 +11,12 @@ use Test::More 0.62;
 
 my @api = qw(
   capture
+  capture_stdout
+  capture_stderr
   capture_merged
   tee
+  tee_stdout
+  tee_stderr
   tee_merged
 );
 
