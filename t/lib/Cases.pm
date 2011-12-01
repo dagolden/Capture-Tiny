@@ -108,7 +108,7 @@ my %tests = (
     },
   },
   capture_stdout => {
-    cnt   => 2,
+    cnt   => 3,
     test  => sub {
       my ($m, $c, $t, $l) = @_;
       my ($inner_out, $inner_err);
@@ -124,7 +124,7 @@ my %tests = (
     },
   },
   capture_stderr => {
-    cnt   => 2,
+    cnt   => 3,
     test  => sub {
       my ($m, $c, $t, $l) = @_;
       my ($inner_out, $inner_err);
