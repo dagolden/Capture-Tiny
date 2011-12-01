@@ -8,6 +8,7 @@ use Exporter ();
 use IO::Handle ();
 use File::Spec ();
 use File::Temp qw/tempfile tmpnam/;
+use Scalar::Util qw/reftype/;
 # Get PerlIO or fake it
 BEGIN {
   local $@;
@@ -22,8 +23,9 @@ our %EXPORT_TAGS = ( 'all' => \@EXPORT_OK );
 my $IS_WIN32 = $^O eq 'MSWin32';
 
 our $DEBUG = $ENV{PERL_CAPTURE_TINY_DEBUG};
+
 my $DEBUGFH;
-open $DEBUGFH, ">&STDERR" if $DEBUG;
+open $DEBUGFH, "> DEBUG" if $DEBUG;
 
 *_debug = $DEBUG ? sub(@) { print {$DEBUGFH} @_ } : sub(){0};
 
@@ -244,9 +246,7 @@ sub _kill_tees {
   }
 }
 
-sub _slurp {
-  seek $_[0],0,0; local $/; return scalar readline $_[0];
-}
+sub _slurp { seek $_[0],0,0; local $/; return scalar readline $_[0] }
 
 #--------------------------------------------------------------------------#
 # _capture_tee() -- generic main sub for capturing or teeing
@@ -266,6 +266,13 @@ sub _capture_tee {
     stderr  => [PerlIO::get_layers(\*STDERR)],
   );
   _debug( "# existing layers for $_\: @{$layers{$_}}\n" ) for qw/stdin stdout stderr/;
+  # get layers from underlying glob of tied filehandles if we can
+  # (this only works for things that work like Tie::StdHandle)
+  $layers{stdout} = [PerlIO::get_layers(tied *STDOUT)]
+    if tied(*STDOUT) && (reftype tied *STDOUT eq 'GLOB');
+  $layers{stderr} = [PerlIO::get_layers(tied *STDERR)]
+    if tied(*STDERR) && (reftype tied *STDERR eq 'GLOB');
+  _debug( "# tied object corrected layers for $_\: @{$layers{$_}}\n" ) for qw/stdin stdout stderr/;
   # bypass scalar filehandles and tied handles
   my %localize;
   $localize{stdin}++,  local(*STDIN)  if grep { $_ eq 'scalar' } @{$layers{stdin}};
@@ -275,14 +282,12 @@ sub _capture_tee {
   $localize{stderr}++, local(*STDERR), _open( \*STDERR, ">&=2") if tied *STDERR && $] >= 5.008;
   _debug( "# localized $_\n" ) for keys %localize;
   my %proxy_std = _proxy_std();
-  _debug( "# proxy std is @{ [%proxy_std] }\n" );
+  _debug( "# proxy std: @{ [%proxy_std] }\n" );
   my $stash = { old => _copy_std() };
   # update layers after any proxying
-  %layers = (
-    stdin   => [PerlIO::get_layers(\*STDIN) ],
-    stdout  => [PerlIO::get_layers(\*STDOUT)],
-    stderr  => [PerlIO::get_layers(\*STDERR)],
-  );
+  $layers{stdin}  = [PerlIO::get_layers(\*STDIN)]  if $proxy_std{stdin};
+  $layers{stdout} = [PerlIO::get_layers(\*STDOUT)] if $proxy_std{stdout};
+  $layers{stderr} = [PerlIO::get_layers(\*STDERR)] if $proxy_std{stderr};
   _debug( "# post-proxy layers for $_\: @{$layers{$_}}\n" ) for qw/stdin stdout stderr/;
   # get handles for capture and apply existing IO layers
   $stash->{new}{$_} = $stash->{capture}{$_} = File::Temp->new for qw/stdout stderr/;
@@ -340,7 +345,7 @@ my %api = (
   capture         => [0,0,0],
   capture_merged  => [0,0,1],
   tee             => [1,1,0],
-  tee_merged      => [1,0,1], # don't tee STDOUT since merging
+  tee_merged      => [1,0,1], # don't tee STDERR since merging
 );
 
 for my $sub ( keys %api ) {
@@ -452,7 +457,7 @@ particularly esoteric platforms yet.
 
 Capture::Tiny does it's best to preserve PerlIO layers such as ':utf8' or
 ':crlf' when capturing.   Layers should be applied to STDOUT or STDERR ~before~
-the call to {capture} or {tee}.
+the call to {capture} or {tee}.  This may not work for tied handles (see below).
 
 == Closed STDIN, STDOUT or STDERR
 
@@ -461,6 +466,13 @@ closed.  However, since they may be reopened to capture or tee output, any code
 within the captured block that depends on finding them closed will, of course,
 not find them to be closed.  If they started closed, Capture::Tiny will reclose
 them again when the capture block finishes.
+
+== Localized STDIN, STDOUT or STDERR
+
+If code localizes any of Perl's standard handles before capturing, the capture
+will affect the localized handles and not the original ones.  External system
+calls are not affected by localizing a handle in Perl and will continue
+to send output to the original handles (which will thus not be captured).
 
 ==  Scalar filehandles and STDIN, STDOUT or STDERR
 
@@ -479,8 +491,10 @@ Capture::Tiny will attempt to override the tie for the duration of the
 {capture} or {tee} call and then send captured output to the tied handle after
 the capture is complete.  (Requires Perl 5.8)
 
-Capture::Tiny does not (yet) support resending utf8 encoded data to a tied
-STDOUT or STDERR handle.  Characters will appear as bytes.
+Capture::Tiny may not support resending utf8 encoded data to a tied
+STDOUT or STDERR handle.  Characters may appear as bytes.  If the tied handle
+is based on [Tie::StdHandle], then Capture::Tiny will attempt to determine
+appropriate layers like {:utf8} from the underlying handle.
 
 Capture::Tiny attempts to preserve the semantics of tied STDIN, but capturing
 or teeing when STDIN is tied is currently broken on Windows.

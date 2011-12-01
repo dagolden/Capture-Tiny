@@ -1,7 +1,7 @@
 # Copyright (c) 2009 by David Golden. All rights reserved.
 # Licensed under Apache License, Version 2.0 (the "License").
 # You may not use this file except in compliance with the License.
-# A copy of the License was distributed with this file or you may obtain a 
+# A copy of the License was distributed with this file or you may obtain a
 # copy of the License from http://www.apache.org/licenses/LICENSE-2.0
 
 use strict;
@@ -27,18 +27,18 @@ binmode($builder->todo_output, ':utf8') if $] >= 5.008;
 save_std(qw/stdout/);
 tie *STDOUT, 'TieLC', ">&=STDOUT";
 my $orig_tie = tied *STDOUT;
-ok( $orig_tie, "STDOUT is tied" ); 
+ok( $orig_tie, "STDOUT is tied" );
 
 my $fd = next_fd;
 
-run_test($_, 'unicode') for qw(
+run_test($_) for qw(
   capture
   capture_scalar
   capture_merged
 );
 
 if ( ! $no_fork ) {
-  run_test($_, 'unicode') for qw(
+  run_test($_) for qw(
     tee
     tee_scalar
     tee_merged

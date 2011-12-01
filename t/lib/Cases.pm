@@ -10,8 +10,8 @@ our @EXPORT_OK = qw(
   run_test
 );
 
-my $have_diff = eval { 
-  require Test::Differences; 
+my $have_diff = eval {
+  require Test::Differences;
   Test::Differences->import;
   $Test::Differences::VERSION < 0.60; # 0.60+ is causing strange failures
 };
@@ -31,17 +31,20 @@ sub _set_utf8 {
   my $t = shift;
   return unless $t eq 'unicode';
   my %seen;
-  my @orig_layers = grep {$_ ne 'unix' and $_ ne 'perlio' and $seen{$_}++} PerlIO::get_layers(\*STDOUT);
-  binmode(STDOUT, ":utf8") if fileno(STDOUT); 
-  binmode(STDERR, ":utf8") if fileno(STDERR); 
+  my @orig_layers = (
+    [ grep {$_ ne 'unix' and $_ ne 'perlio' and $seen{stdout}{$_}++} PerlIO::get_layers(\*STDOUT) ],
+    [ grep {$_ ne 'unix' and $_ ne 'perlio' and $seen{stderr}{$_}++} PerlIO::get_layers(\*STDERR) ],
+  );
+  binmode(STDOUT, ":utf8") if fileno(STDOUT);
+  binmode(STDERR, ":utf8") if fileno(STDERR);
   return @orig_layers;
 }
 
 sub _restore_layers {
   my ($t, @orig_layers) = @_;
   return unless $t eq 'unicode';
-  binmode(STDOUT, join( ":", "", "raw", @orig_layers)) if fileno(STDOUT); 
-  binmode(STDERR, join( ":", "", "raw", @orig_layers)) if fileno(STDERR); 
+  binmode(STDOUT, join( ":", "", "raw", @{$orig_layers[0]})) if fileno(STDOUT);
+  binmode(STDERR, join( ":", "", "raw", @{$orig_layers[1]})) if fileno(STDERR);
 }
 
 #--------------------------------------------------------------------------#
@@ -186,7 +189,7 @@ sub run_test {
     for my $c ( keys %channels ) {
       for my $t ( keys %texts     ) {
         my @orig_layers = _set_utf8($t);
-        local $TODO = "not yet supported"
+        local $TODO = "not supported on all platforms"
           if $t eq $todo;
         $tests{$test_type}{test}->($m, $c, $t, $test_type);
         _restore_layers($t, @orig_layers);
