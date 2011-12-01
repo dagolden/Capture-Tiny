@@ -107,6 +107,22 @@ my %tests = (
       _is_or_diff( $got_out, $expected[0], "$l|$m|$c|$t - got STDOUT" );
     },
   },
+  capture_stdout => {
+    cnt   => 2,
+    test  => sub {
+      my ($m, $c, $t, $l) = @_;
+      my ($inner_out, $inner_err);
+      my ($outer_out, $outer_err) = capture {
+        $inner_out = capture_stdout {
+          $methods{$m}->( $channels{$c}{output}->($t) );
+        };
+      };
+      my @expected = $channels{$c}{expect}->($t);
+      _is_or_diff( $inner_out, $expected[0], "$l|$m|$c|$t - inner STDOUT" );
+      _is_or_diff( $outer_out, "",           "$l|$m|$c|$t - outer STDOUT" );
+      _is_or_diff( $outer_err, $expected[1], "$l|$m|$c|$t - outer STDERR" );
+    },
+  },
   capture_merged => {
     cnt   => 2,
     test  => sub {

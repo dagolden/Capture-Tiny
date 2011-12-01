@@ -16,9 +16,34 @@ BEGIN {
     or *PerlIO::get_layers = sub { return () };
 }
 
+#--------------------------------------------------------------------------#
+# create API subroutines and export them
+# [do STDOUT flag, do STDERR flag, do merge flag, do tee flag]
+#--------------------------------------------------------------------------#
+
+my %api = (
+  capture         => [1,1,0,0],
+  capture_stdout  => [1,0,0,0],
+  capture_stderr  => [0,1,0,0],
+  capture_merged  => [1,0,1,0], # don't do STDERR since merging
+  tee             => [1,1,0,1],
+  tee_stdout      => [1,0,0,1],
+  tee_stderr      => [0,1,0,1],
+  tee_merged      => [1,0,1,1], # don't do STDERR since merging
+);
+
+for my $sub ( keys %api ) {
+  my $args = join q{, }, @{$api{$sub}};
+  eval "sub $sub(&) {unshift \@_, $args; goto \\&_capture_tee;}"; ## no critic
+}
+
 our @ISA = qw/Exporter/;
-our @EXPORT_OK = qw/capture capture_merged tee tee_merged/;
+our @EXPORT_OK = keys %api;
 our %EXPORT_TAGS = ( 'all' => \@EXPORT_OK );
+
+#--------------------------------------------------------------------------#
+# constants and fixtures
+#--------------------------------------------------------------------------#
 
 my $IS_WIN32 = $^O eq 'MSWin32';
 
@@ -49,10 +74,10 @@ my @cmd = ($^X, '-e', '$SIG{HUP}=sub{exit}; '
 
 sub _relayer {
   my ($fh, $layers) = @_;
-  _debug("# requested layers (@{$layers}) to $fh\n");
+  _debug("# requested layers (@{$layers}) for @{[fileno $fh]}\n");
   my %seen = ( unix => 1, perlio => 1 ); # filter these out
   my @unique = grep { !$seen{$_}++ } @$layers;
-  _debug("# applying unique layers (@unique) to $fh\n");
+  _debug("# applying unique layers (@unique) to @{[fileno $fh]}\n");
   binmode($fh, join(":", ":raw", @unique));
 }
 
@@ -246,7 +271,11 @@ sub _kill_tees {
   }
 }
 
-sub _slurp { seek $_[0],0,0; local $/; return scalar readline $_[0] }
+sub _slurp {
+  my ($name, $fh) = @_;
+  _debug( "# slurping captured $name with layers: @{[PerlIO::get_layers($fh)]}\n");
+  seek $fh,0,0; local $/; return scalar readline $fh
+}
 
 #--------------------------------------------------------------------------#
 # _capture_tee() -- generic main sub for capturing or teeing
@@ -275,30 +304,39 @@ sub _capture_tee {
   _debug( "# tied object corrected layers for $_\: @{$layers{$_}}\n" ) for qw/stdin stdout stderr/;
   # bypass scalar filehandles and tied handles
   my %localize;
-  $localize{stdin}++,  local(*STDIN)  if grep { $_ eq 'scalar' } @{$layers{stdin}};
-  $localize{stdout}++, local(*STDOUT) if grep { $_ eq 'scalar' } @{$layers{stdout}};
-  $localize{stderr}++, local(*STDERR) if grep { $_ eq 'scalar' } @{$layers{stderr}};
-  $localize{stdout}++, local(*STDOUT), _open( \*STDOUT, ">&=1") if tied *STDOUT && $] >= 5.008;
-  $localize{stderr}++, local(*STDERR), _open( \*STDERR, ">&=2") if tied *STDERR && $] >= 5.008;
+  $localize{stdin}++,  local(*STDIN)
+    if grep { $_ eq 'scalar' } @{$layers{stdin}};
+  $localize{stdout}++, local(*STDOUT)
+    if $do_stdout && grep { $_ eq 'scalar' } @{$layers{stdout}};
+  $localize{stderr}++, local(*STDERR)
+    if $do_stderr && grep { $_ eq 'scalar' } @{$layers{stderr}};
+  $localize{stdout}++, local(*STDOUT), _open( \*STDOUT, ">&=1")
+    if $do_stdout && tied *STDOUT && $] >= 5.008;
+  $localize{stderr}++, local(*STDERR), _open( \*STDERR, ">&=2")
+    if $do_stderr && tied *STDERR && $] >= 5.008;
   _debug( "# localized $_\n" ) for keys %localize;
+  # proxy any closed/localized handles so we don't use fds 0, 1 or 2
   my %proxy_std = _proxy_std();
   _debug( "# proxy std: @{ [%proxy_std] }\n" );
-  my $stash = { old => _copy_std() };
   # update layers after any proxying
   $layers{stdin}  = [PerlIO::get_layers(\*STDIN)]  if $proxy_std{stdin};
   $layers{stdout} = [PerlIO::get_layers(\*STDOUT)] if $proxy_std{stdout};
   $layers{stderr} = [PerlIO::get_layers(\*STDERR)] if $proxy_std{stderr};
   _debug( "# post-proxy layers for $_\: @{$layers{$_}}\n" ) for qw/stdin stdout stderr/;
+  # store old handles and setup handles for capture
+  my $stash = { old => _copy_std() };
+  $stash->{new} = { %{$stash->{old}} }; # default to originals
+  $stash->{new}{stdout} = $stash->{capture}{stdout} = File::Temp->new if $do_stdout;
+  $stash->{new}{stderr} = $stash->{capture}{stderr} = File::Temp->new if $do_stderr;
+  _debug("# will capture stdout on " . fileno($stash->{capture}{stdout})."\n" ) if $do_stdout;
+  _debug("# will capture stderr on " . fileno($stash->{capture}{stderr})."\n" ) if $do_stderr;
   # get handles for capture and apply existing IO layers
-  $stash->{new}{$_} = $stash->{capture}{$_} = File::Temp->new for qw/stdout stderr/;
-  _debug("# will capture $_ on " .fileno($stash->{capture}{$_})."\n" ) for qw/stdout stderr/;
   # tees may change $stash->{new}
   _start_tee( stdout => $stash ) if $do_stdout && $do_tee;
   _start_tee( stderr => $stash ) if $do_stderr && $do_tee;
   _wait_for_tees( $stash ) if $do_tee;
   # finalize redirection
   $stash->{new}{stderr} = $stash->{new}{stdout} if $do_merge;
-  $stash->{new}{stdin} = $stash->{old}{stdin};
   _debug( "# redirecting in parent ...\n" );
   _open_std( $stash->{new} );
   # execute user provided code
@@ -307,8 +345,8 @@ sub _capture_tee {
     local *STDIN = *CT_ORIG_STDIN if $localize{stdin}; # get original, not proxy STDIN
     local *STDERR = *STDOUT if $do_merge; # minimize buffer mixups during $code
     _debug( "# finalizing layers ...\n" );
-    _relayer(\*STDOUT, $layers{stdout});
-    _relayer(\*STDERR, $layers{stderr}) unless $do_merge;
+    _relayer(\*STDOUT, $layers{stdout}) if $do_stdout;
+    _relayer(\*STDERR, $layers{stderr}) if $do_stderr;
     _debug( "# running code $code ...\n" );
     local $@;
     eval { $code->(); $inner_error = $@ };
@@ -316,48 +354,29 @@ sub _capture_tee {
     $outer_error = $@; # save this for later
   }
   # restore prior filehandles and shut down tees
-  _debug( "# restoring ...\n" );
+  _debug( "# restoring filehandles ...\n" );
   _open_std( $stash->{old} );
   _close( $_ ) for values %{$stash->{old}}; # don't leak fds
   _unproxy( %proxy_std );
+  _debug( "# killing tee subprocesses ...\n" ) if $do_tee;
   _kill_tees( $stash ) if $do_tee;
   # return captured output
-  _relayer($stash->{capture}{stdout}, $layers{stdout});
-  _relayer($stash->{capture}{stderr}, $layers{stderr}) unless $do_merge;
-  _debug( "# slurping captured $_ with layers: @{[PerlIO::get_layers($stash->{capture}{$_})]}\n") for qw/stdout stderr/;
-  my $got_out = _slurp($stash->{capture}{stdout});
-  my $got_err = $do_merge ? q() : _slurp($stash->{capture}{stderr});
+  _relayer($stash->{capture}{stdout}, $layers{stdout}) if $do_stdout;
+  _relayer($stash->{capture}{stderr}, $layers{stderr}) if $do_stderr;
+  my $got_out = $do_stdout ? _slurp('stdout' => $stash->{capture}{stdout}) : q();
+  my $got_err = $do_stderr ? _slurp('stderr' => $stash->{capture}{stderr}) : q();
+  _debug("# slurped " . length($got_out) . " bytes from stdout\n");
+  _debug("# slurped " . length($got_err) . " bytes from stderr\n");
   print CT_ORIG_STDOUT $got_out
-    if $localize{stdout} && $do_stdout && $do_tee;
+    if $do_stdout && $do_tee && $localize{stdout};
   print CT_ORIG_STDERR $got_err
-    if !$do_merge && $localize{stderr} && $do_stdout && $do_tee;
+    if $do_stderr && $do_tee && $localize{stderr};
   $? = $exit_code;
   $@ = $inner_error if $inner_error;
   die $outer_error if $outer_error;
   _debug( "# ending _capture_tee with (@_)...\n" );
   return $got_out if $do_merge;
   return wantarray ? ($got_out, $got_err) : $got_out;
-}
-
-#--------------------------------------------------------------------------#
-# create API subroutines
-# [do STDOUT flag, do STDERR flag, do merge flag, do tee flag]
-#--------------------------------------------------------------------------#
-
-my %api = (
-  capture         => [1,1,0,0],
-  capture_stdout  => [1,0,0,0],
-  capture_stderr  => [0,1,0,0],
-  capture_merged  => [1,0,1,0], # don't do STDERR since merging
-  tee             => [1,1,0,1],
-  tee_stdout      => [1,0,0,1],
-  tee_stderr      => [0,1,0,1],
-  tee_merged      => [1,0,1,1], # don't do STDERR since merging
-);
-
-for my $sub ( keys %api ) {
-  my $args = join q{, }, @{$api{$sub}};
-  eval "sub $sub(&) {unshift \@_, $args; goto \\&_capture_tee;}"; ## no critic
 }
 
 1;
