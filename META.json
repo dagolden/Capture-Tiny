@@ -47,6 +47,7 @@
          "requires" : {
             "Config" : 0,
             "File::Find" : 0,
+            "IO::File" : 0,
             "Test::More" : "0.62"
          }
       }

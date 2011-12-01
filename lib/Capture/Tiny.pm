@@ -8,7 +8,7 @@ use Exporter ();
 use IO::Handle ();
 use File::Spec ();
 use File::Temp qw/tempfile tmpnam/;
-use Scalar::Util qw/reftype/;
+use Scalar::Util qw/reftype blessed/;
 # Get PerlIO or fake it
 BEGIN {
   local $@;
@@ -34,7 +34,7 @@ my %api = (
 
 for my $sub ( keys %api ) {
   my $args = join q{, }, @{$api{$sub}};
-  eval "sub $sub(&) {unshift \@_, $args; goto \\&_capture_tee;}"; ## no critic
+  eval "sub $sub(&;@) {unshift \@_, $args; goto \\&_capture_tee;}"; ## no critic
 }
 
 our @ISA = qw/Exporter/;
@@ -283,7 +283,15 @@ sub _slurp {
 
 sub _capture_tee {
   _debug( "# starting _capture_tee with (@_)...\n" );
-  my ($do_stdout, $do_stderr, $do_merge, $do_tee, $code) = @_;
+  my ($do_stdout, $do_stderr, $do_merge, $do_tee, $code, @opts) = @_;
+  Carp::confess("Custom capture options must be given as key/value pairs\n")
+    unless @opts % 2 == 0;
+  my $stash = { capture => { @opts } };
+  for my $n ( keys %{$stash->{capture}} ) {
+    my $fh = $stash->{capture}{$n};
+    Carp::confess "Custom handle for $n must be seekable\n"
+      unless ref($fh) eq 'GLOB' || (blessed($fh) && $fh->isa("IO::Seekable"));
+  }
   # save existing filehandles and setup captures
   local *CT_ORIG_STDIN  = *STDIN ;
   local *CT_ORIG_STDOUT = *STDOUT;
@@ -324,10 +332,10 @@ sub _capture_tee {
   $layers{stderr} = [PerlIO::get_layers(\*STDERR)] if $proxy_std{stderr};
   _debug( "# post-proxy layers for $_\: @{$layers{$_}}\n" ) for qw/stdin stdout stderr/;
   # store old handles and setup handles for capture
-  my $stash = { old => _copy_std() };
+  $stash->{old} = _copy_std();
   $stash->{new} = { %{$stash->{old}} }; # default to originals
-  $stash->{new}{stdout} = $stash->{capture}{stdout} = File::Temp->new if $do_stdout;
-  $stash->{new}{stderr} = $stash->{capture}{stderr} = File::Temp->new if $do_stderr;
+  $stash->{new}{stdout} = ($stash->{capture}{stdout} ||= File::Temp->new) if $do_stdout;
+  $stash->{new}{stderr} = ($stash->{capture}{stderr} ||= File::Temp->new) if $do_stderr;
   _debug("# will capture stdout on " . fileno($stash->{capture}{stdout})."\n" ) if $do_stdout;
   _debug("# will capture stderr on " . fileno($stash->{capture}{stderr})."\n" ) if $do_stderr;
   # get handles for capture and apply existing IO layers
@@ -446,6 +454,18 @@ scalar context on the return value, you must use the {scalar} keyword.
     my @list = qw/one two three/;
     return scalar @list; # $count will be 3
   };
+
+Captures are normally done internally to an anonymous filehandle.  To
+capture via a named file (e.g. to externally monitor a long-running capture),
+provide custom filehandles as a trailing list of option pairs:
+
+  my $out_fh = IO::File->new("out.txt", "w+");
+  my $err_fh = IO::File->new("out.txt", "w+");
+  capture { ... } stdout => $out_fh, stderr => $err_fh;
+
+The filehandles must be read/write and seekable and should be empty.  Modifying
+the files externally during a capture operation will give unpredictable
+results.  Existing IO layers on them may be changed by the capture.
 
 == capture_stdout
 

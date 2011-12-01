@@ -10,6 +10,9 @@ Revision history for Capture-Tiny
   - Capture functions also returns the return values from the executed
     coderef [rt.cpan.org #61794, adapted from patch by Christian Walde]
 
+  - Capture functions take optional custom filehandles for capturing
+    via named files instead of anonymous ones [inspired by Christian Walde]
+
   Fixed:
 
   - Tied filehandles based on Tie::StdHandle can now use the ":utf8"

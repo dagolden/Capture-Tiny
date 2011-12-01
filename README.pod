@@ -67,6 +67,18 @@ scalar context on the return value, you must use the C<<< scalar >>> keyword.
      return scalar @list; # $count will be 3
    };
 
+Captures are normally done internally to an anonymous filehandle.  To
+capture via a named file (e.g. to externally monitor a long-running capture),
+provide custom filehandles as a trailing list of option pairs:
+
+   my $out_fh = IO::File->new("out.txt", "w+");
+   my $err_fh = IO::File->new("out.txt", "w+");
+   capture { ... } stdout => $out_fh, stderr => $err_fh;
+
+The filehandles must be readE<sol>write and seekable and should be empty.  Modifying
+the files externally during a capture operation will give unpredictable
+results.  Existing IO layers on them may be changed by the capture.
+
 =head2 capture_stdout
 
    ($stdout, @result) = capture_stdout \&code;
