@@ -2,6 +2,11 @@ Revision history for Capture-Tiny
 
 {{$NEXT}}
 
+  Added:
+
+  - New functions capture_stdout, capture_stderr, tee_stdout, tee_stderr
+    [rt.cpan.org #60515]
+
   Fixed:
 
   - Tied filehandles based on Tie::StdHandle can now use the ":utf8"
