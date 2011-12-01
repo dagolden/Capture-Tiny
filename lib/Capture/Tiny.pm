@@ -254,7 +254,7 @@ sub _slurp { seek $_[0],0,0; local $/; return scalar readline $_[0] }
 
 sub _capture_tee {
   _debug( "# starting _capture_tee with (@_)...\n" );
-  my ($tee_stdout, $tee_stderr, $merge, $code) = @_;
+  my ($do_stdout, $do_stderr, $do_merge, $do_tee, $code) = @_;
   # save existing filehandles and setup captures
   local *CT_ORIG_STDIN  = *STDIN ;
   local *CT_ORIG_STDOUT = *STDOUT;
@@ -293,11 +293,11 @@ sub _capture_tee {
   $stash->{new}{$_} = $stash->{capture}{$_} = File::Temp->new for qw/stdout stderr/;
   _debug("# will capture $_ on " .fileno($stash->{capture}{$_})."\n" ) for qw/stdout stderr/;
   # tees may change $stash->{new}
-  _start_tee( stdout => $stash ) if $tee_stdout;
-  _start_tee( stderr => $stash ) if $tee_stderr;
-  _wait_for_tees( $stash ) if $tee_stdout || $tee_stderr;
+  _start_tee( stdout => $stash ) if $do_stdout && $do_tee;
+  _start_tee( stderr => $stash ) if $do_stderr && $do_tee;
+  _wait_for_tees( $stash ) if $do_tee;
   # finalize redirection
-  $stash->{new}{stderr} = $stash->{new}{stdout} if $merge;
+  $stash->{new}{stderr} = $stash->{new}{stdout} if $do_merge;
   $stash->{new}{stdin} = $stash->{old}{stdin};
   _debug( "# redirecting in parent ...\n" );
   _open_std( $stash->{new} );
@@ -305,10 +305,10 @@ sub _capture_tee {
   my ($exit_code, $inner_error, $outer_error);
   {
     local *STDIN = *CT_ORIG_STDIN if $localize{stdin}; # get original, not proxy STDIN
-    local *STDERR = *STDOUT if $merge; # minimize buffer mixups during $code
+    local *STDERR = *STDOUT if $do_merge; # minimize buffer mixups during $code
     _debug( "# finalizing layers ...\n" );
     _relayer(\*STDOUT, $layers{stdout});
-    _relayer(\*STDERR, $layers{stderr}) unless $merge;
+    _relayer(\*STDERR, $layers{stderr}) unless $do_merge;
     _debug( "# running code $code ...\n" );
     local $@;
     eval { $code->(); $inner_error = $@ };
@@ -320,32 +320,39 @@ sub _capture_tee {
   _open_std( $stash->{old} );
   _close( $_ ) for values %{$stash->{old}}; # don't leak fds
   _unproxy( %proxy_std );
-  _kill_tees( $stash ) if $tee_stdout || $tee_stderr;
+  _kill_tees( $stash ) if $do_tee;
   # return captured output
   _relayer($stash->{capture}{stdout}, $layers{stdout});
-  _relayer($stash->{capture}{stderr}, $layers{stderr}) unless $merge;
+  _relayer($stash->{capture}{stderr}, $layers{stderr}) unless $do_merge;
   _debug( "# slurping captured $_ with layers: @{[PerlIO::get_layers($stash->{capture}{$_})]}\n") for qw/stdout stderr/;
   my $got_out = _slurp($stash->{capture}{stdout});
-  my $got_err = $merge ? q() : _slurp($stash->{capture}{stderr});
-  print CT_ORIG_STDOUT $got_out if $localize{stdout} && $tee_stdout;
-  print CT_ORIG_STDERR $got_err if !$merge && $localize{stderr} && $tee_stdout;
+  my $got_err = $do_merge ? q() : _slurp($stash->{capture}{stderr});
+  print CT_ORIG_STDOUT $got_out
+    if $localize{stdout} && $do_stdout && $do_tee;
+  print CT_ORIG_STDERR $got_err
+    if !$do_merge && $localize{stderr} && $do_stdout && $do_tee;
   $? = $exit_code;
   $@ = $inner_error if $inner_error;
   die $outer_error if $outer_error;
   _debug( "# ending _capture_tee with (@_)...\n" );
-  return $got_out if $merge;
+  return $got_out if $do_merge;
   return wantarray ? ($got_out, $got_err) : $got_out;
 }
 
 #--------------------------------------------------------------------------#
-# create API subroutines from [tee STDOUT flag, tee STDERR, merge flag]
+# create API subroutines
+# [do STDOUT flag, do STDERR flag, do merge flag, do tee flag]
 #--------------------------------------------------------------------------#
 
 my %api = (
-  capture         => [0,0,0],
-  capture_merged  => [0,0,1],
-  tee             => [1,1,0],
-  tee_merged      => [1,0,1], # don't tee STDERR since merging
+  capture         => [1,1,0,0],
+  capture_stdout  => [1,0,0,0],
+  capture_stderr  => [0,1,0,0],
+  capture_merged  => [1,0,1,0], # don't do STDERR since merging
+  tee             => [1,1,0,1],
+  tee_stdout      => [1,0,0,1],
+  tee_stderr      => [0,1,0,1],
+  tee_merged      => [1,0,1,1], # don't do STDERR since merging
 );
 
 for my $sub ( keys %api ) {
