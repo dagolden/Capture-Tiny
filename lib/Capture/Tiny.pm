@@ -340,7 +340,7 @@ sub _capture_tee {
   _debug( "# redirecting in parent ...\n" );
   _open_std( $stash->{new} );
   # execute user provided code
-  my ($exit_code, $inner_error, $outer_error);
+  my ($exit_code, $inner_error, $outer_error, @result);
   {
     local *STDIN = *CT_ORIG_STDIN if $localize{stdin}; # get original, not proxy STDIN
     local *STDERR = *STDOUT if $do_merge; # minimize buffer mixups during $code
@@ -349,7 +349,7 @@ sub _capture_tee {
     _relayer(\*STDERR, $layers{stderr}) if $do_stderr;
     _debug( "# running code $code ...\n" );
     local $@;
-    eval { $code->(); $inner_error = $@ };
+    eval { @result = $code->(); $inner_error = $@ };
     $exit_code = $?; # save this for later
     $outer_error = $@; # save this for later
   }
@@ -378,6 +378,7 @@ sub _capture_tee {
   my @return;
   push @return, $got_out if $do_stdout;
   push @return, $got_err if $do_stderr;
+  push @return, @result;
   return wantarray ? @return : $return[0];
 }
 
@@ -391,7 +392,7 @@ __END__
 
   use Capture::Tiny ':all';
 
-  ($stdout, $stderr) = capture {
+  ($stdout, $stderr, @result) = capture {
     # your code here
   };
 
@@ -422,14 +423,14 @@ The following functions are available.  None are exported by default.
 
 == capture
 
-  ($stdout, $stderr) = capture \&code;
+  ($stdout, $stderr, @result) = capture \&code;
   $stdout = capture \&code;
 
 The {capture} function takes a code reference and returns what is sent to
-STDOUT and STDERR.  In scalar context, it returns only STDOUT.  If no output
-was received for a handle, it returns an empty string for that handle.
-Regardless of calling context, all output is captured -- nothing is passed to
-the existing handles.
+STDOUT and STDERR as well as any return values from the code reference.  In
+scalar context, it returns only STDOUT.  If no output was received for a
+handle, it returns an empty string for that handle.  Regardless of calling
+context, all output is captured -- nothing is passed to the existing handles.
 
 It is prototyped to take a subroutine reference as an argument. Thus, it
 can be called in block form:
@@ -438,8 +439,17 @@ can be called in block form:
     # your code here ...
   };
 
+Note that the coderef is evaluated in list context.  If you wish to force
+scalar context on the return value, you must use the {scalar} keyword.
+
+  ($stdout, $stderr, $count) = capture {
+    my @list = qw/one two three/;
+    return scalar @list; # $count will be 3
+  };
+
 == capture_stdout
 
+  ($stdout, @result) = capture_stdout \&code;
   $stdout = capture_stdout \&code;
 
 The {capture_stdout} function works just like {capture} except only
@@ -447,6 +457,7 @@ STDOUT is captured.  STDERR is not captured.
 
 == capture_stderr
 
+  ($stderr, @result) = capture_stderr \&code;
   $stderr = capture_stderr \&code;
 
 The {capture_stderr} function works just like {capture} except only
@@ -454,6 +465,7 @@ STDERR is captured.  STDOUT is not captured.
 
 == capture_merged
 
+  ($merged, @result) = capture_merged \&code;
   $merged = capture_merged \&code;
 
 The {capture_merged} function works just like {capture} except STDOUT and
@@ -465,7 +477,7 @@ properly ordered due to buffering.
 
 == tee
 
-  ($stdout, $stderr) = tee \&code;
+  ($stdout, $stderr, @result) = tee \&code;
   $stdout = tee \&code;
 
 The {tee} function works just like {capture}, except that output is captured
@@ -473,6 +485,7 @@ as well as passed on to the original STDOUT and STDERR.
 
 == tee_stdout
 
+  ($stdout, @result) = tee_stdout \&code;
   $stdout = tee_stdout \&code;
 
 The {tee_stdout} function works just like {tee} except only
@@ -480,6 +493,7 @@ STDOUT is teed.  STDERR is not teed (output goes to STDERR as usual).
 
 == tee_stderr
 
+  ($stderr, @result) = tee_stderr \&code;
   $stderr = tee_stderr \&code;
 
 The {tee_stderr} function works just like {tee} except only
@@ -487,6 +501,7 @@ STDERR is teed.  STDOUT is not teed (output goes to STDOUT as usual).
 
 == tee_merged
 
+  ($merged, @result) = tee_merged \&code;
   $merged = tee_merged \&code;
 
 The {tee_merged} function works just like {capture_merged} except that output

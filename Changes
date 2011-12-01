@@ -7,6 +7,9 @@ Revision history for Capture-Tiny
   - New functions capture_stdout, capture_stderr, tee_stdout, tee_stderr
     [rt.cpan.org #60515]
 
+  - Capture functions also returns the return values from the executed
+    coderef [rt.cpan.org #61794, adapted from patch by Christian Walde]
+
   Fixed:
 
   - Tied filehandles based on Tie::StdHandle can now use the ":utf8"

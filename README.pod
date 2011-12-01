@@ -12,7 +12,7 @@ version 0.12
 
    use Capture::Tiny ':all';
  
-   ($stdout, $stderr) = capture {
+   ($stdout, $stderr, @result) = capture {
      # your code here
    };
  
@@ -43,14 +43,14 @@ The following functions are available.  None are exported by default.
 
 =head2 capture
 
-   ($stdout, $stderr) = capture \&code;
+   ($stdout, $stderr, @result) = capture \&code;
    $stdout = capture \&code;
 
 The C<<< capture >>> function takes a code reference and returns what is sent to
-STDOUT and STDERR.  In scalar context, it returns only STDOUT.  If no output
-was received for a handle, it returns an empty string for that handle.
-Regardless of calling context, all output is captured -- nothing is passed to
-the existing handles.
+STDOUT and STDERR as well as any return values from the code reference.  In
+scalar context, it returns only STDOUT.  If no output was received for a
+handle, it returns an empty string for that handle.  Regardless of calling
+context, all output is captured -- nothing is passed to the existing handles.
 
 It is prototyped to take a subroutine reference as an argument. Thus, it
 can be called in block form:
@@ -59,8 +59,17 @@ can be called in block form:
      # your code here ...
    };
 
+Note that the coderef is evaluated in list context.  If you wish to force
+scalar context on the return value, you must use the C<<< scalar >>> keyword.
+
+   ($stdout, $stderr, $count) = capture {
+     my @list = qw/one two three/;
+     return scalar @list; # $count will be 3
+   };
+
 =head2 capture_stdout
 
+   ($stdout, @result) = capture_stdout \&code;
    $stdout = capture_stdout \&code;
 
 The C<<< capture_stdout >>> function works just like C<<< capture >>> except only
@@ -68,6 +77,7 @@ STDOUT is captured.  STDERR is not captured.
 
 =head2 capture_stderr
 
+   ($stderr, @result) = capture_stderr \&code;
    $stderr = capture_stderr \&code;
 
 The C<<< capture_stderr >>> function works just like C<<< capture >>> except only
@@ -75,6 +85,7 @@ STDERR is captured.  STDOUT is not captured.
 
 =head2 capture_merged
 
+   ($merged, @result) = capture_merged \&code;
    $merged = capture_merged \&code;
 
 The C<<< capture_merged >>> function works just like C<<< capture >>> except STDOUT and
@@ -86,7 +97,7 @@ properly ordered due to buffering.
 
 =head2 tee
 
-   ($stdout, $stderr) = tee \&code;
+   ($stdout, $stderr, @result) = tee \&code;
    $stdout = tee \&code;
 
 The C<<< tee >>> function works just like C<<< capture >>>, except that output is captured
@@ -94,6 +105,7 @@ as well as passed on to the original STDOUT and STDERR.
 
 =head2 tee_stdout
 
+   ($stdout, @result) = tee_stdout \&code;
    $stdout = tee_stdout \&code;
 
 The C<<< tee_stdout >>> function works just like C<<< tee >>> except only
@@ -101,6 +113,7 @@ STDOUT is teed.  STDERR is not teed (output goes to STDERR as usual).
 
 =head2 tee_stderr
 
+   ($stderr, @result) = tee_stderr \&code;
    $stderr = tee_stderr \&code;
 
 The C<<< tee_stderr >>> function works just like C<<< tee >>> except only
@@ -108,6 +121,7 @@ STDERR is teed.  STDOUT is not teed (output goes to STDOUT as usual).
 
 =head2 tee_merged
 
+   ($merged, @result) = tee_merged \&code;
    $merged = tee_merged \&code;
 
 The C<<< tee_merged >>> function works just like C<<< capture_merged >>> except that output
