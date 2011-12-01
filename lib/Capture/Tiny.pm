@@ -389,36 +389,32 @@ __END__
 
 = SYNOPSIS
 
-  use Capture::Tiny qw/capture tee capture_merged tee_merged/;
+  use Capture::Tiny ':all';
 
   ($stdout, $stderr) = capture {
     # your code here
   };
 
+  $stdout = capture_stdout { ... };
+  $stderr = capture_stderr { ... };
+  $merged = capture_merged { ... };
+
   ($stdout, $stderr) = tee {
     # your code here
   };
 
-  $merged = capture_merged {
-    # your code here
-  };
-
-  $merged = tee_merged {
-    # your code here
-  };
+  $stdout = tee_stdout { ... };
+  $stderr = tee_stderr { ... };
+  $merged = tee_merged { ... };
 
 = DESCRIPTION
 
-Capture::Tiny provides a simple, portable way to capture anything sent to
-STDOUT or STDERR, regardless of whether it comes from Perl, from XS code or
+Capture::Tiny provides a simple, portable way to capture almost anything sent
+to STDOUT or STDERR, regardless of whether it comes from Perl, from XS code or
 from an external program.  Optionally, output can be teed so that it is
 captured while being passed through to the original handles.  Yes, it even
-works on Windows.  Stop guessing which of a dozen capturing modules to use in
-any particular situation and just use this one.
-
-This module was heavily inspired by [IO::CaptureOutput], which provides
-similar functionality without the ability to tee output and with more
-complicated code and API.
+works on Windows (usually).  Stop guessing which of a dozen capturing modules
+to use in any particular situation and just use this one.
 
 = USAGE
 
@@ -431,8 +427,9 @@ The following functions are available.  None are exported by default.
 
 The {capture} function takes a code reference and returns what is sent to
 STDOUT and STDERR.  In scalar context, it returns only STDOUT.  If no output
-was received, returns an empty string.  Regardless of context, all output is
-captured -- nothing is passed to the existing handles.
+was received for a handle, it returns an empty string for that handle.
+Regardless of calling context, all output is captured -- nothing is passed to
+the existing handles.
 
 It is prototyped to take a subroutine reference as an argument. Thus, it
 can be called in block form:
@@ -441,14 +438,27 @@ can be called in block form:
     # your code here ...
   };
 
+== capture_stdout
+
+  $stdout = capture_stdout \&code;
+
+The {capture_stdout} function works just like {capture} except only
+STDOUT is captured.  STDERR is not captured.
+
+== capture_stderr
+
+  $stderr = capture_stderr \&code;
+
+The {capture_stderr} function works just like {capture} except only
+STDERR is captured.  STDOUT is not captured.
+
 == capture_merged
 
   $merged = capture_merged \&code;
 
 The {capture_merged} function works just like {capture} except STDOUT and
 STDERR are merged. (Technically, STDERR is redirected to STDOUT before
-executing the function.)  If no output was received, returns an empty string.
-As with {capture} it may be called in block form.
+executing the function.)
 
 Caution: STDOUT and STDERR output in the merged result are not guaranteed to be
 properly ordered due to buffering.
@@ -459,16 +469,28 @@ properly ordered due to buffering.
   $stdout = tee \&code;
 
 The {tee} function works just like {capture}, except that output is captured
-as well as passed on to the original STDOUT and STDERR.  As with {capture} it
-may be called in block form.
+as well as passed on to the original STDOUT and STDERR.
+
+== tee_stdout
+
+  $stdout = tee_stdout \&code;
+
+The {tee_stdout} function works just like {tee} except only
+STDOUT is teed.  STDERR is not teed (output goes to STDERR as usual).
+
+== tee_stderr
+
+  $stderr = tee_stderr \&code;
+
+The {tee_stderr} function works just like {tee} except only
+STDERR is teed.  STDOUT is not teed (output goes to STDOUT as usual).
 
 == tee_merged
 
   $merged = tee_merged \&code;
 
 The {tee_merged} function works just like {capture_merged} except that output
-is captured as well as passed on to STDOUT.  As with {capture} it may be called
-in block form.
+is captured as well as passed on to STDOUT.
 
 Caution: STDOUT and STDERR output in the merged result are not guaranteed to be
 properly ordered due to buffering.
@@ -571,7 +593,13 @@ existing test-file that illustrates the bug or desired feature.
 
 = SEE ALSO
 
-This is a selection of CPAN modules that provide some sort of output capture,
+This module was, inspired by [IO::CaptureOutput], which provides
+similar functionality without the ability to tee output and with more
+complicated code and API.  [IO::CaptureOutput] does not handle layers
+or most of the unusual cases described in the [/Limitations] section and
+I no longer recommend it.
+
+There are many other CPAN modules that provide some sort of output capture,
 albeit with various limitations that make them appropriate only in particular
 circumstances.  I'm probably missing some.  The long list is provided to show
 why I felt Capture::Tiny was necessary.
