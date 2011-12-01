@@ -2,6 +2,8 @@ Revision history for Capture-Tiny
 
 {{$NEXT}}
 
+0.12      2011-12-01 16:58:05 EST5EDT
+
   Added:
 
   - New functions capture_stdout, capture_stderr, tee_stdout, tee_stderr
