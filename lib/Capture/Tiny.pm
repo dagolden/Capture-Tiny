@@ -375,8 +375,10 @@ sub _capture_tee {
   $@ = $inner_error if $inner_error;
   die $outer_error if $outer_error;
   _debug( "# ending _capture_tee with (@_)...\n" );
-  return $got_out if $do_merge;
-  return wantarray ? ($got_out, $got_err) : $got_out;
+  my @return;
+  push @return, $got_out if $do_stdout;
+  push @return, $got_err if $do_stderr;
+  return wantarray ? @return : $return[0];
 }
 
 1;
