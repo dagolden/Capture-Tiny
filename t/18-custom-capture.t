@@ -57,6 +57,9 @@ unlink $_ for $temp_out, $temp_err;
 
 #--------------------------------------------------------------------------#
 
+$temp_out = tmpnam();
+$temp_err = tmpnam();
+
 ok( !-e $temp_out, "Temp out '$temp_out' doesn't exist" );
 ok( !-e $temp_err, "Temp out '$temp_err' doesn't exist" );
 

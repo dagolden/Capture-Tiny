@@ -2,6 +2,11 @@ Revision history for Capture-Tiny
 
 {{$NEXT}}
 
+  Fixed:
+
+  - Fixed t/18-custom-capture.t failures on Windows due to tempfile
+    removal problems in the testfile
+
 0.12      2011-12-01 16:58:05 EST5EDT
 
   Added:
