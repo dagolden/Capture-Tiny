@@ -551,7 +551,7 @@ the call to {capture} or {tee}.  This may not work for tied handles (see below).
 Generally speaking, you should do little or no manipulation of the standard IO
 handles prior to using Capture::Tiny.  In particular, closing, reopening,
 localizing or tying standard handles prior to capture may cause a variety of
-unexpected, undesireable and/or unreliable behaviors, as described below.
+unexpected, undesirable and/or unreliable behaviors, as described below.
 Capture::Tiny does its best to compensate for these situations, but the
 results may not be what you desire.
 
@@ -561,7 +561,7 @@ Capture::Tiny will work even if STDIN, STDOUT or STDERR have been previously
 closed.  However, since they will be reopened to capture or tee output, any
 code within the captured block that depends on finding them closed will, of
 course, not find them to be closed.  If they started closed, Capture::Tiny will
-reclose them again when the capture block finishes.
+close them again when the capture block finishes.
 
 Note that this reopening will happen even for STDIN or a handle not being
 captured to ensure that the filehandle used for capture is not opened to file
@@ -591,7 +591,7 @@ Capture::Tiny will attempt to override the tie for the duration of the
 {capture} or {tee} call and then send captured output to the tied handle after
 the capture is complete.  (Requires Perl 5.8)
 
-Capture::Tiny may not succeed resending utf8 encoded data to a tied
+Capture::Tiny may not succeed resending UTF-8 encoded data to a tied
 STDOUT or STDERR handle.  Characters may appear as bytes.  If the tied handle
 is based on [Tie::StdHandle], then Capture::Tiny will attempt to determine
 appropriate layers like {:utf8} from the underlying handle and do the right
@@ -600,14 +600,14 @@ thing.
 Capture::Tiny attempts to preserve the semantics of tied STDIN, but capturing
 or teeing when STDIN is tied is currently broken on Windows.
 
-== Modifiying handles during a capture
+== Modifying handles during a capture
 
 Attempting to modify STDIN, STDOUT or STDERR ~during~ {capture} or {tee} is
 almost certainly going to cause problems.  Don't do that.
 
 == No support for Perl 5.8.0
 
-It's just too buggy when it comes to layers and UTF8.
+It's just too buggy when it comes to layers and UTF-8.
 
 = ENVIRONMENT
 

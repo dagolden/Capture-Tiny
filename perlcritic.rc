@@ -14,6 +14,7 @@ allow = $@ $!
 [-References::ProhibitDoubleSigils]
 [-RegularExpressions::RequireExtendedFormatting]
 [-InputOutput::ProhibitTwoArgOpen]
+[-InputOutput::RequireEncodingWithUTF8Layer]
 
 # Turn this on
 [Lax::ProhibitStringyEval::ExceptForRequire]
