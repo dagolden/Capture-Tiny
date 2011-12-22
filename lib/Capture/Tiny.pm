@@ -276,7 +276,7 @@ sub _slurp {
   my ($name, $stash) = @_;
   my ($fh, $pos) = map { $stash->{$_}{$name} } qw/capture pos/;
   _debug( "# slurping captured $name from $pos with layers: @{[PerlIO::get_layers($fh)]}\n");
-  seek $fh,$pos,0; local $/; return scalar readline $fh
+  return do { local $/; seek $fh,$pos,0; scalar readline $fh };
 }
 
 #--------------------------------------------------------------------------#
@@ -286,12 +286,13 @@ sub _slurp {
 sub _capture_tee {
   _debug( "# starting _capture_tee with (@_)...\n" );
   my ($do_stdout, $do_stderr, $do_merge, $do_tee, $code, @opts) = @_;
+  my %do = ($do_stdout ? (stdout => 1) : (),  $do_stderr ? (stderr => 1) : ());
   Carp::confess("Custom capture options must be given as key/value pairs\n")
     unless @opts % 2 == 0;
   my $stash = { capture => { @opts } };
-  for my $n ( keys %{$stash->{capture}} ) {
-    my $fh = $stash->{capture}{$n};
-    Carp::confess "Custom handle for $n must be seekable\n"
+  for ( keys %{$stash->{capture}} ) {
+    my $fh = $stash->{capture}{$_};
+    Carp::confess "Custom handle for $_ must be seekable\n"
       unless ref($fh) eq 'GLOB' || (blessed($fh) && $fh->isa("IO::Seekable"));
   }
   # save existing filehandles and setup captures
@@ -336,22 +337,13 @@ sub _capture_tee {
   # store old handles and setup handles for capture
   $stash->{old} = _copy_std();
   $stash->{new} = { %{$stash->{old}} }; # default to originals
-  if ($do_stdout) {
-    $stash->{new}{stdout} = ($stash->{capture}{stdout} ||= File::Temp->new);
-    seek $stash->{capture}{stdout}, 0, 2;
-    $stash->{pos}{stdout} = tell $stash->{capture}{stdout};
+  for ( keys %do ) {
+    $stash->{new}{$_} = ($stash->{capture}{$_} ||= File::Temp->new);
+    seek $stash->{capture}{$_}, 0, 2;
+    $stash->{pos}{$_} = tell $stash->{capture}{$_};
+    _debug("# will capture $_ on " . fileno($stash->{capture}{$_})."\n" );
+    _start_tee( $_ => $stash ) if $do_tee; # tees may change $stash->{new}
   }
-  if ($do_stderr) {
-    $stash->{new}{stderr} = ($stash->{capture}{stderr} ||= File::Temp->new);
-    seek $stash->{capture}{stderr}, 0, 2;
-    $stash->{pos}{stderr} = tell $stash->{capture}{stderr};
-  }
-  _debug("# will capture stdout on " . fileno($stash->{capture}{stdout})."\n" ) if $do_stdout;
-  _debug("# will capture stderr on " . fileno($stash->{capture}{stderr})."\n" ) if $do_stderr;
-  # get handles for capture and apply existing IO layers
-  # tees may change $stash->{new}
-  _start_tee( stdout => $stash ) if $do_stdout && $do_tee;
-  _start_tee( stderr => $stash ) if $do_stderr && $do_tee;
   _wait_for_tees( $stash ) if $do_tee;
   # finalize redirection
   $stash->{new}{stderr} = $stash->{new}{stdout} if $do_merge;
@@ -379,23 +371,23 @@ sub _capture_tee {
   _debug( "# killing tee subprocesses ...\n" ) if $do_tee;
   _kill_tees( $stash ) if $do_tee;
   # return captured output
-  _relayer($stash->{capture}{stdout}, $layers{stdout}) if $do_stdout;
-  _relayer($stash->{capture}{stderr}, $layers{stderr}) if $do_stderr;
-  my $got_out = $do_stdout ? _slurp('stdout', $stash) : q();
-  my $got_err = $do_stderr ? _slurp('stderr', $stash) : q();
-  _debug("# slurped " . length($got_out) . " bytes from stdout\n");
-  _debug("# slurped " . length($got_err) . " bytes from stderr\n");
-  print CT_ORIG_STDOUT $got_out
+  my %got;
+  for ( keys %do ) {
+    _relayer($stash->{capture}{$_}, $layers{$_});
+    $got{$_} = _slurp($_, $stash);
+    _debug("# slurped " . length($got{$_}) . " bytes from $_\n");
+  }
+  print CT_ORIG_STDOUT $got{stdout}
     if $do_stdout && $do_tee && $localize{stdout};
-  print CT_ORIG_STDERR $got_err
+  print CT_ORIG_STDERR $got{stderr}
     if $do_stderr && $do_tee && $localize{stderr};
   $? = $exit_code;
   $@ = $inner_error if $inner_error;
   die $outer_error if $outer_error;
   _debug( "# ending _capture_tee with (@_)...\n" );
   my @return;
-  push @return, $got_out if $do_stdout;
-  push @return, $got_err if $do_stderr;
+  push @return, $got{stdout} if $do_stdout;
+  push @return, $got{stderr} if $do_stderr;
   push @return, @result;
   return wantarray ? @return : $return[0];
 }
