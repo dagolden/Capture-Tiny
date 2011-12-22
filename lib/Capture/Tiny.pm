@@ -273,9 +273,10 @@ sub _kill_tees {
 }
 
 sub _slurp {
-  my ($name, $fh) = @_;
-  _debug( "# slurping captured $name with layers: @{[PerlIO::get_layers($fh)]}\n");
-  seek $fh,0,0; local $/; return scalar readline $fh
+  my ($name, $stash) = @_;
+  my ($fh, $pos) = map { $stash->{$_}{$name} } qw/capture pos/;
+  _debug( "# slurping captured $name from $pos with layers: @{[PerlIO::get_layers($fh)]}\n");
+  seek $fh,$pos,0; local $/; return scalar readline $fh
 }
 
 #--------------------------------------------------------------------------#
@@ -335,8 +336,16 @@ sub _capture_tee {
   # store old handles and setup handles for capture
   $stash->{old} = _copy_std();
   $stash->{new} = { %{$stash->{old}} }; # default to originals
-  $stash->{new}{stdout} = ($stash->{capture}{stdout} ||= File::Temp->new) if $do_stdout;
-  $stash->{new}{stderr} = ($stash->{capture}{stderr} ||= File::Temp->new) if $do_stderr;
+  if ($do_stdout) {
+    $stash->{new}{stdout} = ($stash->{capture}{stdout} ||= File::Temp->new);
+    seek $stash->{capture}{stdout}, 0, 2;
+    $stash->{pos}{stdout} = tell $stash->{capture}{stdout};
+  }
+  if ($do_stderr) {
+    $stash->{new}{stderr} = ($stash->{capture}{stderr} ||= File::Temp->new);
+    seek $stash->{capture}{stderr}, 0, 2;
+    $stash->{pos}{stderr} = tell $stash->{capture}{stderr};
+  }
   _debug("# will capture stdout on " . fileno($stash->{capture}{stdout})."\n" ) if $do_stdout;
   _debug("# will capture stderr on " . fileno($stash->{capture}{stderr})."\n" ) if $do_stderr;
   # get handles for capture and apply existing IO layers
@@ -372,8 +381,8 @@ sub _capture_tee {
   # return captured output
   _relayer($stash->{capture}{stdout}, $layers{stdout}) if $do_stdout;
   _relayer($stash->{capture}{stderr}, $layers{stderr}) if $do_stderr;
-  my $got_out = $do_stdout ? _slurp('stdout' => $stash->{capture}{stdout}) : q();
-  my $got_err = $do_stderr ? _slurp('stderr' => $stash->{capture}{stderr}) : q();
+  my $got_out = $do_stdout ? _slurp('stdout', $stash) : q();
+  my $got_err = $do_stderr ? _slurp('stderr', $stash) : q();
   _debug("# slurped " . length($got_out) . " bytes from stdout\n");
   _debug("# slurped " . length($got_err) . " bytes from stderr\n");
   print CT_ORIG_STDOUT $got_out
@@ -464,9 +473,9 @@ provide custom filehandles as a trailing list of option pairs:
   my $err_fh = IO::File->new("out.txt", "w+");
   capture { ... } stdout => $out_fh, stderr => $err_fh;
 
-The filehandles must be read/write and seekable and should be empty.  Modifying
-the files externally during a capture operation will give unpredictable
-results.  Existing IO layers on them may be changed by the capture.
+The filehandles must be read/write and seekable.  Modifying the files or
+filehandles during a capture operation will give unpredictable results.
+Existing IO layers on them may be changed by the capture.
 
 == capture_stdout
 

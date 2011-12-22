@@ -15,7 +15,7 @@ use Utils qw/next_fd sig_num/;
 use Capture::Tiny ':all';
 use Config;
 
-plan tests => 9;
+plan tests => 13;
 
 local $ENV{PERL_CAPTURE_TINY_TIMEOUT} = 0; # no timeouts
 
@@ -81,6 +81,42 @@ is( scalar do {local (@ARGV,$/) = $temp_out; <>} , "foo\n",
 );
 is( scalar do {local (@ARGV,$/) = $temp_err; <>} , "bar\n",
   "captured STDERR to custom handle (GLOB)"
+);
+
+unlink $_ for $temp_out, $temp_err;
+
+#--------------------------------------------------------------------------#
+# append to custom IO::File
+#--------------------------------------------------------------------------#
+
+$temp_out = tmpnam();
+$temp_err = tmpnam();
+
+ok( !-e $temp_out, "Temp out '$temp_out' doesn't exist" );
+ok( !-e $temp_err, "Temp out '$temp_err' doesn't exist" );
+
+$out_fh = IO::File->new($temp_out, "w+");
+$err_fh = IO::File->new($temp_err, "w+");
+
+$out_fh->autoflush(1);
+$err_fh->autoflush(1);
+
+print $out_fh "Shouldn't see this in capture\n";
+print $err_fh "Shouldn't see this in capture\n";
+
+my ($got_out, $got_err) = capture {
+  print STDOUT "foo\n";
+  print STDERR "bar\n";
+} stdout => $out_fh, stderr => $err_fh;
+
+$out_fh->close;
+$err_fh->close;
+
+is( $got_out, "foo\n",
+  "captured appended STDOUT to custom handle"
+);
+is( $got_err, "bar\n",
+  "captured appended STDERR to custom handle"
 );
 
 unlink $_ for $temp_out, $temp_err;
