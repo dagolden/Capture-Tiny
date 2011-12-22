@@ -2,6 +2,12 @@ Revision history for Capture-Tiny
 
 {{$NEXT}}
 
+  Added:
+
+  - Capturing with custom filehandles will return only newly appended
+    output instead of everything already in the file.
+    [rt.cpan.org #73374]
+
 0.13      2011-12-02 13:39:00 EST5EDT
 
   Fixed:
