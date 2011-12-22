@@ -6,7 +6,7 @@ Capture::Tiny - Capture STDOUT and STDERR from Perl, XS or external programs
 
 =head1 VERSION
 
-version 0.13
+version 0.14
 
 =head1 SYNOPSIS
 
@@ -75,9 +75,9 @@ provide custom filehandles as a trailing list of option pairs:
    my $err_fh = IO::File->new("out.txt", "w+");
    capture { ... } stdout => $out_fh, stderr => $err_fh;
 
-The filehandles must be readE<sol>write and seekable and should be empty.  Modifying
-the files externally during a capture operation will give unpredictable
-results.  Existing IO layers on them may be changed by the capture.
+The filehandles must be readE<sol>write and seekable.  Modifying the files or
+filehandles during a capture operation will give unpredictable results.
+Existing IO layers on them may be changed by the capture.
 
 =head2 capture_stdout
 
@@ -345,9 +345,9 @@ L<Test::Output>
 
 =head2 Bugs / Feature Requests
 
-Please report any bugs or feature requests by email to C<bug-capture-tiny at rt.cpan.org>, or through
-the web interface at L<http://rt.cpan.org/Public/Dist/Display.html?Name=Capture-Tiny>. You will be automatically notified of any
-progress on the request by the system.
+Please report any bugs or feature requests through the issue tracker
+at L<http://rt.cpan.org/Public/Dist/Display.html?Name=Capture-Tiny>.
+You will be notified automatically of any progress on your issue.
 
 =head2 Source Code
 
