@@ -79,6 +79,14 @@ my %channels = (
     output => sub { _binmode($_[0]) . "print STDOUT qq{STDOUT:$texts{$_[0]}}; print STDERR qq{STDERR:$texts{$_[0]}}" },
     expect => sub { eval "qq{STDOUT:$texts{$_[0]}}", eval "qq{STDERR:$texts{$_[0]}}" },
   },
+  empty   => {
+    output => sub { _binmode($_[0]) . "print STDOUT qq{}; print STDERR qq{}" },
+    expect => sub { "", "" },
+  },
+  nooutput=> {
+    output => sub { _binmode($_[0]) },
+    expect => sub { "", "" },
+  },
 );
 
 #--------------------------------------------------------------------------#
