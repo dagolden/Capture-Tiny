@@ -15,7 +15,7 @@ use Utils qw/next_fd sig_num/;
 use Capture::Tiny ':all';
 use Config;
 
-plan tests => 13;
+plan tests => 19;
 
 local $ENV{PERL_CAPTURE_TINY_TIMEOUT} = 0; # no timeouts
 
@@ -117,6 +117,43 @@ is( $got_out, "foo\n",
 );
 is( $got_err, "bar\n",
   "captured appended STDERR to custom handle"
+);
+
+unlink $_ for $temp_out, $temp_err;
+
+#--------------------------------------------------------------------------#
+# repeated append to custom IO::File with no output
+#--------------------------------------------------------------------------#
+
+$temp_out = tmpnam();
+$temp_err = tmpnam();
+
+ok( !-e $temp_out, "Temp out '$temp_out' doesn't exist" );
+ok( !-e $temp_err, "Temp out '$temp_err' doesn't exist" );
+
+$out_fh = IO::File->new($temp_out, "a+");
+$err_fh = IO::File->new($temp_err, "a+");
+
+($got_out, $got_err) = capture {
+  my $i = 0; $i++ for 1 .. 10; # no output, just busywork
+} stdout => $out_fh, stderr => $err_fh;
+
+is( $got_out, "",
+  "Try 1: captured empty appended STDOUT to custom handle"
+);
+is( $got_err, "",
+  "Try 1: captured empty appended STDERR to custom handle"
+);
+
+($got_out, $got_err) = capture {
+  my $i = 0; $i++ for 1 .. 10; # no output, just busywork
+} stdout => $out_fh, stderr => $err_fh;
+
+is( $got_out, "",
+  "Try 2: captured empty appended STDOUT to custom handle"
+);
+is( $got_err, "",
+  "Try 2: captured empty appended STDERR to custom handle"
 );
 
 unlink $_ for $temp_out, $temp_err;

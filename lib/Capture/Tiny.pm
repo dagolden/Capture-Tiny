@@ -276,7 +276,9 @@ sub _slurp {
   my ($name, $stash) = @_;
   my ($fh, $pos) = map { $stash->{$_}{$name} } qw/capture pos/;
   _debug( "# slurping captured $name from $pos with layers: @{[PerlIO::get_layers($fh)]}\n");
-  return do { local $/; seek $fh,$pos,0; scalar readline $fh };
+  seek( $fh, $pos, 0 ) or die "Couldn't seek on capture handle for $name\n";
+  my $text = do { local $/; scalar readline $fh };
+  return defined($text) ? $text : "";
 }
 
 #--------------------------------------------------------------------------#
@@ -339,7 +341,7 @@ sub _capture_tee {
   $stash->{new} = { %{$stash->{old}} }; # default to originals
   for ( keys %do ) {
     $stash->{new}{$_} = ($stash->{capture}{$_} ||= File::Temp->new);
-    seek $stash->{capture}{$_}, 0, 2;
+    seek( $stash->{capture}{$_}, 0, 2 ) or die "Could not seek on capture handle for $_\n";
     $stash->{pos}{$_} = tell $stash->{capture}{$_};
     _debug("# will capture $_ on " . fileno($stash->{capture}{$_})."\n" );
     _start_tee( $_ => $stash ) if $do_tee; # tees may change $stash->{new}
