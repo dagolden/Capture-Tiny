@@ -48,12 +48,12 @@ our %EXPORT_TAGS = ( 'all' => \@EXPORT_OK );
 
 my $IS_WIN32 = $^O eq 'MSWin32';
 
-our $DEBUG = $ENV{PERL_CAPTURE_TINY_DEBUG};
-
-my $DEBUGFH;
-open $DEBUGFH, "> DEBUG" if $DEBUG;
-
-*_debug = $DEBUG ? sub(@) { print {$DEBUGFH} @_ } : sub(){0};
+#our $DEBUG = $ENV{PERL_CAPTURE_TINY_DEBUG};
+#
+#my $DEBUGFH;
+#open $DEBUGFH, "> DEBUG" if $DEBUG;
+#
+#*_debug = $DEBUG ? sub(@) { print {$DEBUGFH} @_ } : sub(){0};
 
 our $TIMEOUT = 30;
 
@@ -75,10 +75,10 @@ my @cmd = ($^X, '-e', '$SIG{HUP}=sub{exit}; '
 
 sub _relayer {
   my ($fh, $layers) = @_;
-  _debug("# requested layers (@{$layers}) for @{[fileno $fh]}\n");
+  # _debug("# requested layers (@{$layers}) for @{[fileno $fh]}\n");
   my %seen = ( unix => 1, perlio => 1 ); # filter these out
   my @unique = grep { !$seen{$_}++ } @$layers;
-  _debug("# applying unique layers (@unique) to @{[fileno $fh]}\n");
+  # _debug("# applying unique layers (@unique) to @{[fileno $fh]}\n");
   binmode($fh, join(":", ":raw", @unique));
 }
 
@@ -90,12 +90,12 @@ sub _name {
 
 sub _open {
   open $_[0], $_[1] or Carp::confess "Error from open(" . join(q{, }, @_) . "): $!";
-  _debug( "# open " . join( ", " , map { defined $_ ? _name($_) : 'undef' } @_ ) . " as " . fileno( $_[0] ) . "\n" );
+  # _debug( "# open " . join( ", " , map { defined $_ ? _name($_) : 'undef' } @_ ) . " as " . fileno( $_[0] ) . "\n" );
 }
 
 sub _close {
   close $_[0] or Carp::confess "Error from close(" . join(q{, }, @_) . "): $!";
-  _debug( "# closed " . ( defined $_[0] ? _name($_[0]) : 'undef' ) . "\n" );
+  # _debug( "# closed " . ( defined $_[0] ? _name($_[0]) : 'undef' ) . "\n" );
 }
 
 my %dup; # cache this so STDIN stays fd0
@@ -106,11 +106,11 @@ sub _proxy_std {
     $proxy_count{stdin}++;
     if (defined $dup{stdin}) {
       _open \*STDIN, "<&=" . fileno($dup{stdin});
-      _debug( "# restored proxy STDIN as " . (defined fileno STDIN ? fileno STDIN : 'undef' ) . "\n" );
+      # _debug( "# restored proxy STDIN as " . (defined fileno STDIN ? fileno STDIN : 'undef' ) . "\n" );
     }
     else {
       _open \*STDIN, "<" . File::Spec->devnull;
-      _debug( "# proxied STDIN as " . (defined fileno STDIN ? fileno STDIN : 'undef' ) . "\n" );
+      # _debug( "# proxied STDIN as " . (defined fileno STDIN ? fileno STDIN : 'undef' ) . "\n" );
       _open $dup{stdin} = IO::Handle->new, "<&=STDIN";
     }
     $proxies{stdin} = \*STDIN;
@@ -120,11 +120,11 @@ sub _proxy_std {
     $proxy_count{stdout}++;
     if (defined $dup{stdout}) {
       _open \*STDOUT, ">&=" . fileno($dup{stdout});
-      _debug( "# restored proxy STDOUT as " . (defined fileno STDOUT ? fileno STDOUT : 'undef' ) . "\n" );
+      # _debug( "# restored proxy STDOUT as " . (defined fileno STDOUT ? fileno STDOUT : 'undef' ) . "\n" );
     }
     else {
       _open \*STDOUT, ">" . File::Spec->devnull;
-      _debug( "# proxied STDOUT as " . (defined fileno STDOUT ? fileno STDOUT : 'undef' ) . "\n" );
+      # _debug( "# proxied STDOUT as " . (defined fileno STDOUT ? fileno STDOUT : 'undef' ) . "\n" );
       _open $dup{stdout} = IO::Handle->new, ">&=STDOUT";
     }
     $proxies{stdout} = \*STDOUT;
@@ -134,11 +134,11 @@ sub _proxy_std {
     $proxy_count{stderr}++;
     if (defined $dup{stderr}) {
       _open \*STDERR, ">&=" . fileno($dup{stderr});
-      _debug( "# restored proxy STDERR as " . (defined fileno STDERR ? fileno STDERR : 'undef' ) . "\n" );
+      # _debug( "# restored proxy STDERR as " . (defined fileno STDERR ? fileno STDERR : 'undef' ) . "\n" );
     }
     else {
       _open \*STDERR, ">" . File::Spec->devnull;
-      _debug( "# proxied STDERR as " . (defined fileno STDERR ? fileno STDERR : 'undef' ) . "\n" );
+      # _debug( "# proxied STDERR as " . (defined fileno STDERR ? fileno STDERR : 'undef' ) . "\n" );
       _open $dup{stderr} = IO::Handle->new, ">&=STDERR";
     }
     $proxies{stderr} = \*STDERR;
@@ -149,10 +149,10 @@ sub _proxy_std {
 
 sub _unproxy {
   my (%proxies) = @_;
-  _debug( "# unproxing " . join(" ", keys %proxies) . "\n" );
+  # _debug( "# unproxing " . join(" ", keys %proxies) . "\n" );
   for my $p ( keys %proxies ) {
     $proxy_count{$p}--;
-    _debug( "# unproxied " . uc($p) . " ($proxy_count{$p} left)\n" );
+    # _debug( "# unproxied " . uc($p) . " ($proxy_count{$p} left)\n" );
     if ( ! $proxy_count{$p} ) {
       _close $proxies{$p};
       _close $dup{$p} unless $] < 5.008; # 5.6 will have already closed this as dup
@@ -163,7 +163,7 @@ sub _unproxy {
 
 sub _copy_std {
   my %handles = map { $_, IO::Handle->new } qw/stdin stdout stderr/;
-  _debug( "# copying std handles ...\n" );
+  # _debug( "# copying std handles ...\n" );
   _open $handles{stdin},   "<&STDIN";
   _open $handles{stdout},  ">&STDOUT";
   _open $handles{stderr},  ">&STDERR";
@@ -186,9 +186,9 @@ sub _start_tee {
   # setup pipes
   $stash->{$_}{$which} = IO::Handle->new for qw/tee reader/;
   pipe $stash->{reader}{$which}, $stash->{tee}{$which};
-  _debug( "# pipe for $which\: " .  _name($stash->{tee}{$which}) . " "
-    . fileno( $stash->{tee}{$which} ) . " => " . _name($stash->{reader}{$which})
-    . " " . fileno( $stash->{reader}{$which}) . "\n" );
+  # _debug( "# pipe for $which\: " .  _name($stash->{tee}{$which}) . " "
+  #  . fileno( $stash->{tee}{$which} ) . " => " . _name($stash->{reader}{$which})
+  #  . " " . fileno( $stash->{reader}{$which}) . "\n" );
   select((select($stash->{tee}{$which}), $|=1)[0]); # autoflush
   # setup desired redirection for parent and child
   $stash->{new}{$which} = $stash->{tee}{$which};
@@ -203,14 +203,14 @@ sub _start_tee {
   if ( $IS_WIN32 ) {
     local $@;
     eval "use Win32API::File qw/CloseHandle GetOsFHandle SetHandleInformation fileLastError HANDLE_FLAG_INHERIT INVALID_HANDLE_VALUE/ ";
-    _debug( "# Win32API::File loaded\n") unless $@;
+    # _debug( "# Win32API::File loaded\n") unless $@;
     my $os_fhandle = GetOsFHandle( $stash->{tee}{$which} );
-    _debug( "# Couldn't get OS handle: " . fileLastError() . "\n") if ! defined $os_fhandle || $os_fhandle == INVALID_HANDLE_VALUE();
+    # _debug( "# Couldn't get OS handle: " . fileLastError() . "\n") if ! defined $os_fhandle || $os_fhandle == INVALID_HANDLE_VALUE();
     if ( SetHandleInformation( $os_fhandle, HANDLE_FLAG_INHERIT(), 0) ) {
-      _debug( "# set no-inherit flag on $which tee\n" );
+      # _debug( "# set no-inherit flag on $which tee\n" );
     }
     else {
-      _debug( "# can't disable tee handle flag inherit: " . fileLastError() . "\n");
+      # _debug( "# can't disable tee handle flag inherit: " . fileLastError() . "\n");
     }
     _open_std( $stash->{child}{$which} );
     $stash->{pid}{$which} = system(1, @cmd, $stash->{flag_files}{$which});
@@ -228,12 +228,12 @@ sub _fork_exec {
     Carp::confess "Couldn't fork(): $!";
   }
   elsif ($pid == 0) { # child
-    _debug( "# in child process ...\n" );
+    # _debug( "# in child process ...\n" );
     untie *STDIN; untie *STDOUT; untie *STDERR;
     _close $stash->{tee}{$which};
-    _debug( "# redirecting handles in child ...\n" );
+    # _debug( "# redirecting handles in child ...\n" );
     _open_std( $stash->{child}{$which} );
-    _debug( "# calling exec on command ...\n" );
+    # _debug( "# calling exec on command ...\n" );
     exec @cmd, $stash->{flag_files}{$which};
   }
   $stash->{pid}{$which} = $pid
@@ -260,9 +260,9 @@ sub _wait_for_tees {
 sub _kill_tees {
   my ($stash) = @_;
   if ( $IS_WIN32 ) {
-    _debug( "# closing handles with CloseHandle\n");
+    # _debug( "# closing handles with CloseHandle\n");
     CloseHandle( GetOsFHandle($_) ) for values %{ $stash->{tee} };
-    _debug( "# waiting for subprocesses to finish\n");
+    # _debug( "# waiting for subprocesses to finish\n");
     my $start = time;
     1 until wait == -1 || (time - $start > 30);
   }
@@ -275,7 +275,7 @@ sub _kill_tees {
 sub _slurp {
   my ($name, $stash) = @_;
   my ($fh, $pos) = map { $stash->{$_}{$name} } qw/capture pos/;
-  _debug( "# slurping captured $name from $pos with layers: @{[PerlIO::get_layers($fh)]}\n");
+  # _debug( "# slurping captured $name from $pos with layers: @{[PerlIO::get_layers($fh)]}\n");
   seek( $fh, $pos, 0 ) or die "Couldn't seek on capture handle for $name\n";
   my $text = do { local $/; scalar readline $fh };
   return defined($text) ? $text : "";
@@ -286,7 +286,7 @@ sub _slurp {
 #--------------------------------------------------------------------------#
 
 sub _capture_tee {
-  _debug( "# starting _capture_tee with (@_)...\n" );
+  # _debug( "# starting _capture_tee with (@_)...\n" );
   my ($do_stdout, $do_stderr, $do_merge, $do_tee, $code, @opts) = @_;
   my %do = ($do_stdout ? (stdout => 1) : (),  $do_stderr ? (stderr => 1) : ());
   Carp::confess("Custom capture options must be given as key/value pairs\n")
@@ -307,14 +307,14 @@ sub _capture_tee {
     stdout  => [PerlIO::get_layers(\*STDOUT)],
     stderr  => [PerlIO::get_layers(\*STDERR)],
   );
-  _debug( "# existing layers for $_\: @{$layers{$_}}\n" ) for qw/stdin stdout stderr/;
+  # _debug( "# existing layers for $_\: @{$layers{$_}}\n" ) for qw/stdin stdout stderr/;
   # get layers from underlying glob of tied filehandles if we can
   # (this only works for things that work like Tie::StdHandle)
   $layers{stdout} = [PerlIO::get_layers(tied *STDOUT)]
     if tied(*STDOUT) && (reftype tied *STDOUT eq 'GLOB');
   $layers{stderr} = [PerlIO::get_layers(tied *STDERR)]
     if tied(*STDERR) && (reftype tied *STDERR eq 'GLOB');
-  _debug( "# tied object corrected layers for $_\: @{$layers{$_}}\n" ) for qw/stdin stdout stderr/;
+  # _debug( "# tied object corrected layers for $_\: @{$layers{$_}}\n" ) for qw/stdin stdout stderr/;
   # bypass scalar filehandles and tied handles
   my %localize;
   $localize{stdin}++,  local(*STDIN)
@@ -327,15 +327,15 @@ sub _capture_tee {
     if $do_stdout && tied *STDOUT && $] >= 5.008;
   $localize{stderr}++, local(*STDERR), _open( \*STDERR, ">&=2")
     if ($do_stderr || $do_merge) && tied *STDERR && $] >= 5.008;
-  _debug( "# localized $_\n" ) for keys %localize;
+  # _debug( "# localized $_\n" ) for keys %localize;
   # proxy any closed/localized handles so we don't use fds 0, 1 or 2
   my %proxy_std = _proxy_std();
-  _debug( "# proxy std: @{ [%proxy_std] }\n" );
+  # _debug( "# proxy std: @{ [%proxy_std] }\n" );
   # update layers after any proxying
   $layers{stdin}  = [PerlIO::get_layers(\*STDIN)]  if $proxy_std{stdin};
   $layers{stdout} = [PerlIO::get_layers(\*STDOUT)] if $proxy_std{stdout};
   $layers{stderr} = [PerlIO::get_layers(\*STDERR)] if $proxy_std{stderr};
-  _debug( "# post-proxy layers for $_\: @{$layers{$_}}\n" ) for qw/stdin stdout stderr/;
+  # _debug( "# post-proxy layers for $_\: @{$layers{$_}}\n" ) for qw/stdin stdout stderr/;
   # store old handles and setup handles for capture
   $stash->{old} = _copy_std();
   $stash->{new} = { %{$stash->{old}} }; # default to originals
@@ -343,41 +343,41 @@ sub _capture_tee {
     $stash->{new}{$_} = ($stash->{capture}{$_} ||= File::Temp->new);
     seek( $stash->{capture}{$_}, 0, 2 ) or die "Could not seek on capture handle for $_\n";
     $stash->{pos}{$_} = tell $stash->{capture}{$_};
-    _debug("# will capture $_ on " . fileno($stash->{capture}{$_})."\n" );
+    # _debug("# will capture $_ on " . fileno($stash->{capture}{$_})."\n" );
     _start_tee( $_ => $stash ) if $do_tee; # tees may change $stash->{new}
   }
   _wait_for_tees( $stash ) if $do_tee;
   # finalize redirection
   $stash->{new}{stderr} = $stash->{new}{stdout} if $do_merge;
-  _debug( "# redirecting in parent ...\n" );
+  # _debug( "# redirecting in parent ...\n" );
   _open_std( $stash->{new} );
   # execute user provided code
   my ($exit_code, $inner_error, $outer_error, @result);
   {
     local *STDIN = *CT_ORIG_STDIN if $localize{stdin}; # get original, not proxy STDIN
     local *STDERR = *STDOUT if $do_merge; # minimize buffer mixups during $code
-    _debug( "# finalizing layers ...\n" );
+    # _debug( "# finalizing layers ...\n" );
     _relayer(\*STDOUT, $layers{stdout}) if $do_stdout;
     _relayer(\*STDERR, $layers{stderr}) if $do_stderr;
-    _debug( "# running code $code ...\n" );
+    # _debug( "# running code $code ...\n" );
     local $@;
     eval { @result = $code->(); $inner_error = $@ };
     $exit_code = $?; # save this for later
     $outer_error = $@; # save this for later
   }
   # restore prior filehandles and shut down tees
-  _debug( "# restoring filehandles ...\n" );
+  # _debug( "# restoring filehandles ...\n" );
   _open_std( $stash->{old} );
   _close( $_ ) for values %{$stash->{old}}; # don't leak fds
   _unproxy( %proxy_std );
-  _debug( "# killing tee subprocesses ...\n" ) if $do_tee;
+  # _debug( "# killing tee subprocesses ...\n" ) if $do_tee;
   _kill_tees( $stash ) if $do_tee;
   # return captured output
   my %got;
   for ( keys %do ) {
     _relayer($stash->{capture}{$_}, $layers{$_});
     $got{$_} = _slurp($_, $stash);
-    _debug("# slurped " . length($got{$_}) . " bytes from $_\n");
+    # _debug("# slurped " . length($got{$_}) . " bytes from $_\n");
   }
   print CT_ORIG_STDOUT $got{stdout}
     if $do_stdout && $do_tee && $localize{stdout};
@@ -386,7 +386,7 @@ sub _capture_tee {
   $? = $exit_code;
   $@ = $inner_error if $inner_error;
   die $outer_error if $outer_error;
-  _debug( "# ending _capture_tee with (@_)...\n" );
+  # _debug( "# ending _capture_tee with (@_)...\n" );
   my @return;
   push @return, $got{stdout} if $do_stdout;
   push @return, $got{stderr} if $do_stderr;
