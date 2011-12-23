@@ -2,6 +2,17 @@ Revision history for Capture-Tiny
 
 {{$NEXT}}
 
+  Fixed:
+
+  - Repeated captures from a custom filehandle would return undef instead
+    of the empty string (and would warn). This has been fixed.
+    [rt.cpan.org #73374 part two. Thank you to Philipp Herz for help
+    in reproducing this bug.]
+
+  Other:
+
+  - Commented out debugging code for slightly less runtime overhead
+
 0.14      2011-12-22 10:14:09 EST5EDT
 
   Added:
