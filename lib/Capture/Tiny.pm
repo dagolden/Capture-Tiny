@@ -586,7 +586,7 @@ output handle after the capture is complete.  (Requires Perl 5.8)
 Capture::Tiny attempts to preserve the semantics of STDIN opened to a scalar
 reference.
 
-*Tied handles*
+*Tied output handles*
 
 If STDOUT or STDERR are tied prior to the call to {capture} or {tee}, then
 Capture::Tiny will attempt to override the tie for the duration of the
@@ -599,8 +599,19 @@ is based on [Tie::StdHandle], then Capture::Tiny will attempt to determine
 appropriate layers like {:utf8} from the underlying handle and do the right
 thing.
 
-Capture::Tiny attempts to preserve the semantics of tied STDIN, but capturing
-or teeing when STDIN is tied is currently broken on Windows.
+*Tied input handle*
+
+Capture::Tiny attempts to preserve the semantics of tied STDIN, but this is not
+entirely stable or portable. For example:
+
+* Capturing or teeing with STDIN tied is broken on Windows
+* [FCGI] has been reported as having a pathological tied handle implementation
+that causes fatal (and hard to diagnose) errors
+
+Unless having STDIN tied is crucial, it may be safest to localize STDIN when
+capturing:
+
+  my ($out, $err) = do { local *STDIN; capture { ... } };
 
 == Modifying handles during a capture
 
