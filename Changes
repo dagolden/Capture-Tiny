@@ -2,6 +2,8 @@ Revision history for Capture-Tiny
 
 {{$NEXT}}
 
+0.16      2012-02-12 21:04:24 EST5EDT
+
   Documented:
 
   - Noted problems and workaround for FCGI's pathological tied STDIN
