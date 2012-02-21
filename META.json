@@ -44,6 +44,9 @@
          }
       },
       "test" : {
+         "recommends" : {
+            "Inline" : "0.50"
+         },
          "requires" : {
             "Config" : 0,
             "File::Find" : 0,
@@ -55,7 +58,7 @@
    "provides" : {
       "Capture::Tiny" : {
          "file" : "lib/Capture/Tiny.pm",
-         "version" : "0.16"
+         "version" : "0.17"
       }
    },
    "release_status" : "stable",
@@ -71,6 +74,6 @@
          "web" : "https://github.com/dagolden/capture-tiny"
       }
    },
-   "version" : "0.16"
+   "version" : "0.17"
 }
 
