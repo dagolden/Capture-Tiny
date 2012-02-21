@@ -2,6 +2,11 @@ Revision history for Capture-Tiny
 
 {{$NEXT}}
 
+  Tested:
+
+  - Added a test using Inline::C to print to stdout and stderr in response
+    to rt.cpan.org #71701
+
 0.16      2012-02-12 21:04:24 EST5EDT
 
   Documented:
