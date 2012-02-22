@@ -19,6 +19,10 @@ plan 'no_plan';
 my $builder = Test::More->builder;
 binmode($builder->failure_output, ':utf8') if $] >= 5.008;
 
+# XXX work around a bug in perl; this needs to be called early-ish
+# to avoid some sort of filehandle leak when combined with Capture::Tiny
+my $qm = quotemeta("\x{263a}");
+
 save_std(qw/stdin/);
 ok( close STDIN, "closed STDIN" );
 

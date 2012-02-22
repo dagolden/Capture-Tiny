@@ -2,6 +2,11 @@ Revision history for Capture-Tiny
 
 {{$NEXT}}
 
+  Fixed:
+
+  - Added a workaround for failing t/08-stdin-closed.t under blead
+    perl / 5.15.8 [rt.perl.org #111070]
+
   Tested:
 
   - Added a test using Inline::C to print to stdout and stderr in response
