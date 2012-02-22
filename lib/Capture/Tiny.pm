@@ -423,7 +423,7 @@ __END__
 Capture::Tiny provides a simple, portable way to capture almost anything sent
 to STDOUT or STDERR, regardless of whether it comes from Perl, from XS code or
 from an external program.  Optionally, output can be teed so that it is
-captured while being passed through to the original handles.  Yes, it even
+captured while being passed through to the original filehandles.  Yes, it even
 works on Windows (usually).  Stop guessing which of a dozen capturing modules
 to use in any particular situation and just use this one.
 
@@ -439,8 +439,8 @@ The following functions are available.  None are exported by default.
 The {capture} function takes a code reference and returns what is sent to
 STDOUT and STDERR as well as any return values from the code reference.  In
 scalar context, it returns only STDOUT.  If no output was received for a
-handle, it returns an empty string for that handle.  Regardless of calling
-context, all output is captured -- nothing is passed to the existing handles.
+filehandle, it returns an empty string for that filehandle.  Regardless of calling
+context, all output is captured -- nothing is passed to the existing filehandles.
 
 It is prototyped to take a subroutine reference as an argument. Thus, it
 can be called in block form:
@@ -538,19 +538,21 @@ properly ordered due to buffering.
 
 Portability is a goal, not a guarantee.  {tee} requires fork, except on
 Windows where {system(1, @cmd)} is used instead.  Not tested on any
-particularly esoteric platforms yet.
+particularly esoteric platforms yet.  See the
+[CPAN Testers Matrix|http://matrix.cpantesters.org/?dist=Capture-Tiny]
+for test result by platform.
 
 == PerlIO layers
 
 Capture::Tiny does it's best to preserve PerlIO layers such as ':utf8' or
 ':crlf' when capturing.   Layers should be applied to STDOUT or STDERR ~before~
-the call to {capture} or {tee}.  This may not work for tied handles (see below).
+the call to {capture} or {tee}.  This may not work for tied filehandles (see below).
 
 == Modifying filehandles before capturing
 
 Generally speaking, you should do little or no manipulation of the standard IO
-handles prior to using Capture::Tiny.  In particular, closing, reopening,
-localizing or tying standard handles prior to capture may cause a variety of
+filehandles prior to using Capture::Tiny.  In particular, closing, reopening,
+localizing or tying standard filehandles prior to capture may cause a variety of
 unexpected, undesirable and/or unreliable behaviors, as described below.
 Capture::Tiny does its best to compensate for these situations, but the
 results may not be what you desire.
@@ -563,47 +565,47 @@ code within the captured block that depends on finding them closed will, of
 course, not find them to be closed.  If they started closed, Capture::Tiny will
 close them again when the capture block finishes.
 
-Note that this reopening will happen even for STDIN or a handle not being
+Note that this reopening will happen even for STDIN or a filehandle not being
 captured to ensure that the filehandle used for capture is not opened to file
 descriptor 0, as this causes problems on various platforms.
 
 *Localized filehandles*
 
-If code localizes any of Perl's standard handles before capturing, the capture
-will affect the localized handles and not the original ones.  External system
-calls are not affected by localizing a handle in Perl and will continue
-to send output to the original handles (which will thus not be captured).
+If code localizes any of Perl's standard filehandles before capturing, the capture
+will affect the localized filehandles and not the original ones.  External system
+calls are not affected by localizing a filehandle in Perl and will continue
+to send output to the original filehandles (which will thus not be captured).
 
 *Scalar filehandles*
 
 If STDOUT or STDERR are reopened to scalar filehandles prior to the call to
-{capture} or {tee}, then Capture::Tiny will override the output handle for the
+{capture} or {tee}, then Capture::Tiny will override the output filehandle for the
 duration of the {capture} or {tee} call and then send captured output to the
-output handle after the capture is complete.  (Requires Perl 5.8)
+output filehandle after the capture is complete.  (Requires Perl 5.8)
 
 Capture::Tiny attempts to preserve the semantics of STDIN opened to a scalar
 reference.
 
-*Tied output handles*
+*Tied output filehandles*
 
 If STDOUT or STDERR are tied prior to the call to {capture} or {tee}, then
 Capture::Tiny will attempt to override the tie for the duration of the
-{capture} or {tee} call and then send captured output to the tied handle after
+{capture} or {tee} call and then send captured output to the tied filehandle after
 the capture is complete.  (Requires Perl 5.8)
 
 Capture::Tiny may not succeed resending UTF-8 encoded data to a tied
-STDOUT or STDERR handle.  Characters may appear as bytes.  If the tied handle
+STDOUT or STDERR filehandle.  Characters may appear as bytes.  If the tied filehandle
 is based on [Tie::StdHandle], then Capture::Tiny will attempt to determine
-appropriate layers like {:utf8} from the underlying handle and do the right
+appropriate layers like {:utf8} from the underlying filehandle and do the right
 thing.
 
-*Tied input handle*
+*Tied input filehandle*
 
 Capture::Tiny attempts to preserve the semantics of tied STDIN, but this is not
 entirely stable or portable. For example:
 
 * Capturing or teeing with STDIN tied is broken on Windows
-* [FCGI] has been reported as having a pathological tied handle implementation
+* [FCGI] has been reported as having a pathological tied filehandle implementation
 that causes fatal (and hard to diagnose) errors
 
 Unless having STDIN tied is crucial, it may be safest to localize STDIN when
@@ -611,7 +613,7 @@ capturing:
 
   my ($out, $err) = do { local *STDIN; capture { ... } };
 
-== Modifying handles during a capture
+== Modifying filehandles during a capture
 
 Attempting to modify STDIN, STDOUT or STDERR ~during~ {capture} or {tee} is
 almost certainly going to cause problems.  Don't do that.
@@ -629,15 +631,6 @@ timeout with an error if the subprocesses are not ready to receive data within
 30 seconds (or whatever is the value of {$Capture::Tiny::TIMEOUT}).  An
 alternate timeout may be specified by setting the {PERL_CAPTURE_TINY_TIMEOUT}
 environment variable.  Setting it to zero will disable timeouts.
-
-= BUGS
-
-Please report any bugs or feature requests using the CPAN Request Tracker.
-Bugs can be submitted through the web interface at
-[http://rt.cpan.org/Dist/Display.html?Queue=Capture-Tiny]
-
-When submitting a bug or request, please include a test-file or a patch to an
-existing test-file that illustrates the bug or desired feature.
 
 = SEE ALSO
 
