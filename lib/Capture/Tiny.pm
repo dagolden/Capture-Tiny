@@ -172,9 +172,9 @@ sub _copy_std {
 
 sub _open_std {
   my ($handles) = @_;
-  _open \*STDIN, "<&" . fileno $handles->{stdin};
-  _open \*STDOUT, ">&" . fileno $handles->{stdout};
-  _open \*STDERR, ">&" . fileno $handles->{stderr};
+  _open \*STDIN, "<&" . fileno $handles->{stdin} if defined $handles->{stdin};
+  _open \*STDOUT, ">&" . fileno $handles->{stdout} if defined $handles->{stdout};
+  _open \*STDERR, ">&" . fileno $handles->{stderr} if defined $handles->{stderr};
 }
 
 #--------------------------------------------------------------------------#
@@ -336,6 +336,8 @@ sub _capture_tee {
   # _debug( "# post-proxy layers for $_\: @{$layers{$_}}\n" ) for qw/stdin stdout stderr/;
   # store old handles and setup handles for capture
   $stash->{old} = _copy_std();
+  # don't save/restore stdin unless we had to fake it up
+  delete $stash->{old}{stdin} unless $proxy_std{stdin};
   $stash->{new} = { %{$stash->{old}} }; # default to originals
   for ( keys %do ) {
     $stash->{new}{$_} = ($stash->{capture}{$_} ||= File::Temp->new);

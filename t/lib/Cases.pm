@@ -256,10 +256,12 @@ my %tests = (
 sub run_test {
   my $test_type = shift or return;
   my $todo = shift || '';
+  my $skip_utf8 = shift || '';
   local $ENV{PERL_CAPTURE_TINY_TIMEOUT} = 0; # don't timeout during testing
   for my $m ( keys %methods ) {
     for my $c ( keys %channels ) {
       for my $t ( keys %texts     ) {
+        next if $t eq 'unicode' && $skip_utf8;
         my @orig_layers = _set_utf8($t);
         local $TODO = "not supported on all platforms"
           if $t eq $todo;
