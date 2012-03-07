@@ -161,15 +161,16 @@ sub _unproxy {
   }
 }
 
-sub _copy_std {
-  my %handles = map { $_, IO::Handle->new } qw/stdin stdout stderr/;
+sub _copy_out_handles {
+  my %handles = map { $_, IO::Handle->new } qw/stdout stderr/;
   # _debug( "# copying std handles ...\n" );
-  _open $handles{stdin},   "<&STDIN";
   _open $handles{stdout},  ">&STDOUT";
   _open $handles{stderr},  ">&STDERR";
   return \%handles;
 }
 
+# In some cases we open all (prior to forking) and in others we only open
+# the output handles (setting up redirection)
 sub _open_std {
   my ($handles) = @_;
   _open \*STDIN, "<&" . fileno $handles->{stdin} if defined $handles->{stdin};
@@ -182,7 +183,7 @@ sub _open_std {
 #--------------------------------------------------------------------------#
 
 sub _start_tee {
-  my ($which, $stash) = @_;
+  my ($which, $stash) = @_; # $which is "stdout" or "stderr"
   # setup pipes
   $stash->{$_}{$which} = IO::Handle->new for qw/tee reader/;
   pipe $stash->{reader}{$which}, $stash->{tee}{$which};
@@ -220,7 +221,7 @@ sub _start_tee {
 }
 
 sub _fork_exec {
-  my ($which, $stash) = @_;
+  my ($which, $stash) = @_; # $which is "stdout" or "stderr"
   my $pid = fork;
   if ( not defined $pid ) {
     Carp::confess "Couldn't fork(): $!";
@@ -314,6 +315,7 @@ sub _capture_tee {
     if tied(*STDERR) && (reftype tied *STDERR eq 'GLOB');
   # _debug( "# tied object corrected layers for $_\: @{$layers{$_}}\n" ) for qw/stdin stdout stderr/;
   # bypass scalar filehandles and tied handles
+  # localize scalar STDIN to get a proxy to pick up FD0, then restore later to CT_ORIG_STDIN
   my %localize;
   $localize{stdin}++,  local(*STDIN)
     if grep { $_ eq 'scalar' } @{$layers{stdin}};
@@ -330,14 +332,11 @@ sub _capture_tee {
   my %proxy_std = _proxy_std();
   # _debug( "# proxy std: @{ [%proxy_std] }\n" );
   # update layers after any proxying
-  $layers{stdin}  = [PerlIO::get_layers(\*STDIN)]  if $proxy_std{stdin};
   $layers{stdout} = [PerlIO::get_layers(\*STDOUT)] if $proxy_std{stdout};
   $layers{stderr} = [PerlIO::get_layers(\*STDERR)] if $proxy_std{stderr};
   # _debug( "# post-proxy layers for $_\: @{$layers{$_}}\n" ) for qw/stdin stdout stderr/;
   # store old handles and setup handles for capture
-  $stash->{old} = _copy_std();
-  # don't save/restore stdin unless we had to fake it up
-  delete $stash->{old}{stdin} unless $proxy_std{stdin};
+  $stash->{old} = _copy_out_handles();
   $stash->{new} = { %{$stash->{old}} }; # default to originals
   for ( keys %do ) {
     $stash->{new}{$_} = ($stash->{capture}{$_} ||= File::Temp->new);
