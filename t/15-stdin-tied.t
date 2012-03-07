@@ -18,8 +18,8 @@ my $no_fork = $^O ne 'MSWin32' && ! $Config{d_fork};
 plan skip_all => "capture needs Perl 5.8 for tied STDERR"
   if $] < 5.008;
 
-plan skip_all => "not supported on Windows yet"
-  if $^O eq 'MSWin32';
+#plan skip_all => "not supported on Windows yet"
+#  if $^O eq 'MSWin32';
 
 plan 'no_plan';
 
