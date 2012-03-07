@@ -580,12 +580,15 @@ to send output to the original filehandles (which will thus not be captured).
 *Scalar filehandles*
 
 If STDOUT or STDERR are reopened to scalar filehandles prior to the call to
-{capture} or {tee}, then Capture::Tiny will override the output filehandle for the
-duration of the {capture} or {tee} call and then send captured output to the
-output filehandle after the capture is complete.  (Requires Perl 5.8)
+{capture} or {tee}, then Capture::Tiny will override the output filehandle for
+the duration of the {capture} or {tee} call and then, for {tee}, send captured
+output to the output filehandle after the capture is complete.  (Requires Perl
+5.8)
 
 Capture::Tiny attempts to preserve the semantics of STDIN opened to a scalar
-reference.
+reference, but note that external processes will not be able to read from such
+a handle.  Capture::Tiny tries to ensure that external processes will read from
+the null device instead, but this is not guaranteed.
 
 *Tied output filehandles*
 
@@ -605,9 +608,8 @@ thing.
 Capture::Tiny attempts to preserve the semantics of tied STDIN, but this is not
 entirely stable or portable. For example:
 
-* Capturing or teeing with STDIN tied is broken on Windows
-* [FCGI] has been reported as having a pathological tied filehandle implementation
-that causes fatal (and hard to diagnose) errors
+* Trying does not affect how external processes read data
+* Capturing or teeing with STDIN tied has been reported broken on Windows
 
 Unless having STDIN tied is crucial, it may be safest to localize STDIN when
 capturing:
