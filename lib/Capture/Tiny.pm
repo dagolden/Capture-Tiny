@@ -207,12 +207,8 @@ sub _start_tee {
     # _debug( "# Win32API::File loaded\n") unless $@;
     my $os_fhandle = GetOsFHandle( $stash->{tee}{$which} );
     # _debug( "# Couldn't get OS handle: " . fileLastError() . "\n") if ! defined $os_fhandle || $os_fhandle == INVALID_HANDLE_VALUE();
-    if ( SetHandleInformation( $os_fhandle, HANDLE_FLAG_INHERIT(), 0) ) {
-      # _debug( "# set no-inherit flag on $which tee\n" );
-    }
-    else {
-      # _debug( "# can't disable tee handle flag inherit: " . fileLastError() . "\n");
-    }
+    my $result = SetHandleInformation( $os_fhandle, HANDLE_FLAG_INHERIT(), 0);
+    # _debug( $result ? "# set no-inherit flag on $which tee\n" : ("# can't disable tee handle flag inherit: " . fileLastError() . "\n"));
     _open_std( $stash->{child}{$which} );
     $stash->{pid}{$which} = system(1, @cmd, $stash->{flag_files}{$which});
     # not restoring std here as it all gets redirected again shortly anyway
