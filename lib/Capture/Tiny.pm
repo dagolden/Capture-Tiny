@@ -161,11 +161,13 @@ sub _unproxy {
   }
 }
 
-sub _copy_out_handles {
-  my %handles = map { $_, IO::Handle->new } qw/stdout stderr/;
-  # _debug( "# copying std handles ...\n" );
-  _open $handles{stdout},  ">&STDOUT";
-  _open $handles{stderr},  ">&STDERR";
+sub _copy_std {
+  my %handles;
+  for my $h ( qw/stdout stderr stdin/ ) {
+    next if $h eq 'stdin' && ! $IS_WIN32; # WIN32 hangs on tee without STDIN copied
+    my $redir = $h eq 'stdin' ? "<&" : ">&";
+    _open $handles{$h} = IO::Handle->new(), $redir . uc($h); # ">&STDOUT" or "<&STDIN"
+  }
   return \%handles;
 }
 
@@ -336,7 +338,7 @@ sub _capture_tee {
   $layers{stderr} = [PerlIO::get_layers(\*STDERR)] if $proxy_std{stderr};
   # _debug( "# post-proxy layers for $_\: @{$layers{$_}}\n" ) for qw/stdin stdout stderr/;
   # store old handles and setup handles for capture
-  $stash->{old} = _copy_out_handles();
+  $stash->{old} = _copy_std();
   $stash->{new} = { %{$stash->{old}} }; # default to originals
   for ( keys %do ) {
     $stash->{new}{$_} = ($stash->{capture}{$_} ||= File::Temp->new);
