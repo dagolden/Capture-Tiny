@@ -2,6 +2,13 @@ Revision history for Capture-Tiny
 
 {{$NEXT}}
 
+  Fixed:
+
+  - Tied STDIN is always localized before redirections to avoid tees
+    hanging on MSWin32
+    
+  - Copying and reopening STDIN is necessary to avoid tees hanging on MSWin32.
+
 0.17_51   2012-03-07 18:22:34 EST5EDT
 
   Fixed:
