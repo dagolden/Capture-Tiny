@@ -456,7 +456,7 @@ scalar context on the return value, you must use the {scalar} keyword.
     return scalar @list; # $count will be 3
   };
 
-Captures are normally done internally to an anonymous filehandle.  To
+Captures are normally done to an anonymous temporary filehandle.  To
 capture via a named file (e.g. to externally monitor a long-running capture),
 provide custom filehandles as a trailing list of option pairs:
 
@@ -544,8 +544,9 @@ for test result by platform.
 == PerlIO layers
 
 Capture::Tiny does it's best to preserve PerlIO layers such as ':utf8' or
-':crlf' when capturing.   Layers should be applied to STDOUT or STDERR ~before~
-the call to {capture} or {tee}.  This may not work for tied filehandles (see below).
+':crlf' when capturing (only for Perl 5.8.1+) .  Layers should be applied to
+STDOUT or STDERR ~before~ the call to {capture} or {tee}.  This may not work
+for tied filehandles (see below).
 
 == Modifying filehandles before capturing
 
@@ -603,11 +604,9 @@ thing.
 
 *Tied input filehandle*
 
-Capture::Tiny attempts to preserve the semantics of tied STDIN, but this is not
-entirely stable or portable. For example:
-
-* Trying does not affect how external processes read data
-* Capturing or teeing with STDIN tied has been reported broken on Windows
+Capture::Tiny attempts to preserve the semantics of tied STDIN, but this
+requires Perl 5.8 and is not entirely predictable.  External processes
+will not be able to read from such a handle.
 
 Unless having STDIN tied is crucial, it may be safest to localize STDIN when
 capturing:
@@ -621,7 +620,12 @@ almost certainly going to cause problems.  Don't do that.
 
 == No support for Perl 5.8.0
 
-It's just too buggy when it comes to layers and UTF-8.
+It's just too buggy when it comes to layers and UTF-8.  Perl 5.8.1 or later
+is recommended.
+
+== Limited support for Perl 5.6
+
+Perl 5.6 predates PerlIO.  UTF-8 data may not be captured correctly.
 
 = ENVIRONMENT
 
