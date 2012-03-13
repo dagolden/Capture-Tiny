@@ -324,9 +324,9 @@ sub _capture_tee {
   $localize{stdin}++, local(*STDIN), _open( \*STDIN, "<&=0")
     if tied *STDIN && $] >= 5.008;
   $localize{stdout}++, local(*STDOUT), _open( \*STDOUT, ">&=1")
-    if $do_stdout && tied *STDOUT && $] >= 5.008;
+    if tied *STDOUT && $] >= 5.008;
   $localize{stderr}++, local(*STDERR), _open( \*STDERR, ">&=2")
-    if ($do_stderr || $do_merge) && tied *STDERR && $] >= 5.008;
+    if tied *STDERR && $] >= 5.008;
   # _debug( "# localized $_\n" ) for keys %localize;
   # proxy any closed/localized handles so we don't use fds 0, 1 or 2
   my %proxy_std = _proxy_std();
