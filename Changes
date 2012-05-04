@@ -2,6 +2,8 @@ Revision history for Capture-Tiny
 
 {{$NEXT}}
 
+0.18      2012-05-04 16:31:53 America/New_York
+
   Added
 
   - When capture or tee are called in void context, Capture::Tiny
