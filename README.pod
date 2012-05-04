@@ -6,7 +6,7 @@ Capture::Tiny - Capture STDOUT and STDERR from Perl, XS or external programs
 
 =head1 VERSION
 
-version 0.17_52
+version 0.17_53
 
 =head1 SYNOPSIS
 
@@ -79,6 +79,9 @@ The filehandles must be readE<sol>write and seekable.  Modifying the files or
 filehandles during a capture operation will give unpredictable results.
 Existing IO layers on them may be changed by the capture.
 
+When called in void context, C<<< capture >>> saves memory and time by
+not reading back from the capture handles.
+
 =head2 capture_stdout
 
    ($stdout, @result) = capture_stdout \&code;
@@ -114,6 +117,11 @@ properly ordered due to buffering.
 
 The C<<< tee >>> function works just like C<<< capture >>>, except that output is captured
 as well as passed on to the original STDOUT and STDERR.
+
+When called in void context, C<<< tee >>> saves memory and time by
+not reading back from the capture handles, except when the
+original STDOUT OR STDERR were tied or opened to a scalar
+handle.
 
 =head2 tee_stdout
 
