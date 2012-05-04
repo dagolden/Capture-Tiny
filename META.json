@@ -58,10 +58,10 @@
    "provides" : {
       "Capture::Tiny" : {
          "file" : "lib/Capture/Tiny.pm",
-         "version" : "0.17_53"
+         "version" : "0.18"
       }
    },
-   "release_status" : "testing",
+   "release_status" : "stable",
    "resources" : {
       "bugtracker" : {
          "mailto" : "bug-capture-tiny at rt.cpan.org",
@@ -74,6 +74,6 @@
          "web" : "https://github.com/dagolden/capture-tiny"
       }
    },
-   "version" : "0.17_53"
+   "version" : "0.18"
 }
 
