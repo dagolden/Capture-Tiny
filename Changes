@@ -2,6 +2,8 @@ Revision history for Capture-Tiny
 
 {{$NEXT}}
 
+0.19      2012-08-06 20:26:34 America/New_York
+
   Fixed:
 
   - Work around rt.perl.org #114404 by forcing PerlIO layers back on
