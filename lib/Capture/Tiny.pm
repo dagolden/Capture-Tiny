@@ -368,6 +368,9 @@ sub _capture_tee {
   # _debug( "# restoring filehandles ...\n" );
   _open_std( $stash->{old} );
   _close( $_ ) for values %{$stash->{old}}; # don't leak fds
+  # shouldn't need relayering originals, but see rt.perl.org #114404
+  _relayer(\*STDOUT, $layers{stdout}) if $do_stdout;
+  _relayer(\*STDERR, $layers{stderr}) if $do_stderr;
   _unproxy( %proxy_std );
   # _debug( "# killing tee subprocesses ...\n" ) if $do_tee;
   _kill_tees( $stash ) if $do_tee;
