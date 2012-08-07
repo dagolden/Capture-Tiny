@@ -301,8 +301,8 @@ sub _capture_tee {
   # find initial layers
   my %layers = (
     stdin   => [PerlIO::get_layers(\*STDIN) ],
-    stdout  => [PerlIO::get_layers(\*STDOUT)],
-    stderr  => [PerlIO::get_layers(\*STDERR)],
+    stdout  => [PerlIO::get_layers(\*STDOUT, output => 1)],
+    stderr  => [PerlIO::get_layers(\*STDERR, output => 1)],
   );
   # _debug( "# existing layers for $_\: @{$layers{$_}}\n" ) for qw/stdin stdout stderr/;
   # get layers from underlying glob of tied filehandles if we can

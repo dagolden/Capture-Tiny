@@ -58,7 +58,7 @@
    "provides" : {
       "Capture::Tiny" : {
          "file" : "lib/Capture/Tiny.pm",
-         "version" : "0.19"
+         "version" : "0.20"
       }
    },
    "release_status" : "stable",
@@ -74,6 +74,6 @@
          "web" : "https://github.com/dagolden/capture-tiny"
       }
    },
-   "version" : "0.19"
+   "version" : "0.20"
 }
 
