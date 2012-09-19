@@ -4,7 +4,7 @@
       "David Golden <dagolden@cpan.org>"
    ],
    "dynamic_config" : 1,
-   "generated_by" : "Dist::Zilla version 4.300018, CPAN::Meta::Converter version 2.120921",
+   "generated_by" : "Dist::Zilla version 4.300023, CPAN::Meta::Converter version 2.120921",
    "license" : [
       "apache_2_0"
    ],
@@ -64,13 +64,13 @@
    "release_status" : "stable",
    "resources" : {
       "bugtracker" : {
-         "mailto" : "bug-capture-tiny at rt.cpan.org",
-         "web" : "http://rt.cpan.org/Public/Dist/Display.html?Name=Capture-Tiny"
+         "mailto" : "bug-Capture-Tiny@rt.cpan.org",
+         "web" : "https://rt.cpan.org/Public/Dist/Display.html?Name=Capture-Tiny"
       },
-      "homepage" : "https://github.com/dagolden/capture-tiny",
+      "homepage" : "https://metacpan.org/release/Capture-Tiny",
       "repository" : {
          "type" : "git",
-         "url" : "https://github.com/dagolden/capture-tiny.git",
+         "url" : "git://github.com/dagolden/capture-tiny.git",
          "web" : "https://github.com/dagolden/capture-tiny"
       }
    },

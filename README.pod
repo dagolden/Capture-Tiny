@@ -104,8 +104,8 @@ STDERR is captured.  STDOUT is not captured.
    $merged = capture_merged \&code;
 
 The C<<< capture_merged >>> function works just like C<<< capture >>> except STDOUT and
-STDERR are merged. (Technically, STDERR is redirected to STDOUT before
-executing the function.)
+STDERR are merged. (Technically, STDERR is redirected to the same capturing
+handle as STDOUT before executing the function.)
 
 Caution: STDOUT and STDERR output in the merged result are not guaranteed to be
 properly ordered due to buffering.
@@ -364,7 +364,7 @@ L<Test::Output>
 =head2 Bugs / Feature Requests
 
 Please report any bugs or feature requests through the issue tracker
-at L<http://rt.cpan.org/Public/Dist/Display.html?Name=Capture-Tiny>.
+at L<https://rt.cpan.org/Public/Dist/Display.html?Name=Capture-Tiny>.
 You will be notified automatically of any progress on your issue.
 
 =head2 Source Code
@@ -374,7 +374,7 @@ public review and contribution under the terms of the license.
 
 L<https://github.com/dagolden/capture-tiny>
 
-  git clone https://github.com/dagolden/capture-tiny.git
+  git clone git://github.com/dagolden/capture-tiny.git
 
 =head1 AUTHOR
 
