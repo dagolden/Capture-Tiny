@@ -2,6 +2,8 @@ Revision history for Capture-Tiny
 
 {{$NEXT}}
 
+0.20      2012-09-19 13:20:57 America/New_York
+
   Fixed:
 
   - Nested merged captures that include an external program call no longer
