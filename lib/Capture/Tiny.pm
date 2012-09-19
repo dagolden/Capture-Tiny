@@ -26,11 +26,11 @@ my %api = (
   capture         => [1,1,0,0],
   capture_stdout  => [1,0,0,0],
   capture_stderr  => [0,1,0,0],
-  capture_merged  => [1,0,1,0], # don't do STDERR since merging
+  capture_merged  => [1,1,1,0],
   tee             => [1,1,0,1],
   tee_stdout      => [1,0,0,1],
   tee_stderr      => [0,1,0,1],
-  tee_merged      => [1,0,1,1], # don't do STDERR since merging
+  tee_merged      => [1,1,1,1],
 );
 
 for my $sub ( keys %api ) {
@@ -354,7 +354,6 @@ sub _capture_tee {
   my ($exit_code, $inner_error, $outer_error, @result);
   {
     local *STDIN = *CT_ORIG_STDIN if $localize{stdin}; # get original, not proxy STDIN
-    local *STDERR = *STDOUT if $do_merge; # minimize buffer mixups during $code
     # _debug( "# finalizing layers ...\n" );
     _relayer(\*STDOUT, $layers{stdout}) if $do_stdout;
     _relayer(\*STDERR, $layers{stderr}) if $do_stderr;
@@ -395,7 +394,7 @@ sub _capture_tee {
   return unless defined wantarray;
   my @return;
   push @return, $got{stdout} if $do_stdout;
-  push @return, $got{stderr} if $do_stderr;
+  push @return, $got{stderr} if $do_stderr && ! $do_merge;
   push @return, @result;
   return wantarray ? @return : $return[0];
 }
@@ -502,8 +501,8 @@ STDERR is captured.  STDOUT is not captured.
   $merged = capture_merged \&code;
 
 The {capture_merged} function works just like {capture} except STDOUT and
-STDERR are merged. (Technically, STDERR is redirected to STDOUT before
-executing the function.)
+STDERR are merged. (Technically, STDERR is redirected to the same capturing
+handle as STDOUT before executing the function.)
 
 Caution: STDOUT and STDERR output in the merged result are not guaranteed to be
 properly ordered due to buffering.
