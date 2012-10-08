@@ -409,13 +409,25 @@ __END__
 
   use Capture::Tiny ':all';
 
+  # capture from external command
+
+  ($stdout, $stderr, $exit) = capture {
+    system( $cmd, @args );
+  };
+
+  # capture from arbitrary code (Perl or external)
+
   ($stdout, $stderr, @result) = capture {
     # your code here
   };
 
+  # capture partial or merged output
+
   $stdout = capture_stdout { ... };
   $stderr = capture_stderr { ... };
   $merged = capture_merged { ... };
+
+  # tee output
 
   ($stdout, $stderr) = tee {
     # your code here
