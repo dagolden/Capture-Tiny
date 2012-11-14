@@ -48,12 +48,12 @@ our %EXPORT_TAGS = ( 'all' => \@EXPORT_OK );
 
 my $IS_WIN32 = $^O eq 'MSWin32';
 
-#our $DEBUG = $ENV{PERL_CAPTURE_TINY_DEBUG};
-#
-#my $DEBUGFH;
-#open $DEBUGFH, "> DEBUG" if $DEBUG;
-#
-#*_debug = $DEBUG ? sub(@) { print {$DEBUGFH} @_ } : sub(){0};
+##our $DEBUG = $ENV{PERL_CAPTURE_TINY_DEBUG};
+##
+##my $DEBUGFH;
+##open $DEBUGFH, "> DEBUG" if $DEBUG;
+##
+##*_debug = $DEBUG ? sub(@) { print {$DEBUGFH} @_ } : sub(){0};
 
 our $TIMEOUT = 30;
 
@@ -94,8 +94,8 @@ sub _open {
 }
 
 sub _close {
+  # _debug( "# closing " . ( defined $_[0] ? _name($_[0]) : 'undef' )  . " on " . fileno( $_[0] ) . "\n" );
   close $_[0] or Carp::confess "Error from close(" . join(q{, }, @_) . "): $!";
-  # _debug( "# closed " . ( defined $_[0] ? _name($_[0]) : 'undef' ) . "\n" );
 }
 
 my %dup; # cache this so STDIN stays fd0
@@ -124,7 +124,7 @@ sub _proxy_std {
     }
     else {
       _open \*STDOUT, ">" . File::Spec->devnull;
-      # _debug( "# proxied STDOUT as " . (defined fileno STDOUT ? fileno STDOUT : 'undef' ) . "\n" );
+       # _debug( "# proxied STDOUT as " . (defined fileno STDOUT ? fileno STDOUT : 'undef' ) . "\n" );
       _open $dup{stdout} = IO::Handle->new, ">&=STDOUT";
     }
     $proxies{stdout} = \*STDOUT;
@@ -134,11 +134,11 @@ sub _proxy_std {
     $proxy_count{stderr}++;
     if (defined $dup{stderr}) {
       _open \*STDERR, ">&=" . fileno($dup{stderr});
-      # _debug( "# restored proxy STDERR as " . (defined fileno STDERR ? fileno STDERR : 'undef' ) . "\n" );
+       # _debug( "# restored proxy STDERR as " . (defined fileno STDERR ? fileno STDERR : 'undef' ) . "\n" );
     }
     else {
       _open \*STDERR, ">" . File::Spec->devnull;
-      # _debug( "# proxied STDERR as " . (defined fileno STDERR ? fileno STDERR : 'undef' ) . "\n" );
+       # _debug( "# proxied STDERR as " . (defined fileno STDERR ? fileno STDERR : 'undef' ) . "\n" );
       _open $dup{stderr} = IO::Handle->new, ">&=STDERR";
     }
     $proxies{stderr} = \*STDERR;
@@ -149,7 +149,7 @@ sub _proxy_std {
 
 sub _unproxy {
   my (%proxies) = @_;
-  # _debug( "# unproxing " . join(" ", keys %proxies) . "\n" );
+  # _debug( "# unproxying: " . join(" ", keys %proxies) . "\n" );
   for my $p ( keys %proxies ) {
     $proxy_count{$p}--;
     # _debug( "# unproxied " . uc($p) . " ($proxy_count{$p} left)\n" );
@@ -272,7 +272,7 @@ sub _kill_tees {
 sub _slurp {
   my ($name, $stash) = @_;
   my ($fh, $pos) = map { $stash->{$_}{$name} } qw/capture pos/;
-  # _debug( "# slurping captured $name from $pos with layers: @{[PerlIO::get_layers($fh)]}\n");
+  # _debug( "# slurping captured $name from " . fileno($fh) . " at pos $pos with layers: @{[PerlIO::get_layers($fh)]}\n");
   seek( $fh, $pos, 0 ) or die "Couldn't seek on capture handle for $name\n";
   my $text = do { local $/; scalar readline $fh };
   return defined($text) ? $text : "";
