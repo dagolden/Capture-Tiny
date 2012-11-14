@@ -2,6 +2,18 @@ Revision history for Capture-Tiny
 
 {{$NEXT}}
 
+  Changed:
+
+  - Skips tee and leak tests for closed STDIN on Perl prior to
+    5.12 when PERL_UNICODE=D.  Documented lack of support as
+    a known issue.
+
+  - Isolated tee subprocesses from effects of PERL_UNICODE as a
+    precaution (though this did not fix the above issue).
+
+  - Improved layer detection for handles proxied due to being closed
+    or tied.
+
 0.20      2012-09-19 13:20:57 America/New_York
 
   Fixed:
