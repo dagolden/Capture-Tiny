@@ -332,8 +332,8 @@ sub _capture_tee {
   my %proxy_std = _proxy_std();
   # _debug( "# proxy std: @{ [%proxy_std] }\n" );
   # update layers after any proxying
-  $layers{stdout} = [PerlIO::get_layers(\*STDOUT)] if $proxy_std{stdout};
-  $layers{stderr} = [PerlIO::get_layers(\*STDERR)] if $proxy_std{stderr};
+  $layers{stdout} = [PerlIO::get_layers(\*STDOUT, output => 1)] if $proxy_std{stdout};
+  $layers{stderr} = [PerlIO::get_layers(\*STDERR, output => 1)] if $proxy_std{stderr};
   # _debug( "# post-proxy layers for $_\: @{$layers{$_}}\n" ) for qw/stdin stdout stderr/;
   # store old handles and setup handles for capture
   $stash->{old} = _copy_std();
