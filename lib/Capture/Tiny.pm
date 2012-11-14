@@ -597,6 +597,9 @@ Note that this reopening will happen even for STDIN or a filehandle not being
 captured to ensure that the filehandle used for capture is not opened to file
 descriptor 0, as this causes problems on various platforms.
 
+Prior to Perl 5.12, closed STDIN combined with PERL_UNICODE=D leaks filehandles
+and also breaks tee() for undiagnosed reasons.  So don't do that.
+
 *Localized filehandles*
 
 If code localizes any of Perl's standard filehandles before capturing, the capture

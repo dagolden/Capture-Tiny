@@ -37,16 +37,29 @@ run_test($_) for qw(
 );
 
 if ( ! $no_fork ) {
-  run_test($_) for qw(
-    tee
-    tee_scalar
-    tee_stdout
-    tee_stderr
-    tee_merged
-  );
+  # prior to 5.12, PERL_UNICODE=D causes problems when STDIN is closed
+  # before capturing.  No idea why.  Documented as a known issue.
+  if ( $] lt '5.012' && ${^UNICODE} & 24 ) {
+    diag 'Skipping tee() tests because PERL_UNICODE=D not supported';
+  }
+  else {
+    run_test($_) for qw(
+      tee
+      tee_scalar
+      tee_stdout
+      tee_stderr
+      tee_merged
+    );
+  }
 }
 
-is( next_fd, $fd, "no file descriptors leaked" );
+if ( $] lt '5.012' && ${^UNICODE} & 24 ) {
+  diag 'Skipping leak test because PERL_UNICODE=D not supported';
+}
+else {
+  is( next_fd, $fd, "no file descriptors leaked" );
+}
+
 restore_std(qw/stdin/);
 
 exit 0;
