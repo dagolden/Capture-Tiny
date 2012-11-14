@@ -6,19 +6,31 @@ Capture::Tiny - Capture STDOUT and STDERR from Perl, XS or external programs
 
 =head1 VERSION
 
-version 0.20
+version 0.21
 
 =head1 SYNOPSIS
 
    use Capture::Tiny ':all';
  
+   # capture from external command
+ 
+   ($stdout, $stderr, $exit) = capture {
+     system( $cmd, @args );
+   };
+ 
+   # capture from arbitrary code (Perl or external)
+ 
    ($stdout, $stderr, @result) = capture {
      # your code here
    };
  
+   # capture partial or merged output
+ 
    $stdout = capture_stdout { ... };
    $stderr = capture_stderr { ... };
    $merged = capture_merged { ... };
+ 
+   # tee output
  
    ($stdout, $stderr) = tee {
      # your code here
@@ -187,6 +199,9 @@ close them again when the capture block finishes.
 Note that this reopening will happen even for STDIN or a filehandle not being
 captured to ensure that the filehandle used for capture is not opened to file
 descriptor 0, as this causes problems on various platforms.
+
+Prior to Perl 5.12, closed STDIN combined with PERL_UNICODE=D leaks filehandles
+and also breaks tee() for undiagnosed reasons.  So don't do that.
 
 B<Localized filehandles>
 
