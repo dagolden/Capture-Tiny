@@ -63,7 +63,7 @@ our $TIMEOUT = 30;
 # This is annoying, but seems to be the best that can be done
 # as a simple, portable IPC technique
 #--------------------------------------------------------------------------#
-my @cmd = ($^X, '-e', '$SIG{HUP}=sub{exit}; '
+my @cmd = ($^X, '-C0', '-e', '$SIG{HUP}=sub{exit}; '
   . 'if( my $fn=shift ){ open my $fh, qq{>$fn}; print {$fh} $$; close $fh;} '
   . 'my $buf; while (sysread(STDIN, $buf, 2048)) { '
   . 'syswrite(STDOUT, $buf); syswrite(STDERR, $buf)}'
