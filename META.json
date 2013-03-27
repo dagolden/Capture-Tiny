@@ -4,7 +4,7 @@
       "David Golden <dagolden@cpan.org>"
    ],
    "dynamic_config" : 1,
-   "generated_by" : "Dist::Zilla version 4.300025, CPAN::Meta::Converter version 2.120921",
+   "generated_by" : "Dist::Zilla version 4.300031, CPAN::Meta::Converter version 2.120921",
    "license" : [
       "apache_2_0"
    ],
@@ -30,6 +30,14 @@
             "ExtUtils::MakeMaker" : "6.30"
          }
       },
+      "develop" : {
+         "requires" : {
+            "Pod::Coverage::TrustPod" : "0",
+            "Test::CPAN::Meta" : "0",
+            "Test::Pod" : "1.41",
+            "Test::Pod::Coverage" : "1.08"
+         }
+      },
       "runtime" : {
          "requires" : {
             "Carp" : "0",
@@ -38,7 +46,7 @@
             "File::Temp" : "0",
             "IO::Handle" : "0",
             "Scalar::Util" : "0",
-            "perl" : "5.006",
+            "perl" : "5.008",
             "strict" : "0",
             "warnings" : "0"
          }
@@ -49,8 +57,11 @@
          },
          "requires" : {
             "Config" : "0",
+            "ExtUtils::MakeMaker" : "0",
             "File::Find" : "0",
+            "File::Spec::Functions" : "0",
             "IO::File" : "0",
+            "List::Util" : "0",
             "Test::More" : "0.62"
          }
       }
@@ -58,14 +69,13 @@
    "provides" : {
       "Capture::Tiny" : {
          "file" : "lib/Capture/Tiny.pm",
-         "version" : "0.21"
+         "version" : "0.22"
       }
    },
    "release_status" : "stable",
    "resources" : {
       "bugtracker" : {
-         "mailto" : "bug-Capture-Tiny@rt.cpan.org",
-         "web" : "https://rt.cpan.org/Public/Dist/Display.html?Name=Capture-Tiny"
+         "web" : "https://github.com/dagolden/capture-tiny/issues"
       },
       "homepage" : "https://metacpan.org/release/Capture-Tiny",
       "repository" : {
@@ -74,6 +84,6 @@
          "web" : "https://github.com/dagolden/capture-tiny"
       }
    },
-   "version" : "0.21"
+   "version" : "0.22"
 }
 
