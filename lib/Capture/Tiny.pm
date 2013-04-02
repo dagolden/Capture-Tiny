@@ -476,6 +476,21 @@ scalar context on the return value, you must use the {scalar} keyword.
     return scalar @list; # $count will be 3
   };
 
+Also note that within the coderef, the {@_} variable will be empty.  So don't
+use arguments from a surrounding subroutine without copying them to an array
+first:
+
+  sub wont_work {
+    my ($stdout, $stderr) = capture { do_stuff( @_ ) };    # WRONG
+    ...
+  }
+
+  sub will_work {
+    my @args = @_;
+    my ($stdout, $stderr) = capture { do_stuff( @args ) }; # RIGHT
+    ...
+  }
+
 Captures are normally done to an anonymous temporary filehandle.  To
 capture via a named file (e.g. to externally monitor a long-running capture),
 provide custom filehandles as a trailing list of option pairs:
