@@ -8,7 +8,7 @@ Capture::Tiny - Capture STDOUT and STDERR from Perl, XS or external programs
 
 =head1 VERSION
 
-version 0.22
+version 0.23
 
 =head1 SYNOPSIS
 
@@ -80,6 +80,21 @@ scalar context on the return value, you must use the C<<< scalar >>> keyword.
      my @list = qw/one two three/;
      return scalar @list; # $count will be 3
    };
+
+Also note that within the coderef, the C<<< @_ >>> variable will be empty.  So don't
+use arguments from a surrounding subroutine without copying them to an array
+first:
+
+   sub wont_work {
+     my ($stdout, $stderr) = capture { do_stuff( @_ ) };    # WRONG
+     ...
+   }
+ 
+   sub will_work {
+     my @args = @_;
+     my ($stdout, $stderr) = capture { do_stuff( @args ) }; # RIGHT
+     ...
+   }
 
 Captures are normally done to an anonymous temporary filehandle.  To
 capture via a named file (e.g. to externally monitor a long-running capture),
