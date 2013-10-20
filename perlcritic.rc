@@ -4,6 +4,9 @@ verbose = 8
 [Variables::ProhibitPunctuationVars]
 allow = $@ $!
 
+[TestingAndDebugging::ProhibitNoStrict]
+allow = refs
+
 # Turn these off
 [-BuiltinFunctions::ProhibitStringyEval]
 [-ControlStructures::ProhibitPostfixControls]
@@ -13,7 +16,7 @@ allow = $@ $!
 [-References::ProhibitDoubleSigils]
 [-RegularExpressions::RequireExtendedFormatting]
 [-InputOutput::ProhibitTwoArgOpen]
-[-InputOutput::RequireEncodingWithUTF8Layer]
+[-Modules::ProhibitEvilModules]
 
 # Turn this on
 [Lax::ProhibitStringyEval::ExceptForRequire]
