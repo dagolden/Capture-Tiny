@@ -2,6 +2,15 @@ Revision history for Capture-Tiny
 
 {{$NEXT}}
 
+  Fixed:
+
+  - minimum Perl prereq is back to 5.6 (but $diety help you if
+    you're still stuck on 5.6)
+
+  Documented:
+
+  - Added warning about using @_ in a capture block
+
 0.22      2013-03-27 15:50:29 America/New_York
 
   Documented:
