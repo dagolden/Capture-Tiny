@@ -63,11 +63,18 @@ our $TIMEOUT = 30;
 # This is annoying, but seems to be the best that can be done
 # as a simple, portable IPC technique
 #--------------------------------------------------------------------------#
-my @cmd = ($^X, '-C0', '-e', '$SIG{HUP}=sub{exit}; '
-  . 'if( my $fn=shift ){ open my $fh, qq{>$fn}; print {$fh} $$; close $fh;} '
-  . 'my $buf; while (sysread(STDIN, $buf, 2048)) { '
-  . 'syswrite(STDOUT, $buf); syswrite(STDERR, $buf)}'
-);
+my @cmd = ($^X, '-C0', '-e', <<'HERE');
+use Fcntl;
+$SIG{HUP}=sub{exit};
+if ( my $fn=shift ) {
+    sysopen(my $fh, qq{$fn}, O_WRONLY|O_CREAT|O_EXCL) or die $!;
+    print {$fh} $$;
+    close $fh;
+}
+my $buf; while (sysread(STDIN, $buf, 2048)) {
+    syswrite(STDOUT, $buf); syswrite(STDERR, $buf);
+}
+HERE
 
 #--------------------------------------------------------------------------#
 # filehandle manipulation

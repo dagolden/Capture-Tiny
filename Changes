@@ -2,6 +2,11 @@ Revision history for Capture-Tiny
 
 {{$NEXT}}
 
+  Fixed:
+
+  - Closed security hole in use of semaphore flag in /tmp;
+    now opens semaphore the using O_CREAT|O_EXCL
+    
 0.23      2013-10-20 11:25:34 America/New_York
 
   Fixed:
