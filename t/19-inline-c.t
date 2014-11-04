@@ -12,7 +12,7 @@ use Utils qw/next_fd/;
 use Capture::Tiny ':all';
 use Config;
 
-if ( eval { require Inline; 1 } ) {
+if ( eval { require Inline::C; 1 } ) {
   Inline->bind( C => << 'CCODE' );
 void test_inline() {
   (void)fprintf (stdout, "OUTPUT");
@@ -22,7 +22,7 @@ void test_inline() {
 CCODE
 }
 else {
-  plan skip_all => "Inline module required";
+  plan skip_all => "Inline::C module required";
 }
 
 plan tests => 3;

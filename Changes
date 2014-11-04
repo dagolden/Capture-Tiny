@@ -2,6 +2,10 @@ Revision history for Capture-Tiny
 
 {{$NEXT}}
 
+  Tests:
+
+  - Actually check for Inline::C in tests, not just Inline
+
 0.25      2014-08-16 10:08:42-04:00 America/New_York
 
   Prereqs:
