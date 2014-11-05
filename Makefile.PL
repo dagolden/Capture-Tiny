@@ -34,7 +34,6 @@ my %WriteMakefileArgs = (
     "ExtUtils::MakeMaker" => 0,
     "File::Spec" => 0,
     "IO::File" => 0,
-    "Inline::C" => 0,
     "Test::More" => "0.62",
     "lib" => 0
   },
@@ -53,7 +52,6 @@ my %FallbackPrereqs = (
   "File::Temp" => 0,
   "IO::File" => 0,
   "IO::Handle" => 0,
-  "Inline::C" => 0,
   "Scalar::Util" => 0,
   "Test::More" => "0.62",
   "lib" => 0,

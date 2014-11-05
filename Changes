@@ -2,6 +2,10 @@ Revision history for Capture-Tiny
 
 {{$NEXT}}
 
+  Prereqs:
+
+  - Make Inline::C recommended, not required
+
 0.26      2014-11-04 06:55:15-05:00 America/New_York
 
   Tests:
