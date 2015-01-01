@@ -684,11 +684,14 @@ Perl 5.6 predates PerlIO.  UTF-8 data may not be captured correctly.
 
 == PERL_CAPTURE_TINY_TIMEOUT
 
-Capture::Tiny uses subprocesses for {tee}.  By default, Capture::Tiny will
-timeout with an error if the subprocesses are not ready to receive data within
-30 seconds (or whatever is the value of {$Capture::Tiny::TIMEOUT}).  An
-alternate timeout may be specified by setting the {PERL_CAPTURE_TINY_TIMEOUT}
-environment variable.  Setting it to zero will disable timeouts.
+Capture::Tiny uses subprocesses internally for {tee}.  By default,
+Capture::Tiny will timeout with an error if such subprocesses are not ready to
+receive data within 30 seconds (or whatever is the value of
+{$Capture::Tiny::TIMEOUT}).  An alternate timeout may be specified by setting
+the {PERL_CAPTURE_TINY_TIMEOUT} environment variable.  Setting it to zero will
+disable timeouts.  B<NOTE>, this does not timeout the code reference being
+captured -- this only prevents Capture::Tiny itself from hanging your process
+waiting for its child processes to be ready to proceed.
 
 = SEE ALSO
 

@@ -2,6 +2,11 @@ Revision history for Capture-Tiny
 
 {{$NEXT}}
 
+  Docs:
+
+  - Clarify that PERL_CAPTURE_TINY_TIMEOUT is an internal control,
+    not a timeout of the code reference being captured.
+
 0.27      2014-11-04 23:10:44-05:00 America/New_York
 
   Prereqs:
