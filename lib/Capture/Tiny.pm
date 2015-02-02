@@ -209,7 +209,9 @@ sub _start_tee {
   $stash->{flag_files}{$which} = scalar tmpnam();
   # execute @cmd as a separate process
   if ( $IS_WIN32 ) {
-    local $@;
+    my $old_eval_err=$@;
+    undef $@;
+
     eval "use Win32API::File qw/CloseHandle GetOsFHandle SetHandleInformation fileLastError HANDLE_FLAG_INHERIT INVALID_HANDLE_VALUE/ ";
     # _debug( "# Win32API::File loaded\n") unless $@;
     my $os_fhandle = GetOsFHandle( $stash->{tee}{$which} );
@@ -219,6 +221,7 @@ sub _start_tee {
     _open_std( $stash->{child}{$which} );
     $stash->{pid}{$which} = system(1, @cmd, $stash->{flag_files}{$which});
     # not restoring std here as it all gets redirected again shortly anyway
+    $@=$old_eval_err;
   }
   else { # use fork
     _fork_exec( $which, $stash );
@@ -365,10 +368,12 @@ sub _capture_tee {
     _relayer(\*STDOUT, $layers{stdout}) if $do_stdout;
     _relayer(\*STDERR, $layers{stderr}) if $do_stderr;
     # _debug( "# running code $code ...\n" );
-    local $@;
+    my $old_eval_err=$@;
+    undef $@;
     eval { @result = $code->(); $inner_error = $@ };
     $exit_code = $?; # save this for later
     $outer_error = $@; # save this for later
+    $@ = $old_eval_err;
   }
   # restore prior filehandles and shut down tees
   # _debug( "# restoring filehandles ...\n" );
