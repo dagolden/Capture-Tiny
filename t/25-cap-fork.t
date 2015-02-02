@@ -34,10 +34,14 @@ my ($stdout, $stderr, @result) = capture {
     print "Happiness";
     die "Certainty\n";
   }
+  else {
+    wait;
+    print ", a parent-ly\n";
+  }
   return qw(a b c);
 };
 
-is ( $stdout, "Happiness", "got stdout");
+is ( $stdout, "Happiness, a parent-ly\n", "got stdout");
 is ( $stderr, "Certainty\n", "got stderr");
 is ( "@result", "a b c" , "got result");
 is ( next_fd, $fd, "no file descriptors leaked" );
