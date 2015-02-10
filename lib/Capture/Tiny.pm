@@ -369,6 +369,8 @@ sub _capture_tee {
     eval { @result = $code->(); $inner_error = $@ };
     $exit_code = $?; # save this for later
     $outer_error = $@; # save this for later
+    STDOUT->flush if $do_stdout;
+    STDERR->flush if $do_stderr;
   }
   # restore prior filehandles and shut down tees
   # _debug( "# restoring filehandles ...\n" );
