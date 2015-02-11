@@ -2,6 +2,12 @@ Revision history for Capture-Tiny
 
 {{$NEXT}}
 
+  Tests:
+
+  - Removes test that optionally uses Inline::C to avoid spurious
+    test failures.  Also Inline::C had become a fairly heavy
+    (if optional) dependency.
+
   Docs:
 
   - Clarify that PERL_CAPTURE_TINY_TIMEOUT is an internal control,
