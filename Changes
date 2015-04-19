@@ -2,6 +2,12 @@ Revision history for Capture-Tiny
 
 {{$NEXT}}
 
+  Fixed:
+
+  - Fix double filehandle close error with tee on Windows
+    (which started warning during the perl 5.21.x series,
+    causing tests to fail)
+
 0.28      2015-02-11 06:39:51-05:00 America/New_York
 
   Tests:

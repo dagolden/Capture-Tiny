@@ -210,7 +210,7 @@ sub _start_tee {
   # execute @cmd as a separate process
   if ( $IS_WIN32 ) {
     local $@;
-    eval "use Win32API::File qw/CloseHandle GetOsFHandle SetHandleInformation fileLastError HANDLE_FLAG_INHERIT INVALID_HANDLE_VALUE/ ";
+    eval "use Win32API::File qw/GetOsFHandle SetHandleInformation fileLastError HANDLE_FLAG_INHERIT INVALID_HANDLE_VALUE/ ";
     # _debug( "# Win32API::File loaded\n") unless $@;
     my $os_fhandle = GetOsFHandle( $stash->{tee}{$which} );
     # _debug( "# Couldn't get OS handle: " . fileLastError() . "\n") if ! defined $os_fhandle || $os_fhandle == INVALID_HANDLE_VALUE();
@@ -264,8 +264,8 @@ sub _wait_for_tees {
 sub _kill_tees {
   my ($stash) = @_;
   if ( $IS_WIN32 ) {
-    # _debug( "# closing handles with CloseHandle\n");
-    CloseHandle( GetOsFHandle($_) ) for values %{ $stash->{tee} };
+    # _debug( "# closing handles\n");
+    close($_) for values %{ $stash->{tee} };
     # _debug( "# waiting for subprocesses to finish\n");
     my $start = time;
     1 until wait == -1 || (time - $start > 30);
