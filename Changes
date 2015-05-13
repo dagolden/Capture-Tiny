@@ -2,6 +2,8 @@ Revision history for Capture-Tiny
 
 {{$NEXT}}
 
+  No changes from 0.29
+
 0.29      2015-04-19 18:36:24+02:00 Europe/Berlin (TRIAL RELEASE)
 
   Fixed:
@@ -305,3 +307,5 @@ Revision history for Capture-Tiny
 
   Added:
     - 'capture' and 'tee' functions
+
+# vim: set ts=2 sts=2 sw=2 et tw=75:
