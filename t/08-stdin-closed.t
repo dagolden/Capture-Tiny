@@ -12,7 +12,7 @@ use Utils qw/save_std restore_std next_fd/;
 use Cases qw/run_test/;
 
 use Config;
-my $no_fork = $^O ne 'MSWin32' && ! $Config{d_fork};
+my $no_fork = ($^O ne 'MSWin32' || $^O ne 'Cygwin') && ! $Config{d_fork};
 
 plan 'no_plan';
 
