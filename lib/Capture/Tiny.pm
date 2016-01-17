@@ -82,11 +82,22 @@ HERE
 
 sub _relayer {
   my ($fh, $layers) = @_;
-  # _debug("# requested layers (@{$layers}) for @{[fileno $fh]}\n");
-  my %seen = ( unix => 1, perlio => 1 ); # filter these out
-  my @unique = grep { !$seen{$_}++ } @$layers;
-  # _debug("# applying unique layers (@unique) to @{[fileno $fh]}\n");
-  binmode($fh, join(":", ":raw", @unique));
+  my $unix_utf8_crlf = @$layers > 4
+    && $layers->[0] eq 'unix'
+    && $layers->[1] eq 'crlf'
+    && $layers->[2] eq 'utf8'
+    && $layers->[3] eq 'unix'
+    && $layers->[4] eq 'encoding(utf8)' ? 1 : 0;
+  if ($unix_utf8_crlf and $IS_WIN32) {
+    binmode($fh, ':unix:encoding(utf8):crlf');
+  }
+  else {
+    # _debug("# requested layers (@{$layers}) for @{[fileno $fh]}\n");
+    my %seen = ( unix => 1, perlio => 1 ); # filter these out
+    my @unique = grep { !$seen{$_}++ } @$layers;
+    # _debug("# applying unique layers (@unique) to @{[fileno $fh]}\n");
+    binmode($fh, join(":", ":raw", @unique));
+  }
 }
 
 sub _name {
