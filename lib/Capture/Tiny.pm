@@ -361,8 +361,9 @@ sub _capture_tee {
   # _debug( "# redirecting in parent ...\n" );
   _open_std( $stash->{new} );
   # execute user provided code
-  my ($exit_code, $inner_error, $outer_error, @result);
+  my ($exit_code, $inner_error, $outer_error, $orig_pid, @result);
   {
+    $orig_pid = $$;
     local *STDIN = *CT_ORIG_STDIN if $localize{stdin}; # get original, not proxy STDIN
     # _debug( "# finalizing layers ...\n" );
     _relayer(\*STDOUT, $layers{stdout}) if $do_stdout;
@@ -390,7 +391,7 @@ sub _capture_tee {
   # return captured output, but shortcut in void context
   # unless we have to echo output to tied/scalar handles;
   my %got;
-  if ( defined wantarray or ($do_tee && keys %localize) ) {
+  if ( $orig_pid == $$ and ( defined wantarray or ($do_tee && keys %localize) ) ) {
     for ( keys %do ) {
       _relayer($stash->{capture}{$_}, $layers{$_});
       $got{$_} = _slurp($_, $stash);
@@ -677,6 +678,14 @@ capturing:
 
 Attempting to modify STDIN, STDOUT or STDERR ~during~ {capture} or {tee} is
 almost certainly going to cause problems.  Don't do that.
+
+*Forking inside a capture*
+
+Forks aren't portable.  The behavior of filehandles during a fork is even
+less so.  If Capture::Tiny detects that a fork has occurred within a
+capture, it will shortcut in the child process and return empty strings for
+captures.  Other problems may occur in the child or parent, as well.
+Forking in a capture block is not recommended.
 
 == No support for Perl 5.8.0
 
