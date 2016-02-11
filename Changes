@@ -2,6 +2,11 @@ Revision history for Capture-Tiny
 
 {{$NEXT}}
 
+0.31      2015-07-12 15:23:00-04:00 America/New_York
+  Tests:
+
+  - Fix tests on Cygwin platform.  Handle as if MSWin32 is set.
+
 0.30      2015-05-15 20:43:54-04:00 America/New_York
 
   No changes from 0.29

@@ -13,7 +13,7 @@ use Cases qw/run_test/;
 use TieLC;
 
 use Config;
-my $no_fork = $^O ne 'MSWin32' && ! $Config{d_fork};
+my $no_fork = ($^O ne 'MSWin32' || $^O ne 'Cygwin') && ! $Config{d_fork};
 
 plan skip_all => "capture needs Perl 5.8 for tied STDERR"
   if $] < 5.008;
