@@ -2,6 +2,14 @@ Revision history for Capture-Tiny
 
 {{$NEXT}}
 
+  Fixed:
+
+  - Application of layers to handles during and after capture now attempts
+    to more accurately duplicate the original layers, including potential
+    duplicate layers.  Because of the unusual ways that layers are ordered
+    and applied, exact duplication is not guaranteeed, but this should be
+    better that what Capture::Tiny did before.
+
 0.30      2015-05-15 20:43:54-04:00 America/New_York
 
   No changes from 0.29

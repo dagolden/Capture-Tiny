@@ -83,10 +83,18 @@ HERE
 sub _relayer {
   my ($fh, $layers) = @_;
   # _debug("# requested layers (@{$layers}) for @{[fileno $fh]}\n");
-  my %seen = ( unix => 1, perlio => 1 ); # filter these out
-  my @unique = grep { !$seen{$_}++ } @$layers;
-  # _debug("# applying unique layers (@unique) to @{[fileno $fh]}\n");
-  binmode($fh, join(":", ":raw", @unique));
+
+  # eliminate pseudo-layers
+  binmode( $fh, ":raw" );
+  # strip off real layers until only :unix is left
+  while ( 1 < ( my $layers =()= PerlIO::get_layers( $fh, output => 1 ) ) ) {
+      binmode( $fh, ":pop" );
+  }
+  # apply other layers
+  my @to_apply = @$layers;
+  shift @to_apply; # eliminate initial :unix
+  # _debug("# applying layers  (unix @to_apply) to @{[fileno $fh]}\n");
+  binmode($fh, ":" . join(":",@to_apply));
 }
 
 sub _name {
