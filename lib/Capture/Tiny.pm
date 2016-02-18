@@ -426,9 +426,9 @@ sub _capture_tee {
 
 __END__
 
-=begin wikidoc
+=pod
 
-= SYNOPSIS
+=head1 SYNOPSIS
 
   use Capture::Tiny ':all';
 
@@ -460,7 +460,7 @@ __END__
   $stderr = tee_stderr { ... };
   $merged = tee_merged { ... };
 
-= DESCRIPTION
+=head1 DESCRIPTION
 
 Capture::Tiny provides a simple, portable way to capture almost anything sent
 to STDOUT or STDERR, regardless of whether it comes from Perl, from XS code or
@@ -469,16 +469,16 @@ captured while being passed through to the original filehandles.  Yes, it even
 works on Windows (usually).  Stop guessing which of a dozen capturing modules
 to use in any particular situation and just use this one.
 
-= USAGE
+=head1 USAGE
 
 The following functions are available.  None are exported by default.
 
-== capture
+=head2 capture
 
   ($stdout, $stderr, @result) = capture \&code;
   $stdout = capture \&code;
 
-The {capture} function takes a code reference and returns what is sent to
+The C<capture> function takes a code reference and returns what is sent to
 STDOUT and STDERR as well as any return values from the code reference.  In
 scalar context, it returns only STDOUT.  If no output was received for a
 filehandle, it returns an empty string for that filehandle.  Regardless of calling
@@ -492,14 +492,14 @@ can be called in block form:
   };
 
 Note that the coderef is evaluated in list context.  If you wish to force
-scalar context on the return value, you must use the {scalar} keyword.
+scalar context on the return value, you must use the C<scalar> keyword.
 
   ($stdout, $stderr, $count) = capture {
     my @list = qw/one two three/;
     return scalar @list; # $count will be 3
   };
 
-Also note that within the coderef, the {@_} variable will be empty.  So don't
+Also note that within the coderef, the C<@_> variable will be empty.  So don't
 use arguments from a surrounding subroutine without copying them to an array
 first:
 
@@ -526,95 +526,95 @@ The filehandles must be read/write and seekable.  Modifying the files or
 filehandles during a capture operation will give unpredictable results.
 Existing IO layers on them may be changed by the capture.
 
-When called in void context, {capture} saves memory and time by
+When called in void context, C<capture> saves memory and time by
 not reading back from the capture handles.
 
-== capture_stdout
+=head2 capture_stdout
 
   ($stdout, @result) = capture_stdout \&code;
   $stdout = capture_stdout \&code;
 
-The {capture_stdout} function works just like {capture} except only
+The C<capture_stdout> function works just like C<capture> except only
 STDOUT is captured.  STDERR is not captured.
 
-== capture_stderr
+=head2 capture_stderr
 
   ($stderr, @result) = capture_stderr \&code;
   $stderr = capture_stderr \&code;
 
-The {capture_stderr} function works just like {capture} except only
+The C<capture_stderr> function works just like C<capture> except only
 STDERR is captured.  STDOUT is not captured.
 
-== capture_merged
+=head2 capture_merged
 
   ($merged, @result) = capture_merged \&code;
   $merged = capture_merged \&code;
 
-The {capture_merged} function works just like {capture} except STDOUT and
+The C<capture_merged> function works just like C<capture> except STDOUT and
 STDERR are merged. (Technically, STDERR is redirected to the same capturing
 handle as STDOUT before executing the function.)
 
 Caution: STDOUT and STDERR output in the merged result are not guaranteed to be
 properly ordered due to buffering.
 
-== tee
+=head2 tee
 
   ($stdout, $stderr, @result) = tee \&code;
   $stdout = tee \&code;
 
-The {tee} function works just like {capture}, except that output is captured
+The C<tee> function works just like C<capture>, except that output is captured
 as well as passed on to the original STDOUT and STDERR.
 
-When called in void context, {tee} saves memory and time by
+When called in void context, C<tee> saves memory and time by
 not reading back from the capture handles, except when the
 original STDOUT OR STDERR were tied or opened to a scalar
 handle.
 
-== tee_stdout
+=head2 tee_stdout
 
   ($stdout, @result) = tee_stdout \&code;
   $stdout = tee_stdout \&code;
 
-The {tee_stdout} function works just like {tee} except only
+The C<tee_stdout> function works just like C<tee> except only
 STDOUT is teed.  STDERR is not teed (output goes to STDERR as usual).
 
-== tee_stderr
+=head2 tee_stderr
 
   ($stderr, @result) = tee_stderr \&code;
   $stderr = tee_stderr \&code;
 
-The {tee_stderr} function works just like {tee} except only
+The C<tee_stderr> function works just like C<tee> except only
 STDERR is teed.  STDOUT is not teed (output goes to STDOUT as usual).
 
-== tee_merged
+=head2 tee_merged
 
   ($merged, @result) = tee_merged \&code;
   $merged = tee_merged \&code;
 
-The {tee_merged} function works just like {capture_merged} except that output
+The C<tee_merged> function works just like C<capture_merged> except that output
 is captured as well as passed on to STDOUT.
 
 Caution: STDOUT and STDERR output in the merged result are not guaranteed to be
 properly ordered due to buffering.
 
-= LIMITATIONS
+=head1 LIMITATIONS
 
-== Portability
+=head2 Portability
 
-Portability is a goal, not a guarantee.  {tee} requires fork, except on
-Windows where {system(1, @cmd)} is used instead.  Not tested on any
+Portability is a goal, not a guarantee.  C<tee> requires fork, except on
+Windows where C<system(1, @cmd)> is used instead.  Not tested on any
 particularly esoteric platforms yet.  See the
-[CPAN Testers Matrix|http://matrix.cpantesters.org/?dist=Capture-Tiny]
+L<CPAN Testers Matrix|http://matrix.cpantesters.org/?dist=Capture-Tiny>
 for test result by platform.
 
-== PerlIO layers
+=head2 PerlIO layers
 
 Capture::Tiny does it's best to preserve PerlIO layers such as ':utf8' or
 ':crlf' when capturing (only for Perl 5.8.1+) .  Layers should be applied to
-STDOUT or STDERR ~before~ the call to {capture} or {tee}.  This may not work
+STDOUT or STDERR I<before> the call to C<capture> or C<tee>.  This may not work
 for tied filehandles (see below).
 
-== Modifying filehandles before capturing
+=head2 Modifying filehandles before capturing
 
 Generally speaking, you should do little or no manipulation of the standard IO
 filehandles prior to using Capture::Tiny.  In particular, closing, reopening,
@@ -623,7 +623,7 @@ unexpected, undesirable and/or unreliable behaviors, as described below.
 Capture::Tiny does its best to compensate for these situations, but the
 results may not be what you desire.
 
-*Closed filehandles*
+=head3 Closed filehandles
 
 Capture::Tiny will work even if STDIN, STDOUT or STDERR have been previously
 closed.  However, since they will be reopened to capture or tee output, any
@@ -638,18 +638,18 @@ descriptor 0, as this causes problems on various platforms.
 Prior to Perl 5.12, closed STDIN combined with PERL_UNICODE=D leaks filehandles
 and also breaks tee() for undiagnosed reasons.  So don't do that.
 
-*Localized filehandles*
+=head3 Localized filehandles
 
 If code localizes any of Perl's standard filehandles before capturing, the capture
 will affect the localized filehandles and not the original ones.  External system
 calls are not affected by localizing a filehandle in Perl and will continue
 to send output to the original filehandles (which will thus not be captured).
 
-*Scalar filehandles*
+=head3 Scalar filehandles
 
 If STDOUT or STDERR are reopened to scalar filehandles prior to the call to
-{capture} or {tee}, then Capture::Tiny will override the output filehandle for
-the duration of the {capture} or {tee} call and then, for {tee}, send captured
+C<capture> or C<tee>, then Capture::Tiny will override the output filehandle for
+the duration of the C<capture> or C<tee> call and then, for C<tee>, send captured
 output to the output filehandle after the capture is complete.  (Requires Perl
 5.8)
 
@@ -658,20 +658,20 @@ reference, but note that external processes will not be able to read from such
 a handle.  Capture::Tiny tries to ensure that external processes will read from
 the null device instead, but this is not guaranteed.
 
-*Tied output filehandles*
+=head3 Tied output filehandles
 
-If STDOUT or STDERR are tied prior to the call to {capture} or {tee}, then
+If STDOUT or STDERR are tied prior to the call to C<capture> or C<tee>, then
 Capture::Tiny will attempt to override the tie for the duration of the
-{capture} or {tee} call and then send captured output to the tied filehandle after
+C<capture> or C<tee> call and then send captured output to the tied filehandle after
 the capture is complete.  (Requires Perl 5.8)
 
 Capture::Tiny may not succeed resending UTF-8 encoded data to a tied
 STDOUT or STDERR filehandle.  Characters may appear as bytes.  If the tied filehandle
-is based on [Tie::StdHandle], then Capture::Tiny will attempt to determine
-appropriate layers like {:utf8} from the underlying filehandle and do the right
+is based on L<Tie::StdHandle>, then Capture::Tiny will attempt to determine
+appropriate layers like C<:utf8> from the underlying filehandle and do the right
 thing.
 
-*Tied input filehandle*
+=head3 Tied input filehandle
 
 Capture::Tiny attempts to preserve the semantics of tied STDIN, but this
 requires Perl 5.8 and is not entirely predictable.  External processes
@@ -682,12 +682,12 @@ capturing:
 
   my ($out, $err) = do { local *STDIN; capture { ... } };
 
-== Modifying filehandles during a capture
+=head2 Modifying filehandles during a capture
 
-Attempting to modify STDIN, STDOUT or STDERR ~during~ {capture} or {tee} is
+Attempting to modify STDIN, STDOUT or STDERR I<during> C<capture> or C<tee> is
 almost certainly going to cause problems.  Don't do that.
 
-*Forking inside a capture*
+=head3 Forking inside a capture
 
 Forks aren't portable.  The behavior of filehandles during a fork is even
 less so.  If Capture::Tiny detects that a fork has occurred within a
@@ -695,34 +695,34 @@ capture, it will shortcut in the child process and return empty strings for
 captures.  Other problems may occur in the child or parent, as well.
 Forking in a capture block is not recommended.
 
-== No support for Perl 5.8.0
+=head2 No support for Perl 5.8.0
 
 It's just too buggy when it comes to layers and UTF-8.  Perl 5.8.1 or later
 is recommended.
 
-== Limited support for Perl 5.6
+=head2 Limited support for Perl 5.6
 
 Perl 5.6 predates PerlIO.  UTF-8 data may not be captured correctly.
 
-= ENVIRONMENT
+=head1 ENVIRONMENT
 
-== PERL_CAPTURE_TINY_TIMEOUT
+=head2 PERL_CAPTURE_TINY_TIMEOUT
 
-Capture::Tiny uses subprocesses internally for {tee}.  By default,
+Capture::Tiny uses subprocesses internally for C<tee>.  By default,
 Capture::Tiny will timeout with an error if such subprocesses are not ready to
 receive data within 30 seconds (or whatever is the value of
-{$Capture::Tiny::TIMEOUT}).  An alternate timeout may be specified by setting
-the {PERL_CAPTURE_TINY_TIMEOUT} environment variable.  Setting it to zero will
+C<$Capture::Tiny::TIMEOUT>).  An alternate timeout may be specified by setting
+the C<PERL_CAPTURE_TINY_TIMEOUT> environment variable.  Setting it to zero will
 disable timeouts.  B<NOTE>, this does not timeout the code reference being
 captured -- this only prevents Capture::Tiny itself from hanging your process
 waiting for its child processes to be ready to proceed.
 
-= SEE ALSO
+=head1 SEE ALSO
 
-This module was, inspired by [IO::CaptureOutput], which provides
+This module was, inspired by L<IO::CaptureOutput>, which provides
 similar functionality without the ability to tee output and with more
-complicated code and API.  [IO::CaptureOutput] does not handle layers
-or most of the unusual cases described in the [/Limitations] section and
+complicated code and API.  L<IO::CaptureOutput> does not handle layers
+or most of the unusual cases described in the L</Limitations> section and
 I no longer recommend it.
 
 There are many other CPAN modules that provide some sort of output capture,
@@ -730,29 +730,28 @@ albeit with various limitations that make them appropriate only in particular
 circumstances.  I'm probably missing some.  The long list is provided to show
 why I felt Capture::Tiny was necessary.
 
-* [IO::Capture]
-* [IO::Capture::Extended]
-* [IO::CaptureOutput]
-* [IPC::Capture]
-* [IPC::Cmd]
-* [IPC::Open2]
-* [IPC::Open3]
-* [IPC::Open3::Simple]
-* [IPC::Open3::Utils]
-* [IPC::Run]
-* [IPC::Run::SafeHandles]
-* [IPC::Run::Simple]
-* [IPC::Run3]
-* [IPC::System::Simple]
-* [Tee]
-* [IO::Tee]
-* [File::Tee]
-* [Filter::Handle]
-* [Tie::STDERR]
-* [Tie::STDOUT]
-* [Test::Output]
-
-=end wikidoc
+=for :list
+* L<IO::Capture>
+* L<IO::Capture::Extended>
+* L<IO::CaptureOutput>
+* L<IPC::Capture>
+* L<IPC::Cmd>
+* L<IPC::Open2>
+* L<IPC::Open3>
+* L<IPC::Open3::Simple>
+* L<IPC::Open3::Utils>
+* L<IPC::Run>
+* L<IPC::Run::SafeHandles>
+* L<IPC::Run::Simple>
+* L<IPC::Run3>
+* L<IPC::System::Simple>
+* L<Tee>
+* L<IO::Tee>
+* L<File::Tee>
+* L<Filter::Handle>
+* L<Tie::STDERR>
+* L<Tie::STDOUT>
+* L<Test::Output>
 
 =cut
 
