@@ -2,7 +2,13 @@ Revision history for Capture-Tiny
 
 {{$NEXT}}
 
-  No changes from 0.31
+  [Docs]
+
+  - Changed internal formatting of documentation
+
+  [Changes]
+
+  - No functional changes from 0.31
 
 0.31      2016-02-14 07:33:50-07:00 America/Mazatlan (TRIAL RELEASE)
 
