@@ -2,6 +2,11 @@ Revision history for Capture-Tiny
 
 {{$NEXT}}
 
+  [Fixed]
+
+  - Removed spurious JSON::PP dependency added by a broken
+    Dist::Zilla plugin.
+
 0.32      2016-02-18 10:12:02-05:00 America/New_York
 
   [Docs]
