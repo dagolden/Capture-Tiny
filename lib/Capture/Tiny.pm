@@ -3,7 +3,7 @@ use strict;
 use warnings;
 package Capture::Tiny;
 # ABSTRACT: Capture STDOUT and STDERR from Perl, XS or external programs
-our $VERSION = '0.33';
+our $VERSION = '0.35';
 use Carp ();
 use Exporter ();
 use IO::Handle ();
