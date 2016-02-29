@@ -6,4 +6,3 @@
 
 - Test utf8 output
 - Test with curses
-- Add tee_stdout and tee_stderr functions (?)
