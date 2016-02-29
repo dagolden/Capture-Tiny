@@ -609,7 +609,7 @@ for test result by platform.
 
 =head2 PerlIO layers
 
-Capture::Tiny does it's best to preserve PerlIO layers such as ':utf8' or
+Capture::Tiny does its best to preserve PerlIO layers such as ':utf8' or
 ':crlf' when capturing (only for Perl 5.8.1+) .  Layers should be applied to
 STDOUT or STDERR I<before> the call to C<capture> or C<tee>.  This may not work
 for tied filehandles (see below).
@@ -719,7 +719,7 @@ waiting for its child processes to be ready to proceed.
 
 =head1 SEE ALSO
 
-This module was, inspired by L<IO::CaptureOutput>, which provides
+This module was inspired by L<IO::CaptureOutput>, which provides
 similar functionality without the ability to tee output and with more
 complicated code and API.  L<IO::CaptureOutput> does not handle layers
 or most of the unusual cases described in the L</Limitations> section and
