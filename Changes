@@ -2,6 +2,11 @@ Revision history for Capture-Tiny
 
 {{$NEXT}}
 
+  [Fixed]
+
+  - Fix in 0.37 tickled a very obscure regular expressions bug in perl <
+    5.18; should now be fixed.
+
 0.37      2016-05-02 07:08:31-04:00 America/New_York (TRIAL RELEASE)
 
   [Fixed]
