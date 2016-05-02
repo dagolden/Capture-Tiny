@@ -11,9 +11,6 @@ perl:
   - "5.10"
   - "5.8.8"
 matrix:
-  include:
-    - perl: 5.18
-      env: COVERAGE=1
   allow_failures:
     - perl: "blead"
 before_install:
@@ -24,8 +21,5 @@ before_install:
 install:
   - cpan-install --deps       # installs prereqs, including recommends
   - cpan-install --coverage   # installs converage prereqs, if enabled
-before_script:
-  - coverage-setup
 script: perl Makefile.PL && make test
-after_success:
-  - coverage-report
+# N.B. coverage reporting causes test failures
