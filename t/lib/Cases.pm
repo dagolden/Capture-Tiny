@@ -264,7 +264,7 @@ sub run_test {
   my $skip_utf8 = shift || '';
   local $ENV{PERL_CAPTURE_TINY_TIMEOUT} = 0; # don't timeout during testing
   for my $m ( keys %methods ) {
-    if ( ($m eq 'sys' || $test_type =~ /tee/ ) && ! $locale_ok ) {
+    if ( ($m eq 'sys' || substr($test_type,0,3) eq 'tee' ) && ! $locale_ok ) {
         SKIP: {
             skip "Perl could not initialize locale", 1
         };
