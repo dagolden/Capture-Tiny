@@ -10,6 +10,11 @@ our @EXPORT_OK = qw(
   run_test
 );
 
+my $locale_ok = eval {
+    my $err = capture_stderr { system($^X, '-we', 1) };
+    $err !~ /setting locale failed/i;
+};
+
 my $have_diff = eval {
   require Test::Differences;
   Test::Differences->import;
@@ -259,6 +264,12 @@ sub run_test {
   my $skip_utf8 = shift || '';
   local $ENV{PERL_CAPTURE_TINY_TIMEOUT} = 0; # don't timeout during testing
   for my $m ( keys %methods ) {
+    if ( ($m eq 'sys' || $test_type =~ /tee/ ) && ! $locale_ok ) {
+        SKIP: {
+            skip "Perl could not initialize locale", 1
+        };
+        next;
+    }
     for my $c ( keys %channels ) {
       for my $t ( keys %texts     ) {
         next if $t eq 'unicode' && $skip_utf8;

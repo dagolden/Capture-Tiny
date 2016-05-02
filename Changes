@@ -2,6 +2,10 @@ Revision history for Capture-Tiny
 
 {{$NEXT}}
 
+  [Fixed]
+
+  - Skip some tests if locale can't be determined.
+
 0.36      2016-02-28 21:36:57-05:00 America/New_York
 
   [Docs]
