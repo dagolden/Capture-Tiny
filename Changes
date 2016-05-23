@@ -2,6 +2,10 @@ Revision history for Capture-Tiny
 
 {{$NEXT}}
 
+  [Fixed]
+
+  - Fixed some failing tests when STDIN is routed to /dev/null
+
 0.40      2016-05-23 11:42:35-04:00 America/New_York
 
   - No changes from 0.39
