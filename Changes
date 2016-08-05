@@ -2,6 +2,11 @@ Revision history for Capture-Tiny
 
 {{$NEXT}}
 
+  [Docs]
+
+  - Note that dropping privileges during a capture can lead to
+    temporary files not cleaned up.
+
 0.42      2016-05-31 12:40:10-04:00 America/New_York
 
   - No changes from 0.41

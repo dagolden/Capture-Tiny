@@ -695,6 +695,11 @@ capture, it will shortcut in the child process and return empty strings for
 captures.  Other problems may occur in the child or parent, as well.
 Forking in a capture block is not recommended.
 
+=head3 Dropping privileges during a capture
+
+If you drop privileges during a capture, temporary files created to
+facilitate the capture may not be cleaned up afterwards.
+
 =head2 No support for Perl 5.8.0
 
 It's just too buggy when it comes to layers and UTF-8.  Perl 5.8.1 or later
