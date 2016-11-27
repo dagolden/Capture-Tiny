@@ -695,6 +695,12 @@ capture, it will shortcut in the child process and return empty strings for
 captures.  Other problems may occur in the child or parent, as well.
 Forking in a capture block is not recommended.
 
+=head3 Using threads
+
+Filehandles are global.  Mixing up I/O and captures in different threads
+without coordination is going to cause problems.  Besides, threads are
+officially discouraged.
+
 =head3 Dropping privileges during a capture
 
 If you drop privileges during a capture, temporary files created to
