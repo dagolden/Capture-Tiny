@@ -81,7 +81,7 @@ HERE
 #--------------------------------------------------------------------------#
 
 sub _relayer {
-  my ($fh, $layers) = @_;
+  my ($fh, $apply_layers) = @_;
   # _debug("# requested layers (@{$layers}) for @{[fileno $fh]}\n");
 
   # eliminate pseudo-layers
@@ -91,7 +91,7 @@ sub _relayer {
       binmode( $fh, ":pop" );
   }
   # apply other layers
-  my @to_apply = @$layers;
+  my @to_apply = @$apply_layers;
   shift @to_apply; # eliminate initial :unix
   # _debug("# applying layers  (unix @to_apply) to @{[fileno $fh]}\n");
   binmode($fh, ":" . join(":",@to_apply));
