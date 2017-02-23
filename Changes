@@ -2,6 +2,10 @@ Revision history for Capture-Tiny
 
 {{$NEXT}}
 
+  [Internal]
+
+  - Avoid variable shadowing to improve debuggability.
+
 0.44      2016-08-05 13:40:33-04:00 America/New_York
 
   [Docs]
