@@ -2,6 +2,11 @@ Revision history for Capture-Tiny
 
 {{$NEXT}}
 
+  [Fixed]
+
+  - Appends PID to random file names for tee signalling to avoid
+    random name collision when used in multiple forked children.
+
 0.46      2017-02-25 14:19:22-05:00 America/New_York
 
   - No changes from 0.45-TRIAL

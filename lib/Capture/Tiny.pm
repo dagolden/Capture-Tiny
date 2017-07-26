@@ -214,7 +214,7 @@ sub _start_tee {
     stderr  => $stash->{capture}{$which},
   };
   # flag file is used to signal the child is ready
-  $stash->{flag_files}{$which} = scalar tmpnam();
+  $stash->{flag_files}{$which} = scalar( tmpnam() ) . $$;
   # execute @cmd as a separate process
   if ( $IS_WIN32 ) {
     my $old_eval_err=$@;
