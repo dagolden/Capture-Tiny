@@ -65,7 +65,7 @@ delete $WriteMakefileArgs{CONFIGURE_REQUIRES}
   unless eval { ExtUtils::MakeMaker->VERSION(6.52) };
 
 if ( $^O eq 'MSWin32' ) {
-	$WriteMakefileArgs{PREREQ_PM}{'Win32API::File'} = '0';
+	$WriteMakefileArgs{PREREQ_PM}{'Win32API::File'} = $FallbackPrereqs{'Win32API::File'} = '0';
 }
 
 WriteMakefile(%WriteMakefileArgs);
