@@ -2,6 +2,10 @@ Revision history for Capture-Tiny
 
 {{$NEXT}}
 
+  [Docs]
+
+  - Fixed docs about custom files for capture
+
 0.48      2018-04-22 10:02:47+02:00 Europe/Oslo
 
   - No changes from 0.47-TRIAL
