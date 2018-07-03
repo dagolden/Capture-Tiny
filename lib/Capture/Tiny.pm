@@ -519,7 +519,7 @@ capture via a named file (e.g. to externally monitor a long-running capture),
 provide custom filehandles as a trailing list of option pairs:
 
   my $out_fh = IO::File->new("out.txt", "w+");
-  my $err_fh = IO::File->new("out.txt", "w+");
+  my $err_fh = IO::File->new("err.txt", "w+");
   capture { ... } stdout => $out_fh, stderr => $err_fh;
 
 The filehandles must be read/write and seekable.  Modifying the files or
