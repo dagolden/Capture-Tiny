@@ -733,7 +733,7 @@ waiting for its child processes to be ready to proceed.
 This module was inspired by L<IO::CaptureOutput>, which provides
 similar functionality without the ability to tee output and with more
 complicated code and API.  L<IO::CaptureOutput> does not handle layers
-or most of the unusual cases described in the L</Limitations> section and
+or most of the unusual cases described in the L</LIMITATIONS> section and
 I no longer recommend it.
 
 There are many other CPAN modules that provide some sort of output capture,
