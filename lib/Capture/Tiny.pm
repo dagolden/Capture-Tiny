@@ -567,7 +567,7 @@ as well as passed on to the original STDOUT and STDERR.
 
 When called in void context, C<tee> saves memory and time by
 not reading back from the capture handles, except when the
-original STDOUT OR STDERR were tied or opened to a scalar
+original STDOUT or STDERR were tied or opened to a scalar
 handle.
 
 =head2 tee_stdout
