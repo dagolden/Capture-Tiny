@@ -2,6 +2,10 @@ Revision history for Capture-Tiny
 
 {{$NEXT}}
 
+  [Internal]
+
+  - Stringify '$]' for far future compatibility.
+
   [Docs]
 
   - Fixed docs about custom files for capture
